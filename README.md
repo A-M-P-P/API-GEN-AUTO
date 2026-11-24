@@ -5,6 +5,8 @@
 Le projet répond à un besoin concret d'entreprise : plutôt que de développer une API sur mesure pour chaque intégration, l'équipe déclare **une API**, ses **endpoints**, ses **connexions**, son **mapping de champs** et sa **planification** depuis une interface graphique. Un moteur d'exécution exécute ensuite les pipelines REST, SQL ou fichiers, journalise chaque échange et applique les règles de sécurité.
 
 > **Statut** : MVP fonctionnel de bout en bout (backend Spring Boot + studio Angular). Prêt à être durci pour la production.
+>
+> **Pour installer sur votre machine** : voir [GUIDE-LOCAL.md](GUIDE-LOCAL.md) — prérequis, démarrage en 5 minutes, raccordement à Oracle et dépannage.
 
 ---
 
