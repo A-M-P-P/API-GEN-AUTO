@@ -201,11 +201,71 @@ npm config set https-proxy http://votre-proxy:port
 
 ### Le port 8080 est déjà occupé
 
-```bash
-SERVER_PORT=8081 mvn spring-boot:run -Dspring-boot.run.profiles=dev
+C'est **l'erreur la plus fréquente au premier lancement**. Si le log se termine par :
+
+```
+Web server failed to start. Port 8080 was already in use.
 ```
 
-Pensez à ajuster `target` dans `frontend/proxy.conf.json` (qui pointe sur `http://localhost:8080`).
+**Tout le reste a fonctionné** — Flyway a validé la base, JPA s'est initialisé, la sécurité est en place. Seul le port est pris.
+
+#### Identifier le coupable (Windows)
+
+```powershell
+netstat -ano | findstr :8080
+```
+
+La dernière colonne est le PID. Identifiez le processus :
+
+```powershell
+tasklist /FI "PID eq 12345"
+```
+
+Puis tuez-le :
+
+```powershell
+taskkill /PID 12345 /F
+```
+
+Dans la plupart des cas, le coupable est **une instance précédente de la même application** — un run IntelliJ qui n'a pas été arrêté, ou un terminal `mvn spring-boot:run` resté ouvert. Vérifiez :
+
+- Dans IntelliJ : le bouton **Stop** (carré rouge) dans la barre d'outils, ou la fenêtre **Services**.
+- Les terminaux où vous auriez lancé `mvn spring-boot:run`.
+- Un conteneur Docker qui publie le port 8080 : `docker ps`.
+
+Sous Linux ou macOS :
+
+```bash
+lsof -i :8080
+kill -9 <PID>
+```
+
+#### Ou changer de port
+
+Si vous ne pouvez pas libérer le 8080 (service système, autre projet), lancez le backend sur un autre port :
+
+```powershell
+$env:SERVER_PORT = "8081"
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+Dans IntelliJ : **Run → Edit Configurations → Environment variables** → ajoutez `SERVER_PORT=8081`.
+
+Il faut alors indiquer au studio Angular où trouver le backend. Éditez `frontend/proxy.conf.json` :
+
+```json
+{
+  "/api/": {
+    "target": "http://localhost:8081",
+    "secure": false,
+    "changeOrigin": true
+  }
+}
+```
+
+Redémarrez `npm start` après cette modification — le fichier de proxy n'est lu qu'au démarrage.
+
+> Les deux serveurs doivent tourner **simultanément** : le backend sur 8080 (ou 8081), le studio sur 4200. Le studio ne parle jamais directement à la base ; il passe par le backend via `/api/`.
 
 ### Le studio affiche une page blanche ou des erreurs d'appel API
 
