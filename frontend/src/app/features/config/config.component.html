@@ -1,0 +1,115 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Configuration</h1>
+      <p class="page-sub">
+        Adresses, ports et paramètres de la plateforme. Les valeurs sont écrites dans un fichier
+        externe : aucun rebuild du WAR n'est nécessaire.
+      </p>
+    </div>
+    <div class="row">
+      <button class="btn btn-ghost" (click)="discard()" [disabled]="!dirty() || saving()">Annuler</button>
+      <button class="btn btn-primary" (click)="save()" [disabled]="!dirty() || saving()">
+        @if (saving()) { <span class="spinner"></span> Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="empty"><span class="spinner"></span> Chargement de la configuration…</div>
+  } @else if (error()) {
+    <div class="card"><div class="empty">{{ error() }}</div></div>
+  } @else {
+    @if (view(); as config) {
+
+      @if (config.restartRequired) {
+        <div class="alert alert-warning">
+          <strong>Redémarrage requis.</strong>
+          Les modifications sont enregistrées dans le fichier externe mais ne sont appliquées
+          qu'au prochain démarrage du serveur. Aucun rebuild n'est nécessaire.
+        </div>
+      }
+
+      <div class="card summary">
+        <div class="summary-item">
+          <span class="small muted">Profil actif</span>
+          <code>{{ config.activeProfile || 'défaut' }}</code>
+        </div>
+        <div class="summary-item">
+          <span class="small muted">Port d'écoute</span>
+          <code>{{ config.serverPort }}</code>
+        </div>
+        <div class="summary-item">
+          <span class="small muted">Chemin de contexte</span>
+          <code>{{ config.contextPath }}</code>
+        </div>
+        <div class="summary-item wide">
+          <span class="small muted">Fichier de configuration</span>
+          <code>{{ config.runtimeConfigPath }}</code>
+          @if (!config.runtimeConfigExists) {
+            <span class="badge badge-warning">non créé</span>
+          } @else {
+            <span class="badge badge-success">actif</span>
+          }
+        </div>
+      </div>
+
+      @if (dirty()) {
+        <div class="alert alert-info">
+          {{ changedKeys().length }} propriété(s) modifiée(s) non enregistrée(s).
+        </div>
+      }
+
+      @for (group of groups(); track group.title) {
+        <div class="card group-card">
+          <div class="group-head">
+            <span class="group-icon">{{ group.icon }}</span>
+            <h3>{{ group.title }}</h3>
+          </div>
+
+          <div class="stack">
+            @for (entry of group.entries; track entry.key) {
+              <div class="prop" [class.changed]="changedKeys().includes(entry.key)">
+                <div class="prop-head">
+                  <label [for]="entry.key">{{ entry.label }}</label>
+                  <span class="badge {{ sourceBadge(entry.source) }}">{{ entry.source }}</span>
+                </div>
+
+                @if (entry.secret) {
+                  <input class="input mono" type="password" [id]="entry.key"
+                         [value]="valueOf(entry)" [readonly]="!entry.editable"
+                         (input)="onInput(entry, $any($event.target).value)"
+                         [placeholder]="isSecretSet(entry) ? 'Défini — laisser vide pour conserver' : 'Non défini'"
+                         autocomplete="new-password">
+                  <div class="hint">
+                    @if (isSecretSet(entry)) {
+                      Secret défini. Saisir une nouvelle valeur la remplace.
+                    } @else {
+                      Aucun secret défini.
+                    }
+                  </div>
+                } @else {
+                  <input class="input mono" [id]="entry.key"
+                         [value]="valueOf(entry)" [readonly]="!entry.editable"
+                         (input)="onInput(entry, $any($event.target).value)">
+                  <div class="hint">{{ entry.hint }}</div>
+                }
+
+                <code class="prop-key">{{ entry.key }}</code>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="card note">
+        <h3>Ce que ce mécanisme ne fait pas</h3>
+        <ul class="small muted">
+          <li>Le <strong>port d'écoute</strong> et l'adresse réseau appartiennent au serveur d'application. Sur WebLogic, ils se règlent dans la console d'administration, jamais dans l'application.</li>
+          <li>Une modification nécessite un <strong>redémarrage</strong> du serveur pour être appliquée — mais jamais une recompilation.</li>
+          <li>Les <strong>secrets</strong> saisis ici sont stockés en clair dans le fichier externe. En production, préférez les variables d'environnement ou un coffre à secrets.</li>
+        </ul>
+      </div>
+    }
+  }
+</div>

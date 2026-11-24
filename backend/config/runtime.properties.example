@@ -1,0 +1,31 @@
+# Configuration externe API-GEN-AUTO
+# ---------------------------------------------------------------------------
+# Copie d'exemple : renommez ce fichier en runtime.properties et adaptez les valeurs.
+# Il est lu au demarrage, avant application.yml (mais apres la ligne de commande).
+# Vous pouvez aussi le creer directement depuis le studio : menu Configuration.
+# ---------------------------------------------------------------------------
+
+# --- Serveur -------------------------------------------------------------
+# Utile uniquement si vous lancez le JAR executable embarque.
+# Sous WebLogic, le port se regle dans la console d'administration.
+#server.port=9090
+#server.servlet.context-path=/apigen
+
+# --- Base de donnees de la plateforme ------------------------------------
+#spring.datasource.url=jdbc:oracle:thin:@//db-host:1521/FREEPDB1
+#spring.datasource.username=apigen
+#spring.datasource.password=
+
+# --- Securite ------------------------------------------------------------
+# Valeurs a changer en production (le fichier reste en clair : protegez-le).
+#apigen.jwt.secret=
+#apigen.jwt.expiration-hours=8
+#apigen.crypto.key=
+
+# --- Fonctionnement ------------------------------------------------------
+#apigen.cors.allowed-origins=http://localhost:4200,http://localhost:8080
+#apigen.scheduler.enabled=true
+#apigen.scheduler.poll-interval-ms=15000
+#apigen.audit.retention-days=30
+#apigen.files.base-dir=./data/exchanges
+#apigen.seed.demo=true

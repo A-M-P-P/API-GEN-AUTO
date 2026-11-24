@@ -180,7 +180,113 @@ Successfully applied 1 migration to schema "APIGEN", now at version v1
 
 ---
 
-## 5. Dépannage
+## 5. Modifier les adresses, ports et paramètres sans rebuild
+
+Tout ce qui est réglé dans `application.yml` est figé dans le WAR/EAR une fois construit. Pour
+changer une valeur **sans recompiler**, la plateforme lit un fichier de propriétés externe au
+démarrage.
+
+### 5.1. Le fichier `runtime.properties`
+
+Emplacement par défaut :
+
+```
+config/runtime.properties     # relatif au répertoire depuis lequel vous lancez le serveur
+```
+
+Ordre de priorité appliqué au démarrage :
+
+```
+ligne de commande  >  config/runtime.properties  >  variables d'environnement  >  application.yml
+```
+
+Exemple de contenu :
+
+```properties
+server.port=9090
+spring.datasource.url=jdbc:oracle:thin:@//db-host:1521/FREEPDB1
+spring.datasource.username=apigen
+apigen.scheduler.poll-interval-ms=30000
+```
+
+Le fichier n'a pas besoin d'exister au premier démarrage : il est créé à la première
+enregistrement depuis l'interface. Pour le placer ailleurs (partage réseau, volume monté) :
+
+```bash
+# Variable d'environnement
+set APIGEN_RUNTIME_CONFIG=D:\apigen\conf\runtime.properties
+
+# Ou en argument de lancement
+java -jar apigen-platform.jar --apigen.runtime-config=/opt/apigen/conf/runtime.properties
+```
+
+### 5.2. Depuis le studio
+
+Menu **Configuration** (rôle `ADMIN` requis). L'écran affiche :
+
+- le profil actif, le port d'écoute, le chemin de contexte et le chemin du fichier externe ;
+- les 14 propriétés éditables, groupées par thème (base de données, serveur, sécurité,
+  fonctionnement) ;
+- pour chacune, sa **source réelle** : `application.yml`, *Fichier externe*, variable
+  d'environnement ou valeur par défaut.
+
+Modifiez, puis **Enregistrer** : le fichier est réécrit, l'action est tracée dans le journal
+d'audit (`CONFIG_UPDATE`), et les valeurs s'appliquent **au redémarrage suivant**.
+
+Deux règles à connaître :
+
+- un champ de secret affiche `••••••••` : laissez-le tel quel pour conserver la valeur actuelle ;
+- une valeur vide supprime la ligne du fichier (retour à `application.yml`).
+
+### 5.3. Depuis l'API
+
+```bash
+# Lire
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/config
+
+# Écrire
+curl -X PUT http://localhost:8080/api/config \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"values":{"server.port":"9090","apigen.audit.retention-days":"30"}}'
+```
+
+Réponse : `{ "changed": [...], "ignored": [...], "writtenTo": "...", "restartRequired": true }`.
+Les clés inconnues sont listées dans `ignored`, jamais écrites.
+
+### 5.4. Ce que ce mécanisme ne règle pas
+
+- **Le port d'écoute** et l'adresse réseau appartiennent au serveur d'application. Dans un
+  WebLogic, ils se définissent dans la console d'administration (ou dans `config.xml`), jamais
+  dans le WAR : `server.port` n'a d'effet que si vous lancez le JAR exécutable embarqué.
+- **Le redémarrage reste obligatoire** : la configuration est lue au démarrage, il n'y a pas de
+  rechargement à chaud.
+- **Les secrets sont en clair** dans le fichier. En production, préférez les variables
+  d'environnement ou un coffre à secrets.
+
+### 5.5. Et le déploiement sur WebLogic 12c ?
+
+**Point bloquant à connaître avant tout packaging.** Spring Boot 3.3 repose sur Jakarta EE 9+
+(`jakarta.*`) et exige Java 17. WebLogic 12c (12.2.1.x) est certifié **Java EE 7 / JDK 8** :
+il ne fournit que `javax.*`. Le WAR produit ne démarre donc pas sur 12c.
+
+| Version WebLogic | Spécifications | Spring Boot 3.3 |
+| --- | --- | --- |
+| 12c (12.2.1.x) | Java EE 7, JDK 8 | incompatible |
+| 14.1.2 | Jakarta EE 8 | incompatible |
+| 15.1.1 | Jakarta EE 9.1, JDK 17/21 | **compatible** |
+
+Options :
+
+1. **WebLogic 15.1.1** : aucune modification du code, déployez le WAR/EAR et réglez port et
+   contexte dans la console.
+2. **Rester sur 12c** : rétrograder toute la plateforme vers Spring Boot 2.7.18 (`javax.*`,
+   JDK 8). C'est une refonte majeure (Hibernate 5, Spring Security 5, Jakarta → javax partout).
+3. **Contourner** : lancer le JAR exécutable derrière un WebLogic frontal si la contrainte porte
+   sur le domaine et non sur le conteneur.
+
+---
+
+## 6. Dépannage
 
 ### `java -version` renvoie 11 ou moins
 
@@ -326,7 +432,7 @@ Vous avez probablement modifié un template. Deux pièges connus dans ce projet 
 
 ---
 
-## 6. Contenu de l'archive
+## 7. Contenu de l'archive
 
 ```
 API-GEN-AUTO/
@@ -339,6 +445,9 @@ API-GEN-AUTO/
 ├── backend/                    ← Spring Boot 3.3, Java 17
 │   ├── pom.xml
 │   ├── Dockerfile
+│   ├── config/
+│   │   ├── runtime.properties.example   ← modèle de configuration externe
+│   │   └── runtime.properties            ← généré par le studio (à ne pas versionner)
 │   └── src/
 │       ├── main/java/com/apigen/
 │       │   ├── config/         ← sécurité JWT, chiffrement, planification
@@ -367,7 +476,7 @@ API-GEN-AUTO/
 
 ---
 
-## 7. Commandes utiles
+## 8. Commandes utiles
 
 ```bash
 make install         # build backend + install frontend

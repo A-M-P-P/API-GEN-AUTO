@@ -36,6 +36,10 @@ Le projet répond à un besoin concret d'entreprise : plutôt que de développer
 | --- | --- |
 | ![Explorateur](docs/screenshots/12-schema-browser.png) | ![Parcourir la base](docs/screenshots/13-api-browser.png) |
 
+| Configuration externe | Paramètres modifiés avant enregistrement |
+| --- | --- |
+| ![Configuration](docs/screenshots/14-configuration.png) | ![Configuration modifiée](docs/screenshots/15-configuration-modifiee.png) |
+
 ---
 
 ## Fonctionnalités du MVP
@@ -300,6 +304,69 @@ Copier `.env.example` vers `.env` (ou exporter les variables) :
 | `APIGEN_JWT_EXPIRATION_HOURS` | `8` | Durée de vie des jetons |
 | `APIGEN_JDBC_POOL_EVICT_MS` | `300000` | Fréquence de fermeture des pools inactifs |
 
+### Configuration externe : changer les paramètres sans rebuild
+
+Les valeurs de la table ci-dessus sont figées dans le livrable. Pour les modifier **après**
+déploiement (WAR/EAR déjà construit), la plateforme lit un fichier de propriétés externe au
+démarrage :
+
+```
+config/runtime.properties     # chemin par défaut, à côté du répertoire de lancement
+```
+
+Ordre de priorité appliqué :
+
+```
+ligne de commande  >  config/runtime.properties  >  variables d'environnement  >  application.yml
+```
+
+Le chemin se change avec `APIGEN_RUNTIME_CONFIG` (ou `--apigen.runtime-config=`) : placez le
+fichier hors du WAR, sur un répertoire monté en volume, il survit aux redéploiements.
+
+Deux façons de le renseigner :
+
+1. **Depuis le studio** — menu *Configuration* (rôle `ADMIN`). L'écran liste les 14 propriétés
+   éditables, indique pour chacune sa source réelle (`application.yml`, *Fichier externe`,
+   variable d'environnement, valeur par défaut) et écrit le fichier en un clic.
+2. **Par l'API** — `GET /api/config` renvoie l'état, `PUT /api/config` écrit :
+
+```json
+{ "values": { "server.port": "9090", "apigen.audit.retention-days": "30" } }
+```
+
+Réponse : `{ "changed": [...], "ignored": [...], "writtenTo": "...", "restartRequired": true }`.
+Une clé inconnue est renvoyée dans `ignored` ; une valeur vide supprime la ligne ; un secret
+laissé tel quel (`••••••••`) n'est pas réécrit.
+
+Les valeurs s'appliquent **au redémarrage suivant** du serveur — jamais de recompilation ni de
+repackaging. Deux limites à connaître :
+
+- le **port d'écoute** et l'adresse réseau appartiennent au serveur d'application, pas au WAR.
+  Sur WebLogic ils se règlent dans la console d'administration (voir ci-dessous) ;
+- les secrets saisis ici sont écrits **en clair** dans le fichier. En production, préférez les
+  variables d'environnement ou un coffre à secrets.
+
+### Déploiement sur serveur d'application (WebLogic)
+
+Le livrable Spring Boot 3.3 / Jakarta EE 9+ **ne se déploie pas tel quel sur WebLogic 12c** :
+
+| Version WebLogic | Spécifications | Spring Boot 3.3 |
+| --- | --- | --- |
+| 12c (12.2.1.x) | Java EE 7, JDK 8 | ❌ incompatible (`javax.*`, pas de `jakarta.*`) |
+| 14.1.2 | Jakarta EE 8 | ❌ toujours incompatible |
+| 15.1.1 | Jakarta EE 9.1, JDK 17/21 | ✅ compatible |
+
+Trois voies possibles :
+
+- **Monter vers WebLogic 15.1.1** — aucune modification du code ; déployer le WAR produit par
+  Spring Boot (ou l'EAR) et paramétrer le port et le contexte dans la console.
+- **Rester sur 12c** — rétrograder la plateforme vers Spring Boot 2.7.18 (`javax.*`, JDK 8) :
+  refonte majeure, à chiffrer séparément.
+- **Contourner** — exposer l'application en JAR exécutable derrière un WebLogic frontal ou un
+  reverse proxy, si la contrainte porte sur le domaine et non sur le conteneur.
+
+Dans tous les cas, adresses et ports se règlent dans le fichier externe ci-dessus, sans rebuild.
+
 ### Production avec Oracle
 
 1. Créer un utilisateur dédié (exemple Oracle 23ai / FREEPDB1) :
@@ -489,6 +556,9 @@ Les secrets par défaut du `docker-compose.yml` sont des valeurs de démonstrati
 - Les **pools JDBC sont locaux à chaque instance** (pas de pool distribué). En cluster, chaque nœud maintient son propre pool par base cible.
 - Pas de **rate limiting** ni de quota par clé API.
 - Pas de **versioning** des pipelines ni de rollback.
+- La configuration externe s'applique **au redémarrage** : pas de rechargement à chaud.
+- **WebLogic 12c non supporté** (Java EE 7 / `javax.*`) : Spring Boot 3.3 exige Jakarta EE 9+.
+  Cible compatible : WebLogic 15.1.1. Voir « Déploiement sur serveur d'application ».
 - Studio : le pipeline reste un **éditeur JSON** (les connexions, elles, sont en champs structurés) ; un concepteur visuel par glisser-déposer est envisagé.
 - Pas de **chiffrement applicatif** des réponses stockées (seuls les identifiants sont chiffrés).
 - L'authentification OAuth2/OIDC côté endpoints entrants est à ajouter.

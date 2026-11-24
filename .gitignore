@@ -31,6 +31,10 @@ Thumbs.db
 
 # Runtime data
 data/
+
+# Configuration externe générée par le studio (ne pas versionner les vraies valeurs)
+backend/config/runtime.properties
+backend/config/*.local.properties
 *.db
 *.mv.db
 *.trace.db

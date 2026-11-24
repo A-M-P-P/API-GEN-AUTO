@@ -46,6 +46,11 @@ export const routes: Routes = [
       {
         path: 'audit',
         loadComponent: () => import('./features/audit/audit.component').then((m) => m.AuditComponent)
+      },
+      {
+        path: 'config',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/config/config.component').then((m) => m.ConfigComponent)
       }
     ]
   },

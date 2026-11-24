@@ -204,3 +204,31 @@ export interface LoginResponse {
   expiresIn: number;
   user: User;
 }
+
+export interface ConfigEntry {
+  key: string;
+  label: string;
+  value: string;
+  masked: boolean;
+  secret: boolean;
+  editable: boolean;
+  source: string;
+  hint: string;
+}
+
+export interface ConfigView {
+  runtimeConfigPath: string;
+  runtimeConfigExists: boolean;
+  activeProfile: string;
+  serverPort: string;
+  contextPath: string;
+  restartRequired: boolean;
+  entries: ConfigEntry[];
+}
+
+export interface ConfigUpdateResult {
+  changed: string[];
+  ignored: string[];
+  writtenTo: string;
+  restartRequired: boolean;
+}
