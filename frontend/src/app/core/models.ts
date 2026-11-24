@@ -1,0 +1,206 @@
+export type ApiStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
+export type InboundAuth = 'NONE' | 'API_KEY' | 'JWT';
+export type Direction = 'INBOUND' | 'OUTBOUND';
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
+export type RunStatus = 'RUNNING' | 'SUCCESS' | 'FAILED';
+export type TriggerType = 'MANUAL' | 'SCHEDULE' | 'INBOUND';
+export type Role = 'ADMIN' | 'EDITOR' | 'VIEWER';
+export type ConnectionType = 'ORACLE' | 'POSTGRESQL' | 'MYSQL' | 'SQLSERVER' | 'REST' | 'FILE' | 'FTP' | 'SFTP';
+
+export interface ApiSummary {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+  version: string;
+  status: ApiStatus;
+  inboundAuth: InboundAuth;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  endpointCount: number;
+}
+
+export interface Schedule {
+  id?: number;
+  cronExpression: string;
+  enabled: boolean;
+  payload?: any;
+  nextRunAt?: string | null;
+  lastRunAt?: string | null;
+}
+
+export interface EndpointSummary {
+  id: number;
+  name: string;
+  method: HttpMethod;
+  path: string;
+  direction: Direction;
+  active: boolean;
+  schedule?: Schedule | null;
+}
+
+export interface EndpointDetail extends EndpointSummary {
+  apiId: number;
+  description?: string;
+  pipeline: any[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiDetail extends ApiSummary {
+  endpoints: EndpointSummary[];
+}
+
+export interface ApiPayload {
+  code: string;
+  name: string;
+  description?: string;
+  version?: string;
+  status?: ApiStatus;
+  inboundAuth?: InboundAuth;
+}
+
+export interface EndpointPayload {
+  name: string;
+  method: HttpMethod;
+  path: string;
+  direction: Direction;
+  description?: string;
+  pipeline: any[];
+  active: boolean;
+}
+
+export interface ApiKeyResponse {
+  apiId: number;
+  code: string;
+  apiKey: string;
+  inboundAuth: InboundAuth;
+}
+
+export interface Connection {
+  id: number;
+  name: string;
+  type: ConnectionType;
+  description?: string;
+  baseConfig: any;
+  hasCredentials: boolean;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConnectionPayload {
+  name: string;
+  type: ConnectionType;
+  description?: string;
+  baseConfig: any;
+  credentials?: any;
+  active?: boolean;
+}
+
+export interface ConnectionTestResult {
+  ok: boolean;
+  message: string;
+  latencyMs: number;
+}
+
+export interface TableSummary {
+  name: string;
+  type: string;
+}
+
+export interface SchemaSummary {
+  name: string;
+  tables: TableSummary[];
+}
+
+export interface DiscoveryResult {
+  product: string;
+  version: string;
+  schemas: SchemaSummary[];
+}
+
+export interface ColumnInfo {
+  name: string;
+  type: string;
+  nullable: boolean;
+}
+
+export interface ColumnsResult {
+  schema: string;
+  table: string;
+  columns: ColumnInfo[];
+}
+
+/** Paramètres de découverte : connexion enregistrée ou configuration inline. */
+export interface DiscoveryQuery {
+  connectionId?: number;
+  type?: string;
+  baseConfig?: any;
+  credentials?: any;
+}
+
+export interface Run {
+  id: number;
+  apiId?: number;
+  apiCode?: string;
+  apiName?: string;
+  endpointId?: number;
+  endpointName?: string;
+  status: RunStatus;
+  direction?: Direction;
+  triggerType?: TriggerType;
+  correlationId?: string;
+  requestSummary?: string;
+  responseSummary?: string;
+  errorMessage?: string;
+  startedAt: string;
+  finishedAt?: string;
+  durationMs?: number;
+}
+
+export interface Page<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface User {
+  id: number;
+  username: string;
+  fullName?: string;
+  role: Role;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export interface Dashboard {
+  apiCount: number;
+  activeApiCount: number;
+  endpointCount: number;
+  connectionCount: number;
+  runsToday: number;
+  successRate24h: number;
+  runsByStatus: Record<RunStatus, number>;
+  recentRuns: Run[];
+}
+
+export interface AuditEvent {
+  id: number;
+  actor?: string;
+  action: string;
+  entityType?: string;
+  entityId?: string;
+  details?: string;
+  createdAt: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  tokenType: string;
+  expiresIn: number;
+  user: User;
+}

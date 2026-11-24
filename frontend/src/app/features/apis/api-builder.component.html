@@ -1,0 +1,360 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <a routerLink="/apis" class="back">← Retour aux APIs</a>
+      <h1 class="page-title">
+        @if (isCreateMode) { Nouvelle API } @else { {{ apiData()?.name }} }
+      </h1>
+      <p class="page-sub">
+        @if (isCreateMode) {
+          Créez le conteneur, puis ajoutez-y des endpoints et leurs pipelines d'échange.
+        } @else {
+          {{ apiData()?.endpoints?.length }} endpoint(s) · version {{ apiData()?.version }} · code
+          <code class="mono">{{ apiData()?.code }}</code>
+        }
+      </p>
+    </div>
+    <div class="row">
+      <button class="btn btn-primary" (click)="saveApi()" [disabled]="saving()">
+        @if (saving()) { <span class="spinner"></span> Enregistrement… } @else { Enregistrer l'API }
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="empty"><span class="spinner"></span> Chargement de l'API…</div>
+  } @else {
+    <div class="builder-grid">
+      <div class="col-left">
+        <div class="card card-pad">
+          <h3 class="mb-16">Informations générales</h3>
+          <form [formGroup]="apiForm" class="form-stack" (ngSubmit)="saveApi()">
+            <div class="field">
+              <label>Nom de l'API</label>
+              <input class="input" formControlName="name" placeholder="Ex. Synchronisation RH">
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label>Code</label>
+                <input class="input mono" formControlName="code" placeholder="rh-sync" [readonly]="!isCreateMode">
+                <span class="hint">Utilisé dans l'URL : /api/gateway/{{ apiForm.getRawValue().code || 'code' }}/…</span>
+              </div>
+              <div class="field">
+                <label>Version</label>
+                <input class="input" formControlName="version" placeholder="1.0">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label>Statut</label>
+                <select class="select" formControlName="status">
+                  <option value="DRAFT">Brouillon</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="PAUSED">En pause</option>
+                  <option value="ARCHIVED">Archivée</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Créée par</label>
+                <input class="input" [value]="apiData()?.createdBy || '—'" disabled>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Description</label>
+              <textarea class="textarea" formControlName="description" rows="3"
+                        placeholder="Objectif de l'API, systèmes concernés, règles d'échange…"></textarea>
+            </div>
+          </form>
+        </div>
+
+        <div class="card card-pad" [formGroup]="apiForm">
+          <h3 class="mb-8">Sécurité des appels entrants</h3>
+          <p class="small muted mb-16">Mode d'authentification exigé sur la passerelle <code class="mono">/api/gateway/{{ apiData()?.code }}</code>.</p>
+
+          <div class="field mb-16">
+            <label>Authentification</label>
+            <select class="select" formControlName="inboundAuth">
+              <option value="NONE">Aucune (ouverte)</option>
+              <option value="API_KEY">Clé API (X-API-Key)</option>
+              <option value="JWT">JWT (Bearer)</option>
+            </select>
+          </div>
+
+          @if (apiForm.getRawValue().inboundAuth === 'NONE') {
+            <div class="alert alert-warning">Tout le monde peut appeler cette API. Réservez ce mode aux tests.</div>
+          } @else if (apiForm.getRawValue().inboundAuth === 'JWT') {
+            <div class="alert alert-info">Les appelants doivent présenter un JWT émis par la plateforme (login).</div>
+          } @else {
+            @if (apiKey(); as key) {
+              <div class="key-box">
+                <div class="spread">
+                  <strong class="small">Nouvelle clé API</strong>
+                  <button class="btn btn-secondary btn-sm" (click)="copyKey()">Copier</button>
+                </div>
+                <code class="mono">{{ key }}</code>
+                <span class="hint">Affichée une seule fois. Conservez-la dans votre coffre-fort.</span>
+              </div>
+            }
+            <div class="row mt-16">
+              <button class="btn btn-primary btn-sm" (click)="generateKey()">Générer / régénérer une clé</button>
+              <button class="btn btn-ghost btn-sm" (click)="revokeKey()">Révoquer</button>
+            </div>
+            <span class="hint mt-8">La clé est stockée sous forme de hash SHA-256, jamais en clair.</span>
+          }
+        </div>
+      </div>
+
+      @if (apiData()) {
+      <div class="col-right">
+        <div class="card card-pad">
+          <div class="spread mb-16">
+            <div>
+              <h3>Endpoints</h3>
+              <span class="small muted">Routes exposées ou flux sortants planifiés.</span>
+            </div>
+            <button class="btn btn-secondary btn-sm" (click)="newEndpoint()">+ Nouvel endpoint</button>
+          </div>
+
+          @if (apiData()?.endpoints?.length === 0) {
+            <div class="empty small">
+              Aucun endpoint. Créez le premier pour définir un pipeline d'échange.
+            </div>
+          } @else {
+            <div class="endpoint-list">
+              @for (endpoint of apiData()?.endpoints ?? []; track endpoint.id) {
+                <button class="endpoint-item" [class.selected]="selectedEndpointId() === endpoint.id"
+                        (click)="selectEndpoint(endpoint)">
+                  <span class="{{ methodClass(endpoint.method) }}">{{ endpoint.method }}</span>
+                  <div class="endpoint-meta">
+                    <div class="endpoint-name">{{ endpoint.name }}</div>
+                    <div class="endpoint-path mono">{{ endpoint.path }}</div>
+                  </div>
+                  <div class="endpoint-side">
+                    <span class="badge {{ endpoint.direction === 'INBOUND' ? 'badge-info' : 'badge-brand' }}">
+                      {{ directionLabel(endpoint.direction) }}
+                    </span>
+                    @if (endpoint.schedule?.enabled) { <span class="clock" title="Planifié">◷</span> }
+                    <span class="state-dot" [class.off]="!endpoint.active"></span>
+                  </div>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="card card-pad editor">
+          <div class="spread mb-16">
+            <div>
+              <h3>{{ selectedEndpoint() ? 'Configurer l\u2019endpoint' : 'Nouvel endpoint' }}</h3>
+              <span class="small muted">
+                {{ selectedEndpoint() ? selectedEndpoint()?.path : 'Définissez la route et son pipeline.' }}
+              </span>
+            </div>
+            @if (selectedEndpoint()) {
+              <button class="btn btn-danger btn-sm" (click)="removeEndpoint()" [disabled]="deletingEndpoint()">
+                Supprimer
+              </button>
+            }
+          </div>
+
+          <form [formGroup]="endpointForm" class="form-stack" (ngSubmit)="saveEndpoint()">
+            <div class="form-row">
+              <div class="field">
+                <label>Nom</label>
+                <input class="input" formControlName="name" placeholder="Ex. Réception commandes">
+              </div>
+              <div class="field" style="max-width: 130px">
+                <label>Méthode</label>
+                <select class="select" formControlName="method">
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="PATCH">PATCH</option>
+                  <option value="DELETE">DELETE</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label>Chemin</label>
+                <input class="input mono" formControlName="path" placeholder="/orders">
+                <span class="hint">Variables acceptées : /orders/ID</span>
+              </div>
+              <div class="field" style="max-width: 170px">
+                <label>Direction</label>
+                <select class="select" formControlName="direction">
+                  <option value="INBOUND">Entrant</option>
+                  <option value="OUTBOUND">Sortant</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Description</label>
+              <input class="input" formControlName="description" placeholder="Rôle de cet endpoint">
+            </div>
+
+            <label class="check">
+              <input type="checkbox" formControlName="active">
+              Endpoint actif
+            </label>
+
+            <div class="divider"></div>
+
+            <div class="spread mb-8">
+              <div>
+                <strong class="small">Pipeline d'exécution</strong>
+                <div class="hint">Tableau JSON d'étapes exécutées dans l'ordre : HTTP, DB_QUERY, DB_EXEC, FILE_READ, FILE_WRITE, MAP, LOG, SET.</div>
+              </div>
+              <div class="row">
+                <button type="button" class="btn btn-secondary btn-sm" (click)="openBrowser()">
+                  ⊞ Parcourir la base
+                </button>
+                <select class="select select-sm" (change)="insertTemplate($any($event.target).value)">
+                  <option value="">+ Insérer un modèle</option>
+                  <option value="http">Appel HTTP</option>
+                  <option value="dbQuery">Requête SQL (lecture)</option>
+                  <option value="dbExec">Écriture SQL</option>
+                  <option value="fileRead">Lecture fichier</option>
+                  <option value="fileWrite">Écriture fichier</option>
+                  <option value="map">Mapping de champs</option>
+                  <option value="log">Journalisation</option>
+                </select>
+              </div>
+            </div>
+
+            <textarea class="textarea code" formControlName="pipeline" rows="14" spellcheck="false"></textarea>
+            @if (pipelineError(); as error) {
+              <div class="alert alert-error mt-8">{{ error }}</div>
+            }
+            <span class="hint">Variables disponibles : request.body.x, payload.id, steps.0, output (syntaxe à double accolades).</span>
+
+            <div class="divider"></div>
+
+            <div class="spread mb-8">
+              <strong class="small">Planification</strong>
+              <span class="hint">Optionnel · format cron à 6 champs</span>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label>Expression cron</label>
+                <input class="input mono" formControlName="cron" placeholder="0 */5 * * * *">
+              </div>
+              <div class="field">
+                <label>Payload JSON</label>
+                <input class="input mono" formControlName="schedulePayload" placeholder="objet JSON">
+              </div>
+            </div>
+            <label class="check">
+              <input type="checkbox" formControlName="scheduleEnabled">
+              Activer la planification
+            </label>
+
+            <div class="divider"></div>
+
+            <div class="spread mb-8">
+              <strong class="small">Test d'exécution</strong>
+              <span class="hint">Payload injecté dans la variable payload</span>
+            </div>
+            <textarea class="textarea code" [value]="runPayload()" (input)="runPayload.set($any($event.target).value)" rows="4" spellcheck="false"></textarea>
+            <div class="row mt-8">
+              <button type="button" class="btn btn-secondary btn-sm" (click)="runTest()" [disabled]="running() || !selectedEndpointId()">
+                @if (running()) { <span class="spinner"></span> Exécution… } @else { ▶ Exécuter maintenant }
+              </button>
+              <span class="hint">Enregistrez l'endpoint avant de tester.</span>
+            </div>
+
+            @if (runResult(); as run) {
+              <div class="run-result mt-16">
+                <div class="spread">
+                  <div class="row">
+                    <span class="badge {{ statusClass(run.status) }}">{{ statusLabel(run.status) }}</span>
+                    <span class="small muted">run #{{ run.id }} · {{ triggerLabel(run.triggerType) }} · {{ run.durationMs }} ms</span>
+                  </div>
+                  <span class="small muted mono">{{ run.correlationId }}</span>
+                </div>
+                @if (run.errorMessage) {
+                  <div class="alert alert-error mt-8 small">{{ run.errorMessage }}</div>
+                }
+                @if (run.responseSummary) {
+                  <div class="code-block mt-8">{{ formatSummary(run.responseSummary) }}</div>
+                }
+              </div>
+            }
+
+            <div class="spread mt-16">
+              @if (selectedEndpoint()) {
+                <button type="button" class="btn btn-ghost btn-sm" (click)="toggleActive()">
+                  {{ endpointForm.getRawValue().active ? 'Désactiver' : 'Activer' }}
+                </button>
+              } @else {
+                <span></span>
+              }
+              <button type="submit" class="btn btn-primary" [disabled]="savingEndpoint()">
+                @if (savingEndpoint()) { <span class="spinner"></span> Enregistrement… } @else {
+                  {{ selectedEndpointId() ? 'Mettre à jour l\u2019endpoint' : 'Créer l\u2019endpoint' }}
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      } @else {
+        <div class="card card-pad placeholder-card">
+          <div class="glyph">⇄</div>
+          <h3>Créez d'abord l'API</h3>
+          <p class="small muted">Enregistrez les informations générales pour pouvoir ajouter des endpoints et configurer leurs pipelines.</p>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (browserOpen()) {
+  <div class="modal-backdrop" (click)="closeBrowser()"></div>
+  <div class="modal modal-lg" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3>Parcourir la base</h3>
+        <p class="small muted">Sélectionnez une table : une étape de lecture est générée automatiquement.</p>
+      </div>
+      <button class="btn btn-ghost btn-icon" (click)="closeBrowser()">✕</button>
+    </div>
+
+    @if (browserConnections().length === 0) {
+      <div class="empty">
+        <div class="glyph">⛁</div>
+        Aucune connexion de base de données déclarée.<br>
+        <span class="small">Créez-en une dans Connexions, avec un hôte, un port et un service.</span>
+      </div>
+    } @else {
+      <div class="field">
+        <label>Connexion</label>
+        <select class="select" (change)="onBrowserConnectionChange($event)">
+          @for (connection of browserConnections(); track connection.id) {
+            <option [value]="connection.id" [selected]="connection.id === browserConnectionId()">
+              {{ connection.name }} · {{ connection.type }}
+            </option>
+          }
+        </select>
+      </div>
+
+      @if (browserQuery(); as query) {
+        <app-schema-browser [query]="query" (tableChosen)="onBrowserTable($event)"></app-schema-browser>
+      }
+
+      @if (browserTable(); as ref) {
+        <div class="browser-footer">
+          <code class="browser-preview">SELECT * FROM {{ ref.schema }}.{{ ref.table }}</code>
+          <button type="button" class="btn btn-primary btn-sm" (click)="insertTableStep()">
+            Insérer l'étape DB_QUERY
+          </button>
+        </div>
+      }
+    }
+  </div>
+}

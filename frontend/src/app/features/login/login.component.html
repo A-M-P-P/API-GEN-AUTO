@@ -1,0 +1,81 @@
+<div class="login">
+  <section class="hero">
+    <div class="hero-brand">
+      <div class="mark">
+        <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#14b8a6"></rect>
+          <path d="M9 22V10h3.2l3.8 6.2 3.8-6.2H23v12h-3v-7.2l-4 6.4-4-6.4V22H9z" fill="white"></path>
+        </svg>
+      </div>
+      <div>
+        <div class="hero-name">API-GEN</div>
+        <div class="hero-sub">Studio d'échange de données</div>
+      </div>
+    </div>
+
+    <div class="hero-copy">
+      <span class="eyebrow">Interfaces sécurisées &amp; paramétrables</span>
+      <h1>Configurez vos API d'échange.<br><span>Sans écrire de code.</span></h1>
+      <p>
+        Connectez vos systèmes hétérogènes — REST, fichiers, bases de données —
+        depuis une interface unique. Déclarez un endpoint, mappez les champs,
+        planifiez l'exécution et suivez chaque échange.
+      </p>
+
+      <ul class="features">
+        <li><span>01</span> Création d'API et d'endpoints en quelques clics</li>
+        <li><span>02</span> Moteur d'exécution avec mapping et transformations</li>
+        <li><span>03</span> Planification cron, API keys, journalisation et audit</li>
+      </ul>
+    </div>
+
+    <div class="hero-foot">
+      <div class="stat"><strong>REST</strong><span>JSON · webhooks</span></div>
+      <div class="stat"><strong>DB</strong><span>Oracle · PostgreSQL</span></div>
+      <div class="stat"><strong>Files</strong><span>CSV · XLSX · JSON</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-inner">
+      <div class="panel-head">
+        <h2>Bienvenue</h2>
+        <p>Connectez-vous pour accéder au studio.</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="field">
+          <label for="username">Identifiant</label>
+          <input id="username" class="input" formControlName="username" autocomplete="username" placeholder="admin">
+        </div>
+
+        <div class="field">
+          <label for="password">Mot de passe</label>
+          <div class="password-wrap">
+            <input id="password" class="input" formControlName="password" autocomplete="current-password"
+                   [type]="showPassword() ? 'text' : 'password'" placeholder="••••••••">
+            <button type="button" class="reveal" (click)="togglePassword()">
+              {{ showPassword() ? 'Masquer' : 'Afficher' }}
+            </button>
+          </div>
+        </div>
+
+        @if (error()) {
+          <div class="alert alert-error">{{ error() }}</div>
+        }
+
+        <button class="btn btn-primary submit" type="submit" [disabled]="submitting()">
+          @if (submitting()) { <span class="spinner"></span> Connexion… } @else { Se connecter → }
+        </button>
+      </form>
+
+      <div class="demo-hint">
+        <strong>Accès de démonstration</strong>
+        <div class="hint-row"><span>Identifiant</span><code>admin</code></div>
+        <div class="hint-row"><span>Mot de passe</span><code>ChangeMe123!</code></div>
+        <button type="button" class="fill-demo" (click)="fillDemo()">Remplir les champs</button>
+        <small>À changer immédiatement en production.</small>
+      </div>
+    </div>
+  </section>
+</div>

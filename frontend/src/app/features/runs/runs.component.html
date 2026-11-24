@@ -1,0 +1,108 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Exécutions</h1>
+      <p class="page-sub">Journal complet des échanges : requête, réponse, erreur, durée et déclencheur.</p>
+    </div>
+    <button class="btn btn-secondary" (click)="load()">↻ Actualiser</button>
+  </div>
+
+  <div class="filters card">
+    <div class="field">
+      <label>Statut</label>
+      <select class="select" (change)="setStatus($any($event.target).value)">
+        <option value="">Tous</option>
+        <option value="SUCCESS">Réussis</option>
+        <option value="FAILED">Échecs</option>
+        <option value="RUNNING">En cours</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>API</label>
+      <select class="select" (change)="setApi($any($event.target).value)">
+        <option value="">Toutes les APIs</option>
+        @for (api of apis(); track api.id) {
+          <option [value]="api.id">{{ api.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="filter-spacer"></div>
+    <span class="muted small">{{ totalElements() }} exécution(s)</span>
+  </div>
+
+  <div class="card">
+    @if (loading()) {
+      <div class="empty"><span class="spinner"></span> Chargement…</div>
+    } @else if (runs().length === 0) {
+      <div class="empty">
+        <div class="glyph">◷</div>
+        Aucune exécution.<br>
+        <span class="small">Exécutez un endpoint depuis le studio pour voir les résultats ici.</span>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="table runs-table">
+          <thead>
+            <tr>
+              <th style="width: 34px"></th>
+              <th>Endpoint</th>
+              <th>API</th>
+              <th>Statut</th>
+              <th>Déclencheur</th>
+              <th>Durée</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (run of runs(); track run.id) {
+              <tr class="run-row" (click)="toggle(run.id)">
+                <td><span class="chevron" [class.open]="expanded() === run.id">▸</span></td>
+                <td>
+                  <div class="run-name">{{ run.endpointName }}</div>
+                  <div class="small muted mono">#{{ run.id }} · {{ run.correlationId }}</div>
+                </td>
+                <td class="small">{{ run.apiName }}</td>
+                <td><span class="badge {{ statusClass(run.status) }}">{{ statusLabel(run.status) }}</span></td>
+                <td class="small">{{ triggerLabel(run.triggerType) }}</td>
+                <td class="mono small">{{ run.durationMs | number }} ms</td>
+                <td class="small muted nowrap">{{ run.startedAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+              </tr>
+              @if (expanded() === run.id) {
+                <tr class="detail-row">
+                  <td colspan="7">
+                    <div class="detail">
+                      @if (run.errorMessage) {
+                        <div class="detail-block">
+                          <div class="detail-label">Erreur</div>
+                          <div class="alert alert-error">{{ run.errorMessage }}</div>
+                        </div>
+                      }
+                      <div class="detail-grid">
+                        <div class="detail-block">
+                          <div class="detail-label">Requête</div>
+                          <div class="code-block">{{ formatSummary(run.requestSummary) || '—' }}</div>
+                        </div>
+                        <div class="detail-block">
+                          <div class="detail-label">Réponse</div>
+                          <div class="code-block">{{ formatSummary(run.responseSummary) || '—' }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="btn btn-secondary btn-sm" (click)="goPage(-1)" [disabled]="page() === 0">← Précédent</button>
+          <span class="small muted">Page {{ page() + 1 }} / {{ totalPages() }}</span>
+          <button class="btn btn-secondary btn-sm" (click)="goPage(1)" [disabled]="page() >= totalPages() - 1">Suivant →</button>
+        </div>
+      }
+    }
+  </div>
+</div>

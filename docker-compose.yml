@@ -1,0 +1,46 @@
+services:
+  db:
+    image: gvenzl/oracle-free:23-slim
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:-OraclePass123}
+      APP_USER: ${APIGEN_DB_USER:-apigen}
+      APP_USER_PASSWORD: ${APIGEN_DB_PASSWORD:-change-me}
+    ports:
+      - "1521:1521"
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh"]
+      interval: 20s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+
+  backend:
+    build: ./backend
+    environment:
+      APIGEN_PROFILE: prod
+      APIGEN_DB_URL: jdbc:oracle:thin:@//db:1521/FREEPDB1
+      APIGEN_DB_USER: ${APIGEN_DB_USER:-apigen}
+      APIGEN_DB_PASSWORD: ${APIGEN_DB_PASSWORD:-change-me}
+      APIGEN_JWT_SECRET: ${APIGEN_JWT_SECRET:-dev-only-change-me-0123456789abcdef0123456789abcdef}
+      APIGEN_CRYPTO_KEY: ${APIGEN_CRYPTO_KEY:-dev-only-crypto-key-change-me-0123456789}
+      APIGEN_SEED_DEMO: "false"
+      APIGEN_CORS_ORIGINS: ${APIGEN_CORS_ORIGINS:-http://localhost:4200}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+    restart: unless-stopped
+
+volumes:
+  oracle-data:

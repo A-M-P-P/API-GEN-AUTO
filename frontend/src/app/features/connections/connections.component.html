@@ -1,0 +1,301 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Connexions</h1>
+      <p class="page-sub">Sources et destinations réutilisables dans vos pipelines. Les identifiants sont chiffrés en base (AES-256-GCM).</p>
+    </div>
+    <button class="btn btn-primary" (click)="openNew()">+ Nouvelle connexion</button>
+  </div>
+
+  @if (loading()) {
+    <div class="empty"><span class="spinner"></span> Chargement…</div>
+  } @else if (connections().length === 0) {
+    <div class="card">
+      <div class="empty">
+        <div class="glyph">⛁</div>
+        Aucune connexion.<br>
+        <span class="small">Déclarez un système REST, une base Oracle/PostgreSQL/MySQL/SQL Server ou un dossier de fichiers.</span>
+        <div class="mt-16"><button class="btn btn-primary btn-sm" (click)="openNew()">Créer une connexion</button></div>
+      </div>
+    </div>
+  } @else {
+    <div class="grid grid-3">
+      @for (connection of connections(); track connection.id) {
+        <div class="card conn-card">
+          <div class="spread">
+            <div class="row">
+              <div class="type-icon">{{ typeGlyph(connection.type) }}</div>
+              <div>
+                <div class="conn-name">{{ connection.name }}</div>
+                <div class="small muted">{{ typeLabel(connection.type) }}</div>
+              </div>
+            </div>
+            <span class="badge {{ connection.active ? 'badge-success' : 'badge-muted' }}">
+              {{ connection.active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+
+          <div class="config mono">{{ configSummary(connection) }}</div>
+          @if (connection.description) { <p class="desc">{{ connection.description }}</p> }
+
+          @if (lastTests()[connection.id]; as outcome) {
+            <div class="test-strip {{ outcome.ok ? 'ok' : 'ko' }}">
+              <span>{{ outcome.ok ? 'Connexion OK' : 'Échec' }}</span>
+              @if (outcome.ok) {
+                <span class="latency {{ latencyClass(outcome.latencyMs) }}">{{ outcome.latencyMs }} ms</span>
+              }
+            </div>
+          }
+
+          <div class="conn-meta">
+            <span class="badge {{ connection.hasCredentials ? 'badge-info' : 'badge-muted' }}">
+              {{ connection.hasCredentials ? 'Identifiants chiffrés' : 'Sans identifiants' }}
+            </span>
+            @if (isDb(connection.type)) {
+              <span class="badge badge-muted">Pool · {{ poolSizeOf(connection) }}</span>
+            }
+            @if (!isImplemented(connection.type)) {
+              <span class="badge badge-warning">Connecteur à venir</span>
+            }
+          </div>
+
+          <div class="conn-actions">
+            <button class="btn btn-secondary btn-sm" (click)="testExisting(connection)" [disabled]="testing()">
+              Tester
+            </button>
+            <button class="btn btn-ghost btn-sm" (click)="openEdit(connection)">Modifier</button>
+            <button class="btn btn-ghost btn-sm" (click)="toggleActive(connection)">
+              {{ connection.active ? 'Désactiver' : 'Activer' }}
+            </button>
+            <button class="btn btn-ghost btn-sm danger" (click)="remove(connection)">Supprimer</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (editorOpen()) {
+  <div class="modal-backdrop" (click)="closeEditor()"></div>
+  <div class="modal modal-lg" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3>{{ editing() ? 'Modifier la connexion' : 'Nouvelle connexion' }}</h3>
+        <p class="small muted">Les identifiants sont séparés de la configuration et chiffrés avant stockage.</p>
+      </div>
+      <button class="btn btn-ghost btn-icon" (click)="closeEditor()">✕</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-row">
+        <div class="field">
+          <label>Nom</label>
+          <input class="input" formControlName="name" placeholder="Ex. ERP production">
+        </div>
+        <div class="field">
+          <label>Type</label>
+          <select class="select" formControlName="type" (change)="onTypeChange()">
+            <option value="REST">REST / HTTP</option>
+            <option value="ORACLE">Oracle</option>
+            <option value="POSTGRESQL">PostgreSQL</option>
+            <option value="MYSQL">MySQL</option>
+            <option value="SQLSERVER">SQL Server</option>
+            <option value="FILE">Fichiers</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Description</label>
+        <input class="input" formControlName="description" placeholder="Usage de cette connexion">
+      </div>
+
+      @if (isDb(form.getRawValue().type)) {
+        <fieldset class="group">
+          <legend>Base de données</legend>
+
+          <div class="form-row">
+            <div class="field grow">
+              <label>Hôte</label>
+              <input class="input" formControlName="host" placeholder="ex. localhost ou 10.0.0.12">
+            </div>
+            <div class="field port-field">
+              <label>Port</label>
+              <input class="input" type="number" formControlName="port" min="1" max="65535">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field grow">
+              <label>{{ databaseLabel() }}</label>
+              <input class="input" formControlName="database" [placeholder]="databasePlaceholder()">
+            </div>
+            @if (form.getRawValue().type === 'ORACLE') {
+              <div class="field port-field">
+                <label>Adressage</label>
+                <select class="select" formControlName="addressing">
+                  <option value="SERVICE">Service name</option>
+                  <option value="SID">SID</option>
+                </select>
+              </div>
+            }
+          </div>
+
+          @if (buildJdbcUrl()) {
+            <div class="url-preview">
+              <span class="small muted">URL générée</span>
+              <code>{{ buildJdbcUrl() }}</code>
+            </div>
+          }
+
+          <div class="form-row">
+            <div class="field grow">
+              <label>Utilisateur</label>
+              <input class="input" formControlName="username" autocomplete="off" placeholder="ex. APIGEN">
+            </div>
+            <div class="field grow">
+              <label>Mot de passe</label>
+              <input class="input" type="password" formControlName="password" autocomplete="new-password">
+            </div>
+          </div>
+
+          @if (editing()) {
+            <p class="hint">Laissez le mot de passe vide pour conserver les identifiants actuels.</p>
+          }
+
+          <div class="form-row">
+            <div class="field port-field">
+              <label>Pool (max)</label>
+              <input class="input" type="number" formControlName="maxPoolSize" min="1" max="20">
+            </div>
+            <div class="field grow pool-help">
+              <span class="small muted">
+                Nombre maximal de connexions maintenues pour cette base. Le pool se ferme automatiquement après 15 min d'inactivité.
+              </span>
+            </div>
+          </div>
+        </fieldset>
+      }
+
+      @if (isRest(form.getRawValue().type)) {
+        <fieldset class="group">
+          <legend>API REST</legend>
+
+          <div class="field">
+            <label>URL de base</label>
+            <input class="input" formControlName="baseUrl" placeholder="https://api.exemple.com">
+          </div>
+
+          <div class="form-row">
+            <div class="field grow">
+              <label>Authentification</label>
+              <select class="select" formControlName="authType">
+                <option value="NONE">Aucune</option>
+                <option value="BASIC">Basic</option>
+                <option value="BEARER">Bearer (token)</option>
+                <option value="API_KEY">Clé API</option>
+              </select>
+            </div>
+            @if (form.getRawValue().authType === 'API_KEY') {
+              <div class="field grow">
+                <label>Header de la clé</label>
+                <input class="input" formControlName="apiKeyHeader" placeholder="X-API-Key">
+              </div>
+            }
+          </div>
+
+          @switch (form.getRawValue().authType) {
+            @case ('BASIC') {
+              <div class="form-row">
+                <div class="field grow">
+                  <label>Utilisateur</label>
+                  <input class="input" formControlName="username" autocomplete="off">
+                </div>
+                <div class="field grow">
+                  <label>Mot de passe</label>
+                  <input class="input" type="password" formControlName="password" autocomplete="new-password">
+                </div>
+              </div>
+            }
+            @case ('BEARER') {
+              <div class="field">
+                <label>Token</label>
+                <input class="input" formControlName="token" autocomplete="off" placeholder="Jetons d'accès">
+              </div>
+            }
+            @case ('API_KEY') {
+              <div class="field">
+                <label>Clé API</label>
+                <input class="input" formControlName="apiKey" autocomplete="off">
+              </div>
+            }
+          }
+        </fieldset>
+      }
+
+      @if (isFile(form.getRawValue().type)) {
+        <fieldset class="group">
+          <legend>Fichiers</legend>
+          <div class="field">
+            <label>Répertoire de base</label>
+            <input class="input" formControlName="basePath" placeholder="./data/exchanges">
+            <span class="hint">Chemin relatif au répertoire de travail du serveur.</span>
+          </div>
+        </fieldset>
+      }
+
+      <details class="preview">
+        <summary class="small muted">Voir la configuration équivalente</summary>
+        <pre class="code-block">{{ previewJson() }}</pre>
+      </details>
+
+      <label class="check">
+        <input type="checkbox" formControlName="active"> Connexion active
+      </label>
+
+      @if (testResult(); as result) {
+        <div class="test-result {{ result.ok ? 'ok' : 'ko' }}">
+          <div class="test-result-head">
+            <strong>{{ result.ok ? 'Connexion réussie' : 'Connexion échouée' }}</strong>
+            <span class="latency {{ latencyClass(result.latencyMs) }}">{{ result.latencyMs }} ms</span>
+          </div>
+          <p class="small muted">{{ result.message }}</p>
+        </div>
+      }
+
+      @if (isDb(form.getRawValue().type)) {
+        <div class="discovery-block">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="toggleDiscovery()">
+            {{ discoveryOpen() ? 'Masquer les tables' : 'Découvrir les tables' }}
+          </button>
+          <span class="small muted">Parcourez les schémas, tables et colonnes sans écrire de SQL.</span>
+        </div>
+
+        @if (discoveryOpen()) {
+          @if (discoveryQuery(); as query) {
+            <app-schema-browser [query]="query" (tableChosen)="onTableChosen($event)"></app-schema-browser>
+          }
+          @if (selectedTable(); as ref) {
+            <div class="picked">
+              <span class="small muted">Table sélectionnée</span>
+              <code>{{ qualifiedTable() }}</code>
+              <button type="button" class="btn btn-ghost btn-sm" (click)="copyTable()">Copier le nom</button>
+            </div>
+          }
+        }
+      }
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="testForm()" [disabled]="testing()">
+          @if (testing()) { <span class="spinner"></span> Test en cours… } @else { Tester la connexion }
+        </button>
+        <div class="row">
+          <button type="button" class="btn btn-ghost" (click)="closeEditor()">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            @if (saving()) { <span class="spinner"></span> } @else { Enregistrer }
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+}

@@ -1,0 +1,120 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Utilisateurs</h1>
+      <p class="page-sub">Gestion des comptes du studio et de leurs droits d'accès.</p>
+    </div>
+    <button class="btn btn-primary" (click)="openNew()">+ Nouvel utilisateur</button>
+  </div>
+
+  <div class="card">
+    @if (loading()) {
+      <div class="empty"><span class="spinner"></span> Chargement…</div>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Utilisateur</th>
+              <th>Rôle</th>
+              <th>Statut</th>
+              <th>Créé le</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user.id) {
+              <tr>
+                <td>
+                  <div class="row">
+                    <div class="avatar-sm">{{ user.username.slice(0, 2).toUpperCase() }}</div>
+                    <div>
+                      <div class="user-name">{{ user.fullName || user.username }}</div>
+                      <div class="small muted mono">{{ user.username }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge {{ roleClass(user.role) }}">{{ roleLabel(user.role) }}</span></td>
+                <td>
+                  <span class="badge {{ user.enabled ? 'badge-success' : 'badge-muted' }}">
+                    {{ user.enabled ? 'Actif' : 'Désactivé' }}
+                  </span>
+                </td>
+                <td class="small muted">{{ user.createdAt | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <div class="actions">
+                    <button class="btn btn-secondary btn-sm" (click)="openEdit(user)">Modifier</button>
+                    <button class="btn btn-ghost btn-sm" (click)="toggleEnabled(user)">
+                      {{ user.enabled ? 'Désactiver' : 'Activer' }}
+                    </button>
+                    <button class="btn btn-ghost btn-sm danger" (click)="remove(user)">Supprimer</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (editorOpen()) {
+  <div class="modal-backdrop" (click)="close()"></div>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3>{{ editing() ? 'Modifier l\u2019utilisateur' : 'Nouvel utilisateur' }}</h3>
+        <p class="small muted">Le mot de passe est haché avec BCrypt.</p>
+      </div>
+      <button class="btn btn-ghost btn-icon" (click)="close()">✕</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-row">
+        <div class="field">
+          <label>Identifiant</label>
+          <input class="input" formControlName="username" [readonly]="!!editing()">
+        </div>
+        <div class="field">
+          <label>Nom complet</label>
+          <input class="input" formControlName="fullName" placeholder="Ex. Amina Nkomo">
+        </div>
+      </div>
+
+      @if (!editing()) {
+        <div class="field">
+          <label>Mot de passe</label>
+          <input class="input" type="password" formControlName="password" autocomplete="new-password">
+          <span class="hint">8 caractères minimum.</span>
+        </div>
+      }
+
+      <div class="form-row">
+        <div class="field">
+          <label>Rôle</label>
+          <select class="select" formControlName="role">
+            <option value="ADMIN">Administrateur</option>
+            <option value="EDITOR">Éditeur</option>
+            <option value="VIEWER">Lecture seule</option>
+          </select>
+        </div>
+        <div class="field" style="justify-content:flex-end">
+          <label class="check">
+            <input type="checkbox" formControlName="enabled"> Compte actif
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <span></span>
+        <div class="row">
+          <button type="button" class="btn btn-ghost" (click)="close()">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            @if (saving()) { <span class="spinner"></span> } @else { Enregistrer }
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+}

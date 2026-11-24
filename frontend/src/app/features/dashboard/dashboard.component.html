@@ -1,0 +1,124 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Tableau de bord</h1>
+      <p class="page-sub">Vue d'ensemble de vos API, connexions et échanges de données.</p>
+    </div>
+    <div class="row">
+      <a routerLink="/apis" class="btn btn-secondary">Voir les APIs</a>
+      <a routerLink="/apis/new" class="btn btn-primary">+ Nouvelle API</a>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="empty"><span class="spinner"></span> Chargement du tableau de bord…</div>
+  } @else {
+    @if (dashboard(); as d) {
+    <div class="grid grid-4 stats">
+      <div class="stat-card">
+        <div class="stat-icon brand">⇄</div>
+        <div class="stat-body">
+          <div class="stat-value">{{ d.apiCount }}</div>
+          <div class="stat-label">APIs configurées</div>
+          <div class="stat-foot">{{ d.activeApiCount }} active(s)</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon accent">◈</div>
+        <div class="stat-body">
+          <div class="stat-value">{{ d.endpointCount }}</div>
+          <div class="stat-label">Endpoints</div>
+          <div class="stat-foot">inbound &amp; outbound</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon info">⛁</div>
+        <div class="stat-body">
+          <div class="stat-value">{{ d.connectionCount }}</div>
+          <div class="stat-label">Connexions</div>
+          <div class="stat-foot">REST · BDD · fichiers</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon success">↻</div>
+        <div class="stat-body">
+          <div class="stat-value">{{ d.runsToday }}</div>
+          <div class="stat-label">Exécutions aujourd'hui</div>
+          <div class="stat-foot">{{ d.successRate24h }}% de réussite / 24h</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="card card-pad">
+        <div class="spread mb-16">
+          <h3>Exécutions récentes</h3>
+          <a routerLink="/runs" class="small muted">Tout voir →</a>
+        </div>
+
+        @if (d.recentRuns.length === 0) {
+          <div class="empty">
+            <div class="glyph">⇄</div>
+            Aucun échange pour l'instant.<br>
+            <span class="small">Créez une API puis exécutez un endpoint pour voir les résultats ici.</span>
+          </div>
+        } @else {
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Endpoint</th>
+                  <th>Statut</th>
+                  <th>Déclencheur</th>
+                  <th>Durée</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (run of d.recentRuns; track run.id) {
+                  <tr>
+                    <td>
+                      <div class="run-name">{{ run.endpointName }}</div>
+                      <div class="small muted">{{ run.apiName }}</div>
+                    </td>
+                    <td><span class="badge {{ statusClass(run.status) }}">{{ statusLabel(run.status) }}</span></td>
+                    <td><span class="small">{{ run.triggerType }}</span></td>
+                    <td class="mono small">{{ run.durationMs }} ms</td>
+                    <td class="small muted">{{ run.startedAt | date:'dd/MM HH:mm' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="side-col">
+        <div class="card card-pad">
+          <h3 class="mb-16">Taux de réussite</h3>
+          <div class="rate-row">
+            <div class="donut" [style.background]="'conic-gradient(#059669 ' + d.successRate24h + '%, #e2e8f0 0)'">
+              <div class="donut-hole"><strong>{{ d.successRate24h }}%</strong><span>/ 24 h</span></div>
+            </div>
+            <div class="legend">
+              <div><span class="dot success"></span> Réussis <strong>{{ d.runsByStatus.SUCCESS }}</strong></div>
+              <div><span class="dot danger"></span> Échecs <strong>{{ d.runsByStatus.FAILED }}</strong></div>
+              <div><span class="dot warning"></span> En cours <strong>{{ d.runsByStatus.RUNNING }}</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-pad">
+          <h3 class="mb-8">Démarrage rapide</h3>
+          <ol class="steps">
+            <li><span>1</span><div><strong>Créez une API</strong><small>Un code, un nom, un mode d'authentification.</small></div></li>
+            <li><span>2</span><div><strong>Ajoutez une connexion</strong><small>REST, Oracle/PostgreSQL ou dossier de fichiers.</small></div></li>
+            <li><span>3</span><div><strong>Déclarez un endpoint</strong><small>Pipeline d'étapes HTTP, SQL, fichier ou mapping.</small></div></li>
+          </ol>
+          <a routerLink="/apis/new" class="btn btn-secondary btn-sm mt-16" style="width:100%">Commencer</a>
+        </div>
+      </div>
+    </div>
+  }
+  }
+</div>

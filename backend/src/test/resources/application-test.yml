@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:apigen-test;MODE=Oracle;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: true
+
+apigen:
+  scheduler:
+    enabled: false
+  seed:
+    demo: true

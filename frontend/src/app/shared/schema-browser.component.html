@@ -1,0 +1,61 @@
+<div class="browser">
+  @if (loading()) {
+    <div class="browser-state"><span class="spinner"></span> Lecture des schémas et des tables…</div>
+  } @else if (error()) {
+    <div class="browser-error">{{ error() }}</div>
+  } @else if (result()) {
+    <div class="browser-head">
+      <span class="small muted">{{ result()!.product }} · {{ result()!.version }}</span>
+      <span class="small muted">{{ result()!.schemas.length }} schéma(s)</span>
+    </div>
+
+    @if (result()!.schemas.length === 0) {
+      <div class="browser-state">Aucun schéma visible avec ces droits.</div>
+    }
+
+    <div class="tree">
+      @for (schema of result()!.schemas; track schema.name) {
+        <div class="schema">
+          <button type="button" class="schema-row" (click)="toggleSchema(schema.name)">
+            <span class="chev" [class.open]="isExpanded(schema.name)">▸</span>
+            <span class="schema-name">{{ schema.name }}</span>
+            <span class="count">{{ schema.tables.length }}</span>
+          </button>
+
+          @if (isExpanded(schema.name)) {
+            <div class="tables">
+              @if (schema.tables.length === 0) {
+                <div class="table-empty">Aucune table</div>
+              }
+              @for (table of schema.tables; track table.name) {
+                <button type="button" class="table-row"
+                        [class.selected]="isSelected(schema.name, table.name)"
+                        (click)="selectTable(schema.name, table.name)">
+                  <span class="table-glyph">{{ table.type === 'VIEW' ? '◫' : '▤' }}</span>
+                  <span class="table-name">{{ table.name }}</span>
+                  <span class="table-type">{{ table.type }}</span>
+                </button>
+
+                @if (isSelected(schema.name, table.name)) {
+                  <div class="columns">
+                    @if (loadingColumnsFor(schema.name, table.name)) {
+                      <span class="spinner"></span>
+                    } @else {
+                      @for (column of columnsFor(schema.name, table.name); track column.name) {
+                        <div class="col">
+                          <span class="col-name">{{ column.name }}</span>
+                          <span class="col-type">{{ column.type }}</span>
+                          @if (!column.nullable) { <span class="col-null">NOT NULL</span> }
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
