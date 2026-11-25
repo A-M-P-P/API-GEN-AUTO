@@ -473,6 +473,23 @@ et saisissez :
 { "oracle.jdbc.timezoneAsRegion": "true" }
 ```
 
+### Oracle : `ORA-18716: ... n'est dans aucun fuseau horaire` au démarrage
+
+Au lancement, le contexte Spring échoue dans `DataInitializer` avec
+`Could not extract column ... from JDBC ResultSet` et, dans la cause,
+`oracle.jdbc.driver.TimestampAccessor.getOffsetDateTime`.
+
+Hibernate 6.5 mappe par défaut `java.time.Instant` sur `TIMESTAMP_UTC` : la lecture passe par
+`ResultSet.getObject(OffsetDateTime.class)`. Sur Oracle 12c, une colonne `DATE` (y compris dans
+un schéma préexistant) ne porte aucun fuseau et le pilote renvoie `ORA-18716`.
+
+**Correctif intégré** : `application.yml` force
+`spring.jpa.properties.hibernate.type.preferred_instant_jdbc_type=TIMESTAMP`. Les horodatages
+sont alors lus et écrits comme des `TIMESTAMP` ordinaires, compatibles avec les colonnes
+`DATE`/`TIMESTAMP` d'Oracle et de H2. Aucune modification du schéma n'est nécessaire. Après une
+mise à jour du code, reconstruisez le backend pour que `application.yml` soit recopié dans
+`target/classes` (dans IntelliJ : *Build → Rebuild Project*, puis relancez l'application).
+
 Autres causes possibles d'un échec sur une base ancienne :
 
 - `ORA-28040: No matching authentication protocol` — le serveur refuse les anciens protocoles.
