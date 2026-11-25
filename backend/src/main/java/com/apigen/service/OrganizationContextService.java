@@ -153,7 +153,7 @@ public class OrganizationContextService {
                 node.fieldNames().forEachRemaining(name -> node.put(name, MASK));
             }
             return objectMapper.writeValueAsString(root);
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | JsonProcessingException e) {
             log.warn("Contexte illisible lors de la lecture : {}", e.getMessage());
             return null;
         }
