@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { ConnectionService } from '../../core/connection.service';
+import { OrganizationService } from '../../core/organization.service';
 import { ToastService } from '../../core/toast.service';
 import {
   ApiDetail,
@@ -15,6 +16,7 @@ import {
   EndpointSummary,
   HttpMethod,
   InboundAuth,
+  Organization,
   Run,
   Schedule
 } from '../../core/models';
@@ -34,6 +36,7 @@ export class ApiBuilderComponent implements OnInit {
   private api = inject(ApiService);
   private toast = inject(ToastService);
   private connections = inject(ConnectionService);
+  private organizationService = inject(OrganizationService);
 
   readonly apiData = signal<ApiDetail | null>(null);
   readonly loading = signal(true);
@@ -43,6 +46,9 @@ export class ApiBuilderComponent implements OnInit {
   readonly running = signal(false);
 
   readonly apiKey = signal<string | null>(null);
+
+  /** Organisations disponibles pour le rattachement de l'API. */
+  readonly organizations = signal<Organization[]>([]);
   readonly selectedEndpointId = signal<number | null>(null);
   readonly selectedEndpoint = computed(() => {
     const id = this.selectedEndpointId();
@@ -75,7 +81,8 @@ export class ApiBuilderComponent implements OnInit {
     description: [''],
     version: ['1.0'],
     status: ['DRAFT' as ApiPayload['status']],
-    inboundAuth: ['NONE' as InboundAuth]
+    inboundAuth: ['NONE' as InboundAuth],
+    organizationId: this.fb.control<number | null>(null)
   });
 
   readonly endpointForm = this.fb.nonNullable.group({
@@ -92,6 +99,11 @@ export class ApiBuilderComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.organizationService.list().subscribe({
+      next: (organizations) => this.organizations.set(organizations),
+      error: () => this.organizations.set([])
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadApi(Number(id));
@@ -116,7 +128,8 @@ export class ApiBuilderComponent implements OnInit {
           description: data.description ?? '',
           version: data.version,
           status: data.status,
-          inboundAuth: data.inboundAuth
+          inboundAuth: data.inboundAuth,
+          organizationId: data.organizationId ?? null
         });
         this.loading.set(false);
         const target = selectId ?? data.endpoints[0]?.id ?? null;

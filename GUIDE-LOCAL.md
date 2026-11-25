@@ -6,14 +6,16 @@ Ce guide décrit comment installer et lancer **API-GEN-AUTO** sur votre propre m
 
 ## 1. Ce qu'il faut installer
 
-Trois outils sont **obligatoires**. Oracle est **optionnel** pour démarrer : le profil `dev` utilise une base H2 embarquée, aucune installation de base n'est nécessaire pour voir l'application tourner.
+Trois outils sont **obligatoires**. Oracle n'est nécessaire qu'à partir du profil `dev` : le
+profil `local` utilise une base H2 embarquée, aucune installation de base n'est requise pour
+découvrir l'application.
 
 | Outil | Version | Indispensable pour | Vérification |
 | --- | --- | --- | --- |
 | **JDK Java** | 17 (LTS) | Compiler et lancer le backend | `java -version` |
 | **Maven** | 3.9 ou plus | Construire le backend | `mvn -version` |
 | **Node.js + npm** | Node 20 LTS, npm 10 | Compiler et lancer le studio Angular | `node -v` et `npm -v` |
-| **Oracle Database** | 11g, 12c+, 19c, 21c ou 23ai | Uniquement si vous voulez brancher votre vraie base | `sqlplus -V` |
+| **Oracle Database** | **12c** (votre cible), 19c, 21c ou 23ai | Base de la plateforme en `dev`/`prod`, et source de données des pipelines | `sqlplus -V` |
 
 > **Important** : Spring Boot 3.3 exige **Java 17 minimum**. Avec Java 11 vous obtiendrez une erreur `Unsupported class file major version` ou `invalid target release`. Angular 17 exige Node 18.13 ou 20+.
 
@@ -47,8 +49,11 @@ Ouvrez **deux terminaux** dans le dossier `API-GEN-AUTO`.
 
 ```bash
 cd backend
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
+mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
+
+> **Deux profils possibles.** `local` embarque une base H2 : rien à installer. `dev` (et `prod`)
+> ciblent votre **Oracle 12c** (`SID=ORCL`, utilisateur `sigif`) — voir la section 4.3.
 
 La première exécution télécharge les dépendances Maven (2 à 5 minutes selon votre connexion), puis démarre. Attendez la ligne :
 
@@ -93,7 +98,7 @@ Le formulaire de connexion a un bouton **« Remplir les champs »** qui saisit c
 
 Une fois connecté, ces quatre vérifications confirment que l'ensemble de la chaîne tourne :
 
-1. **Tableau de bord** — les compteurs affichent 1 API, 4 endpoints, 2 connexions.
+1. **Tableau de bord** — les compteurs affichent 1 API, 4 endpoints, 2 connexions et 1 organisation.
 2. **APIs → API de démonstration** — sélectionnez l'endpoint « Dernier article » et cliquez **« Exécuter maintenant »**. Un appel REST réel vers JSONPlaceholder part, le résultat s'affiche en ~350 ms.
 3. **Connexions → JSONPlaceholder → Tester** — renvoie « Connexion HTTP établie » avec la latence mesurée.
 4. **Connexions → Fichiers d'échange → Tester** — renvoie le chemin du répertoire.
@@ -141,42 +146,89 @@ sqlplus APIGEN/ChangeMe_2026@//localhost:1521/FREEPDB1
 
 Cliquez **« Tester la connexion »** : le résultat s'affiche avec la latence. Puis **« Découvrir les tables »** : l'arbre des schémas et des tables apparaît, vous pouvez copier un nom ou générer une étape `DB_QUERY` sans écrire de SQL.
 
-### 4.2. Faire tourner la **plateforme elle-même** sur Oracle
+### 4.2. Faire tourner la **plateforme elle-même** sur Oracle 12c (dev et prod)
 
-La base qui contient les APIs, endpoints, exécutions et l'audit devient votre Oracle au lieu de H2.
+C'est le réglage par défaut des profils `dev` et `prod` : `SID=ORCL`, utilisateur `sigif`,
+mot de passe `sigif2015`. L'URL utilise la **syntaxe SID** (deux-points, pas de `//`) :
+
+```
+jdbc:oracle:thin:@localhost:1521:ORCL
+```
+
+Rien à écrire dans le code. Pour changer la cible, surchargez les variables :
 
 ```bash
 cd backend
 export APIGEN_PROFILE=prod
-export APIGEN_DB_URL="jdbc:oracle:thin:@//localhost:1521/FREEPDB1"
-export APIGEN_DB_USER="APIGEN"
-export APIGEN_DB_PASSWORD="ChangeMe_2026"
 export APIGEN_JWT_SECRET="$(openssl rand -hex 48)"
 export APIGEN_CRYPTO_KEY="$(openssl rand -base64 32)"
-export APIGEN_SEED_DEMO=false
+# Facultatif : uniquement si l'hôte, le port ou le SID diffèrent des valeurs par défaut
+export ORACLE_HOST=db-host
+export ORACLE_PORT=1521
+export ORACLE_SID=ORCL
 mvn spring-boot:run -Dspring-boot.run.profiles=prod
 ```
 
-Sous Windows PowerShell, remplacez les `export` par :
+Sous Windows PowerShell :
 
 ```powershell
 $env:APIGEN_PROFILE = "prod"
-$env:APIGEN_DB_URL = "jdbc:oracle:thin:@//localhost:1521/FREEPDB1"
-$env:APIGEN_DB_USER = "APIGEN"
-$env:APIGEN_DB_PASSWORD = "ChangeMe_2026"
+$env:ORACLE_HOST = "localhost"; $env:ORACLE_PORT = "1521"; $env:ORACLE_SID = "ORCL"
 $env:APIGEN_JWT_SECRET = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 64 | % {[char]$_})
 $env:APIGEN_CRYPTO_KEY = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 40 | % {[char]$_})
-$env:APIGEN_SEED_DEMO = "false"
 mvn spring-boot:run "-Dspring-boot.run.profiles=prod"
 ```
 
-Au démarrage, **Flyway crée automatiquement les 7 tables** (`api_definitions`, `endpoints`, `connections`, `schedules`, `exchange_runs`, `app_users`, `audit_events`) ainsi que l'utilisateur `admin`. Vous verrez :
+Ou directement l'URL complète, si vous préférez la syntaxe service-name (pluggable database) :
+
+```bash
+export APIGEN_DB_URL="jdbc:oracle:thin:@//db-host:1521/FREEPDB1"
+export APIGEN_DB_USER="sigif"
+export APIGEN_DB_PASSWORD="sigif2015"
+```
+
+Au premier démarrage, **Flyway crée les tables** (`V1__init.sql`, `V2__organizations.sql`) et
+l'utilisateur `admin`. Si le schéma `SIGIF` contient déjà d'autres tables, Flyway pose un
+référentiel (`baseline-on-migrate`) au lieu d'échouer sur « schéma non vide sans historique ».
+
+#### Si une table manque, elle est créée automatiquement
+
+Un garde-fou de schéma s'exécute à chaque démarrage, après Flyway : il vérifie les huit tables
+(`organizations`, `api_definitions`, `endpoints`, `connections`, `schedules`, `exchange_runs`,
+`app_users`, `audit_events`) et **recrée celles qui manquent**, avec leurs index et contraintes.
+
+Cas concret : la table `app_users` (utilisateurs de l'application) a été supprimée par erreur.
 
 ```
-Successfully applied 1 migration to schema "APIGEN", now at version v1
+Table app_users absente : créée automatiquement.
+Schéma auto-complété : 1 table(s) créée(s).
+Compte admin créé : admin / ChangeMe123!
 ```
 
-> **Note** : `APIGEN_SEED_DEMO=false` en production. Si vous le laissez à `true`, l'API et les endpoints de démonstration sont recréés à chaque démarrage.
+L'application redémarre normalement, le compte `admin` est rétabli. Aucun script SQL à rejouer.
+
+> **Mot de passe en clair.** `sigif2015` figure dans les YAML des profils. En production,
+> préférez `APIGEN_DB_PASSWORD` ou le fichier externe `config/runtime.properties` (hors WAR,
+> non versionné).
+
+> **Note** : `APIGEN_SEED_DEMO=false` en production. Si vous le laissez à `true`, l'API et les
+> endpoints de démonstration sont recréés à chaque démarrage.
+
+### 4.3. Organisations et rattachement des API
+
+Une **organisation** possède zéro ou plusieurs API ; une API peut aussi rester « non classée ».
+
+1. Menu **Organisations** → **+ Nouvelle organisation** (code, nom, description).
+2. Menu **APIs → + Nouvelle API** → champ **Organisation** (ou **Aucune** pour une API non classée).
+3. La liste des API est **groupée par organisation**, avec un filtre « Toutes les organisations »
+   en haut de page.
+
+Règles :
+
+- supprimer une organisation **ne supprime pas** ses API : elles deviennent « non classées » ;
+- désactiver une organisation n'empêche pas ses API de fonctionner ;
+- l'organisation par défaut est créée automatiquement au premier démarrage et recueille les API
+  existantes lors d'une montée de version.
 
 ---
 
@@ -404,6 +456,31 @@ lsnrctl status
 
 Puis, dans le formulaire, choisissez l'adressage **`Service name`** (le plus courant) plutôt que `SID`, et reprenez le nom affiché par `lsnrctl`.
 
+### Oracle : `ORA-01882: timezone region not found`
+
+Erreur classique sur **Oracle 10g/11g** : le pilote JDBC envoie le nom de la région de la JVM
+(`Africa/Douala`) et le fichier de fuseaux de la base ne la connaît pas.
+
+**Correctif intégré** : toute connexion Oracle reçoit automatiquement
+`oracle.jdbc.timezoneAsRegion=false`, ce qui force l'envoi d'un décalage numérique. Rien à
+faire dans le studio ni dans le code — ni pour l'API, ni pour la base de la plateforme
+(`dev`/`prod`).
+
+Si une base exige l'ancien comportement, ouvrez la connexion → **Propriétés du pilote JDBC**
+et saisissez :
+
+```json
+{ "oracle.jdbc.timezoneAsRegion": "true" }
+```
+
+Autres causes possibles d'un échec sur une base ancienne :
+
+- `ORA-28040: No matching authentication protocol` — le serveur refuse les anciens protocoles.
+  Côté base 12c+ : `SQLNET.ALLOWED_LOGON_VERSION=8` dans `sqlnet.ora`, puis redémarrage.
+- `ORA-12505` / `ORA-12514` — SID ou service-name inconnu : voir les sections correspondantes.
+- `IAIK` / `Unsupported version` — pilote trop récent pour la base : ajouter un pilote plus
+  ancien dans le classpath (ojdbc8 pour 11g/12c).
+
 ### Oracle : `ORA-01017: invalid username/password`
 
 Identifiants refusés. Recréez l'utilisateur, ou déverrouillez-le :
@@ -450,15 +527,15 @@ API-GEN-AUTO/
 │   │   └── runtime.properties            ← généré par le studio (à ne pas versionner)
 │   └── src/
 │       ├── main/java/com/apigen/
-│       │   ├── config/         ← sécurité JWT, chiffrement, planification
+│       │   ├── config/         ← sécurité JWT, chiffrement, planification, garde-fou de schéma
 │       │   ├── domain/         ← entités JPA
 │       │   ├── service/        ← logique métier
 │       │   │   └── connector/  ← REST, JDBC, fichiers, pool HikariCP
 │       │   ├── execution/      ← moteur de pipelines, templates, étapes
 │       │   └── web/            ← contrôleurs REST + passerelle dynamique
 │       ├── main/resources/
-│       │   ├── application*.yml
-│       │   └── db/migration/V1__init.sql
+│       │   ├── application*.yml     ← local (H2), dev et prod (Oracle 12c)
+│       │   └── db/migration/         ← V1__init.sql, V2__organizations.sql
 │       └── test/               ← tests d'intégration
 │
 ├── frontend/                   ← Angular 17, TypeScript, SCSS
@@ -467,7 +544,7 @@ API-GEN-AUTO/
 │   ├── proxy.conf.json
 │   └── src/app/
 │       ├── core/               ← services, guards, interceptors, modèles
-│       ├── features/           ← login, dashboard, apis, connexions, runs…
+│       ├── features/           ← login, dashboard, organisations, apis, connexions, runs…
 │       ├── shared/             ← composants réutilisables (explorateur de schémas)
 │       └── shell/
 │

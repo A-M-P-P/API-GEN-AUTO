@@ -2,6 +2,7 @@ package com.apigen.service;
 
 import com.apigen.domain.ConnectionType;
 import com.apigen.dto.MetadataDtos;
+import com.apigen.service.connector.JdbcConnectionProps;
 import com.apigen.service.connector.JdbcPoolManager;
 import org.springframework.stereotype.Service;
 
@@ -218,7 +219,8 @@ public class MetadataService {
         int previous = DriverManager.getLoginTimeout();
         DriverManager.setLoginTimeout(5);
         try {
-            return DriverManager.getConnection(spec.jdbcUrl(), spec.username(), spec.password());
+            return DriverManager.getConnection(spec.jdbcUrl(), JdbcConnectionProps.toProperties(
+                    spec.driverProperties(), spec.username(), spec.password()));
         } finally {
             DriverManager.setLoginTimeout(previous);
         }

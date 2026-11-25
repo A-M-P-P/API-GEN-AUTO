@@ -40,6 +40,14 @@ Le projet répond à un besoin concret d'entreprise : plutôt que de développer
 | --- | --- |
 | ![Configuration](docs/screenshots/14-configuration.png) | ![Configuration modifiée](docs/screenshots/15-configuration-modifiee.png) |
 
+| Organisations | APIs groupées par organisation |
+| --- | --- |
+| ![Organisations](docs/screenshots/17-organisations.png) | ![APIs par organisation](docs/screenshots/20-apis-deux-organisations.png) |
+
+| Connexion JDBC : propriétés du pilote | |
+| --- | --- |
+| ![Propriétés du pilote](docs/screenshots/21-connexion-proprietes-pilote.png) | |
+
 ---
 
 ## Fonctionnalités du MVP
@@ -52,6 +60,11 @@ Le projet répond à un besoin concret d'entreprise : plutôt que de développer
 - **Génération d'étape** : sélectionner une table dans l'explorateur ajoute automatiquement une étape `DB_QUERY` au pipeline.
 - Journal des **exécutions** avec requête, réponse, erreur, durée, déclencheur.
 - **Journal d'audit** des actions de configuration et de sécurité.
+- **Organisations** : chaque API est rattachée à une organisation — une organisation possède
+  zéro ou plusieurs API. Liste des API groupée par organisation, filtre par organisation,
+  sélecteur dans le formulaire d'API, API « non classées » conservées.
+- **Écran de configuration** : adresses, ports, secrets et paramètres de fonctionnement éditables
+  sans rebuild, écrits dans un fichier de propriétés externe lu au démarrage.
 - Gestion des rôles : `ADMIN`, `EDITOR`, `VIEWER`.
 
 ### Moteur d'exécution
@@ -147,14 +160,17 @@ API-GEN-AUTO/
 
 ### 1. Backend (H2, zéro configuration)
 
+Le profil `local` embarque une base H2 : aucune installation n'est nécessaire pour découvrir
+la plateforme. Les profils `dev` et `prod` ciblent Oracle 12c (voir plus bas).
+
 ```bash
 cd backend
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
+mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
 - API : `http://localhost:8080`
 - Swagger : `http://localhost:8080/swagger-ui.html`
-- Console H2 : `http://localhost:8080/h2-console`
+- Console H2 : `http://localhost:8080/h2-console` (profil `local` uniquement)
 - Compte admin créé au premier démarrage : **admin / ChangeMe123!**
 
 ### 2. Frontend
@@ -169,7 +185,7 @@ Studio : `http://localhost:4200` (le proxy Angular redirige `/api/` vers `http:/
 
 ### 3. Utiliser la démonstration
 
-Le profil `dev` crée une API `demo` avec quatre endpoints :
+Le profil `local` crée une organisation par défaut et une API `demo` avec quatre endpoints :
 
 | Méthode | Chemin | Rôle |
 | --- | --- | --- |
@@ -290,10 +306,11 @@ Copier `.env.example` vers `.env` (ou exporter les variables) :
 
 | Variable | Défaut | Rôle |
 | --- | --- | --- |
-| `APIGEN_PROFILE` | `dev` | `dev` (H2) ou `prod` (Oracle) |
-| `APIGEN_DB_URL` | `jdbc:oracle:thin:@//localhost:1521/FREEPDB1` | URL JDBC Oracle |
-| `APIGEN_DB_USER` | `apigen` | Utilisateur Oracle |
-| `APIGEN_DB_PASSWORD` | — | Mot de passe Oracle |
+| `APIGEN_PROFILE` | `dev` | `local` (H2), `dev` (Oracle 12c) ou `prod` (Oracle 12c) |
+| `APIGEN_DB_URL` | `jdbc:oracle:thin:@localhost:1521:ORCL` | URL JDBC Oracle (syntaxe SID) |
+| `APIGEN_DB_USER` | `sigif` | Utilisateur Oracle |
+| `APIGEN_DB_PASSWORD` | `sigif2015` | Mot de passe Oracle (**à changer en production**) |
+| `ORACLE_HOST` / `ORACLE_PORT` / `ORACLE_SID` | `localhost` / `1521` / `ORCL` | Composants de l'URL si `APIGEN_DB_URL` n'est pas fourni |
 | `APIGEN_JWT_SECRET` | valeur de dev | **À changer en production** (≥ 64 caractères) |
 | `APIGEN_CRYPTO_KEY` | valeur de dev | Clé AES-256 des identifiants (**à changer**) |
 | `APIGEN_CORS_ORIGINS` | `http://localhost:4200,http://localhost:8080` | Origines autorisées |
@@ -303,6 +320,75 @@ Copier `.env.example` vers `.env` (ou exporter les variables) :
 | `APIGEN_SEED_DEMO` | `true` en dev | Crée le jeu de démonstration |
 | `APIGEN_JWT_EXPIRATION_HOURS` | `8` | Durée de vie des jetons |
 | `APIGEN_JDBC_POOL_EVICT_MS` | `300000` | Fréquence de fermeture des pools inactifs |
+
+### Profils et base de données
+
+| Profil | Base | Usage |
+| --- | --- | --- |
+| `local` | H2 fichier (`./data/apigen`) | Démonstration, tests, démarrage sans Oracle |
+| `dev` | **Oracle 12c** — `SID=ORCL`, utilisateur `sigif` | Développement |
+| `prod` | **Oracle 12c** — `SID=ORCL`, utilisateur `sigif` | Production |
+
+`dev` et `prod` partagent la même cible Oracle ; seul le comportement diffère (jeu de
+démonstration, console H2, verbosité). L'URL est construite par défaut avec la syntaxe **SID** :
+
+```
+jdbc:oracle:thin:@localhost:1521:ORCL
+```
+
+Tout est surchargeable sans rebuild via les variables du tableau ci-dessus ou le fichier externe
+`config/runtime.properties`.
+
+### Bases cibles : Oracle 10g, 11g, 12c, 19c, PostgreSQL, MySQL, SQL Server…
+
+Les connexions JDBC passent par un pool HikariCP propre à chaque base cible, et les propriétés
+du pilote sont construites automatiquement selon l'URL. Deux règles :
+
+- **toute URL Oracle** reçoit `oracle.jdbc.timezoneAsRegion=false` ;
+- une base non-Oracle ne reçoit aucune propriété parasite.
+
+Le point Oracle est important : par défaut le pilote envoie le **nom** de la région de la JVM
+(par exemple `Africa/Douala`). Une base dont le fichier de fuseaux ne connaît pas cette région
+répond alors `ORA-01882: timezone region not found` (ou `ORA-00604` au niveau SQL récursif) —
+c'est systématique sur les 10g/11g. En demandant un décalage numérique, la connexion passe sur
+toutes les versions.
+
+Pour aller plus loin (préfetch, NLS, chiffrement du transport…), chaque connexion expose un
+champ **Propriétés du pilote JDBC** (JSON) dans le formulaire, stocké dans
+`baseConfig.driverProperties` :
+
+```json
+{ "oracle.jdbc.defaultRowPrefetch": "100", "oracle.jdbc.oracleLogTraceLevel": "16" }
+```
+
+Les valeurs saisies **priment** sur les valeurs par défaut, ce qui permet de désactiver le
+correctif si une base l'exigeait :
+
+```json
+{ "oracle.jdbc.timezoneAsRegion": "true" }
+```
+
+### Création automatique des tables manquantes
+
+Au démarrage, après les migrations Flyway, un garde-fou (`SchemaGuard`) vérifie que les huit
+tables de la plateforme existent et **crée celles qui manquent**, avec leurs index et leurs
+contraintes :
+
+```
+organizations · api_definitions · endpoints · connections · schedules · exchange_runs · app_users · audit_events
+```
+
+Concrètement : si `app_users` (la table des utilisateurs de l'application) a été supprimée, elle
+est recréée au démarrage suivant et le compte `admin` est rétabli. Aucune intervention manuelle,
+aucun script SQL à rejouer.
+
+Deux réglages complémentaires :
+
+- `spring.flyway.baseline-on-migrate=true` avec `baseline-version=0` : sur un schéma Oracle qui
+  contient déjà d'autres tables, Flyway pose un référentiel puis applique les migrations au lieu
+  d'échouer sur « schéma non vide sans historique » ;
+- si l'historique Flyway a été perdu, les migrations sont rejouées depuis le début — les tables
+  déjà présentes sont conservées et seules les manquantes sont créées par le garde-fou.
 
 ### Configuration externe : changer les paramètres sans rebuild
 
@@ -367,30 +453,38 @@ Trois voies possibles :
 
 Dans tous les cas, adresses et ports se règlent dans le fichier externe ci-dessus, sans rebuild.
 
-### Production avec Oracle
+### Production avec Oracle 12c
 
-1. Créer un utilisateur dédié (exemple Oracle 23ai / FREEPDB1) :
-
-```sql
-CREATE USER APIGEN IDENTIFIED BY "ChangeMe_2026";
-GRANT CONNECT, RESOURCE, CREATE VIEW, CREATE TABLE, CREATE SEQUENCE TO APIGEN;
-ALTER USER APIGEN QUOTA UNLIMITED ON USERS;
-```
-
-2. Lancer le backend en profil `prod` :
+La base de production est déjà décrite dans les profils : `SID=ORCL`, utilisateur `sigif`.
+Il suffit donc de lancer en profil `prod`, et de surcharger uniquement les secrets :
 
 ```bash
 export APIGEN_PROFILE=prod
-export APIGEN_DB_URL="jdbc:oracle:thin:@//db-host:1521/FREEPDB1"
-export APIGEN_DB_USER="apigen"
-export APIGEN_DB_PASSWORD="ChangeMe_2026"
 export APIGEN_JWT_SECRET="$(openssl rand -hex 48)"
 export APIGEN_CRYPTO_KEY="$(openssl rand -base64 32)"
-export APIGEN_SEED_DEMO=false
 java -jar backend/target/apigen-platform.jar
 ```
 
-Flyway applique automatiquement `V1__init.sql` (tables, index, contraintes). Le script est compatible Oracle 12c+ et H2 (mode Oracle).
+Pour pointer ailleurs (autre hôte, autre SID, autre service) :
+
+```bash
+# syntaxe SID
+export APIGEN_DB_URL="jdbc:oracle:thin:@db-host:1521:ORCL"
+# syntaxe service-name (pluggable database)
+export APIGEN_DB_URL="jdbc:oracle:thin:@//db-host:1521/FREEPDB1"
+```
+
+1. Si l'utilisateur `sigif` n'existe pas encore, le créer une fois :
+
+```sql
+CREATE USER SIGIF IDENTIFIED BY "sigif2015";
+GRANT CONNECT, RESOURCE, CREATE VIEW, CREATE TABLE, CREATE SEQUENCE TO SIGIF;
+ALTER USER SIGIF QUOTA UNLIMITED ON USERS;
+```
+
+2. Flyway applique automatiquement `V1__init.sql` puis `V2__organizations.sql`. Les scripts sont
+   compatibles Oracle 12c+ et H2 (mode Oracle). Toute table manquante est ensuite recréée par le
+   garde-fou de schéma (voir « Création automatique des tables manquantes »).
 
 ---
 
@@ -489,6 +583,8 @@ Toutes les routes `/api/**` (sauf `/api/auth/login` et `/api/gateway/**`) néces
 | `POST` | `/api/auth/login` | Connexion |
 | `GET` | `/api/auth/me` | Utilisateur courant |
 | `POST` | `/api/auth/change-password` | Changer son mot de passe |
+| `GET/POST` | `/api/organizations` | Lister / créer des organisations |
+| `GET/PUT/DELETE` | `/api/organizations/{id}` | Détail / mise à jour / suppression (`ADMIN`) |
 | `GET/POST` | `/api/apis` | Lister / créer des APIs |
 | `GET/PUT/DELETE` | `/api/apis/{id}` | Détail / mise à jour / suppression |
 | `POST` | `/api/apis/{id}/api-key` | Générer / régénérer une clé |

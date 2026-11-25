@@ -1,0 +1,29 @@
+.org-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.org-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  flex: 0 0 auto;
+}
+.org-title { font-weight: 600; }
+.desc {
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}

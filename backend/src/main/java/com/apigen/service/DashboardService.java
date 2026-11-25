@@ -7,6 +7,7 @@ import com.apigen.repository.ApiDefinitionRepository;
 import com.apigen.repository.ConnectionRepository;
 import com.apigen.repository.EndpointRepository;
 import com.apigen.repository.ExchangeRunRepository;
+import com.apigen.repository.OrganizationRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,17 +24,20 @@ public class DashboardService {
     private final EndpointRepository endpointRepository;
     private final ConnectionRepository connectionRepository;
     private final ExchangeRunRepository runRepository;
+    private final OrganizationRepository organizationRepository;
     private final RunService runService;
 
     public DashboardService(ApiDefinitionRepository apiRepository,
                             EndpointRepository endpointRepository,
                             ConnectionRepository connectionRepository,
                             ExchangeRunRepository runRepository,
+                            OrganizationRepository organizationRepository,
                             RunService runService) {
         this.apiRepository = apiRepository;
         this.endpointRepository = endpointRepository;
         this.connectionRepository = connectionRepository;
         this.runRepository = runRepository;
+        this.organizationRepository = organizationRepository;
         this.runService = runService;
     }
 
@@ -55,6 +59,7 @@ public class DashboardService {
         return new CommonDtos.DashboardResponse(
                 apiRepository.count(),
                 apiRepository.countByStatus(ApiStatus.ACTIVE),
+                organizationRepository.count(),
                 endpointRepository.count(),
                 connectionRepository.count(),
                 runRepository.countByStartedAtAfterAndStatus(startOfDay, RunStatus.SUCCESS)

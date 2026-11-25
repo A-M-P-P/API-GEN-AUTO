@@ -2,7 +2,10 @@
   <div class="page-head">
     <div>
       <h1 class="page-title">APIs</h1>
-      <p class="page-sub">Chaque API regroupe des endpoints, un mode d'authentification et ses règles d'échange.</p>
+      <p class="page-sub">
+        Chaque API regroupe des endpoints, un mode d'authentification et ses règles d'échange.
+        Elles sont classées par organisation.
+      </p>
     </div>
     <a routerLink="/apis/new" class="btn btn-primary">+ Nouvelle API</a>
   </div>
@@ -10,58 +13,93 @@
   <div class="toolbar">
     <div class="search">
       <span>⌕</span>
-      <input class="input" type="search" placeholder="Rechercher par nom, code ou description…"
+      <input class="input" type="search" placeholder="Rechercher par nom, code ou organisation…"
              [value]="search()" (input)="search.set($any($event.target).value)">
     </div>
+    <select class="select org-filter" [value]="organizationFilter()"
+            (change)="setFilter($any($event.target).value)">
+      <option value="all">Toutes les organisations</option>
+      @for (organization of organizations(); track organization.id) {
+        <option [value]="organization.id">{{ organization.name }}</option>
+      }
+      @if (hasUnassigned()) {
+        <option value="none">Non classées</option>
+      }
+    </select>
     <span class="muted small">{{ filtered().length }} API(s)</span>
   </div>
 
-  <div class="card">
-    @if (loading()) {
-      <div class="empty"><span class="spinner"></span> Chargement…</div>
-    } @else if (filtered().length === 0) {
+  @if (loading()) {
+    <div class="card"><div class="empty"><span class="spinner"></span> Chargement…</div></div>
+  } @else if (groups().length === 0) {
+    <div class="card">
       <div class="empty">
         <div class="glyph">⇄</div>
         Aucune API trouvée.<br>
         <span class="small">Créez votre première API pour commencer à échanger des données.</span>
         <div class="mt-16"><a routerLink="/apis/new" class="btn btn-primary btn-sm">Créer une API</a></div>
       </div>
-    } @else {
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>API</th>
-              <th>Statut</th>
-              <th>Authentification</th>
-              <th>Endpoints</th>
-              <th>Mise à jour</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of filtered(); track item.id) {
-              <tr>
-                <td>
-                  <a class="api-name" [routerLink]="['/apis', item.id]">{{ item.name }}</a>
-                  <div class="code-chip mono">{{ item.code }} · v{{ item.version }}</div>
-                  @if (item.description) { <div class="small muted desc">{{ item.description }}</div> }
-                </td>
-                <td><span class="badge {{ statusClass(item.status) }}">{{ statusLabel(item.status) }}</span></td>
-                <td><span class="auth">{{ authLabel(item.inboundAuth) }}</span></td>
-                <td><span class="count">{{ item.endpointCount }}</span></td>
-                <td class="small muted nowrap">{{ item.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td>
-                  <div class="actions">
-                    <a class="btn btn-secondary btn-sm" [routerLink]="['/apis', item.id]">Ouvrir</a>
-                    <button class="btn btn-ghost btn-sm" (click)="remove(item)">Supprimer</button>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+    </div>
+  } @else {
+    @for (group of groups(); track group.key) {
+      <div class="group">
+        <div class="group-head">
+          @if (group.organization; as organization) {
+            <span class="org-badge">{{ organization.name.slice(0, 2).toUpperCase() }}</span>
+            <div class="group-title">
+              <h3>{{ organization.name }}</h3>
+              <span class="code-chip mono">{{ organization.code }}</span>
+            </div>
+            <a routerLink="/organizations" class="small muted">Gérer →</a>
+          } @else {
+            <span class="org-badge muted-badge">—</span>
+            <div class="group-title">
+              <h3>Non classées</h3>
+              <span class="small muted">API rattachées à aucune organisation</span>
+            </div>
+            <a routerLink="/organizations" class="small muted">Créer une organisation →</a>
+          }
+          <span class="group-count">{{ group.apis.length }} API(s)</span>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>API</th>
+                  <th>Statut</th>
+                  <th>Authentification</th>
+                  <th>Endpoints</th>
+                  <th>Mise à jour</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of group.apis; track item.id) {
+                  <tr>
+                    <td>
+                      <a class="api-name" [routerLink]="['/apis', item.id]">{{ item.name }}</a>
+                      <div class="code-chip mono">{{ item.code }} · v{{ item.version }}</div>
+                      @if (item.description) { <div class="small muted desc">{{ item.description }}</div> }
+                    </td>
+                    <td><span class="badge {{ statusClass(item.status) }}">{{ statusLabel(item.status) }}</span></td>
+                    <td><span class="auth">{{ authLabel(item.inboundAuth) }}</span></td>
+                    <td><span class="count">{{ item.endpointCount }}</span></td>
+                    <td class="small muted nowrap">{{ item.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>
+                      <div class="actions">
+                        <a class="btn btn-secondary btn-sm" [routerLink]="['/apis', item.id]">Ouvrir</a>
+                        <button class="btn btn-ghost btn-sm" (click)="remove(item)">Supprimer</button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     }
-  </div>
+  }
 </div>

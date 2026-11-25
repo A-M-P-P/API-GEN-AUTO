@@ -36,6 +36,11 @@ public class ApiDefinition {
     @Column(name = "api_key_hash", length = 128)
     private String apiKeyHash;
 
+    /** Organisation propriétaire (nullable : API « non classée »). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
     @Column(name = "created_by", length = 100)
     private String createdBy;
 
@@ -74,6 +79,8 @@ public class ApiDefinition {
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
     public List<Endpoint> getEndpoints() { return endpoints; }
     public void setEndpoints(List<Endpoint> endpoints) { this.endpoints = endpoints; }
 }

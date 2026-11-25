@@ -57,6 +57,16 @@
                 </select>
               </div>
               <div class="field">
+                <label>Organisation</label>
+                <select class="select" formControlName="organizationId">
+                  <option [value]="null">Aucune (non classée)</option>
+                  @for (organization of organizations(); track organization.id) {
+                    <option [value]="organization.id">{{ organization.name }}</option>
+                  }
+                </select>
+                <span class="hint">Une organisation peut contenir zéro ou plusieurs API.</span>
+              </div>
+              <div class="field">
                 <label>Créée par</label>
                 <input class="input" [value]="apiData()?.createdBy || '—'" disabled>
               </div>

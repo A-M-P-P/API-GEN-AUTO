@@ -90,7 +90,8 @@ public class JdbcConnector {
     }
 
     public void testQuery(String jdbcUrl, String username, String password) throws Exception {
-        try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
+        try (Connection connection = DriverManager.getConnection(
+                jdbcUrl, JdbcConnectionProps.forUrl(jdbcUrl, username, password))) {
             connection.isValid(5);
         }
     }

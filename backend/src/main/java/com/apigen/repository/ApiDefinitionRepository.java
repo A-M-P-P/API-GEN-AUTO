@@ -21,7 +21,8 @@ public interface ApiDefinitionRepository extends JpaRepository<ApiDefinition, Lo
     Optional<ApiDefinition> findById(Long id);
 
     @Query("select a.id, a.code, a.name, a.description, a.version, a.status, a.inboundAuth, " +
-            "a.createdBy, a.createdAt, a.updatedAt, size(a.endpoints) " +
+            "a.createdBy, a.createdAt, a.updatedAt, size(a.endpoints), " +
+            "a.organization.id, a.organization.code, a.organization.name " +
             "from ApiDefinition a order by a.updatedAt desc")
     List<Object[]> findSummaries();
 }

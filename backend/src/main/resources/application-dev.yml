@@ -1,25 +1,36 @@
+# Développement — base Oracle 12c (SID ORCL, utilisateur sigif)
 spring:
   datasource:
-    url: jdbc:h2:file:./data/apigen;MODE=Oracle;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_SERVER=TRUE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: ""
+    url: ${APIGEN_DB_URL:jdbc:oracle:thin:@${ORACLE_HOST:localhost}:${ORACLE_PORT:1521}:${ORACLE_SID:ORCL}}
+    driver-class-name: oracle.jdbc.OracleDriver
+    username: ${APIGEN_DB_USER:sigif}
+    password: ${APIGEN_DB_PASSWORD:sigif2015}
+    hikari:
+      # Oracle 10g/11g : le pilote envoie sinon le nom de région de la JVM, inconnu du
+      # fichier de fuseaux de la base -> ORA-01882. On force l'envoi d'un décalage.
+      data-source-properties:
+        oracle.jdbc.timezoneAsRegion: false
+      maximum-pool-size: ${APIGEN_DB_POOL_MAX:10}
+      minimum-idle: 2
+      connection-timeout: 30000
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    properties:
-      hibernate:
-        default_schema: PUBLIC
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    database-platform: org.hibernate.dialect.OracleDialect
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
   flyway:
+    enabled: ${APIGEN_FLYWAY_ENABLED:true}
     locations: classpath:db/migration
+    # Si le schéma contient déjà d'autres tables, Flyway pose une base de référence
+    # puis applique les migrations manquantes au lieu d'échouer.
+    baseline-on-migrate: true
+    baseline-version: 0
 
 apigen:
   seed:
-    demo: true
+    demo: ${APIGEN_SEED_DEMO:true}
 
 logging:
   level:
     com.apigen: DEBUG
+    org.hibernate.SQL: WARN

@@ -5,6 +5,7 @@ import com.apigen.domain.ApiStatus;
 import com.apigen.domain.Endpoint;
 import com.apigen.dto.ApiDtos;
 import com.apigen.repository.ApiDefinitionRepository;
+import com.apigen.repository.OrganizationRepository;
 import com.apigen.security.ApiKeyService;
 import com.apigen.security.SecurityUtils;
 import com.apigen.web.ApiException;
@@ -22,17 +23,20 @@ public class ApiDefinitionService {
     private final ApiKeyService apiKeyService;
     private final SecurityUtils securityUtils;
     private final AuditService auditService;
+    private final OrganizationRepository organizationRepository;
 
     public ApiDefinitionService(ApiDefinitionRepository repository,
                                 EndpointMapper endpointMapper,
                                 ApiKeyService apiKeyService,
                                 SecurityUtils securityUtils,
-                                AuditService auditService) {
+                                AuditService auditService,
+                                OrganizationRepository organizationRepository) {
         this.repository = repository;
         this.endpointMapper = endpointMapper;
         this.apiKeyService = apiKeyService;
         this.securityUtils = securityUtils;
         this.auditService = auditService;
+        this.organizationRepository = organizationRepository;
     }
 
     @Transactional(readOnly = true)
@@ -68,6 +72,7 @@ public class ApiDefinitionService {
         api.setStatus(request.status() == null ? ApiStatus.DRAFT : request.status());
         api.setInboundAuth(request.inboundAuth() == null ? com.apigen.domain.InboundAuth.NONE : request.inboundAuth());
         api.setCreatedBy(securityUtils.currentUsername());
+        api.setOrganization(resolveOrganization(request.organizationId()));
         ApiDefinition saved = repository.save(api);
         auditService.record("API_CREATE", "ApiDefinition", String.valueOf(saved.getId()), "Création de l'API " + saved.getCode());
         return toDetail(saved);
@@ -90,6 +95,8 @@ public class ApiDefinitionService {
                 api.setApiKeyHash(null);
             }
         }
+        // null explicite = retirer l'API de son organisation
+        api.setOrganization(resolveOrganization(request.organizationId()));
         api.touch();
         ApiDefinition saved = repository.save(api);
         auditService.record("API_UPDATE", "ApiDefinition", String.valueOf(saved.getId()), "Mise à jour de l'API " + saved.getCode());
@@ -139,8 +146,39 @@ public class ApiDefinitionService {
                 (String) row[7],
                 instant(row[8]),
                 instant(row[9]),
-                ((Number) row[10]).longValue()
+                ((Number) row[10]).longValue(),
+                row[11] == null ? null : ((Number) row[11]).longValue(),
+                (String) row[12],
+                (String) row[13]
         );
+    }
+
+    /** Surcharge utilisée pour composer une organisation avec ses API. */
+    public ApiDtos.ApiSummary toSummary(ApiDefinition api) {
+        return new ApiDtos.ApiSummary(
+                api.getId(),
+                api.getCode(),
+                api.getName(),
+                api.getDescription(),
+                api.getVersion(),
+                api.getStatus(),
+                api.getInboundAuth(),
+                api.getCreatedBy(),
+                api.getCreatedAt(),
+                api.getUpdatedAt(),
+                api.getEndpoints().size(),
+                api.getOrganization() == null ? null : api.getOrganization().getId(),
+                api.getOrganization() == null ? null : api.getOrganization().getCode(),
+                api.getOrganization() == null ? null : api.getOrganization().getName()
+        );
+    }
+
+    private com.apigen.domain.Organization resolveOrganization(Long organizationId) {
+        if (organizationId == null) {
+            return null;
+        }
+        return organizationRepository.findById(organizationId)
+                .orElseThrow(() -> ApiException.notFound("Organisation introuvable : " + organizationId));
     }
 
     private java.time.Instant instant(Object value) {
@@ -171,7 +209,10 @@ public class ApiDefinitionService {
                 api.getCreatedBy(),
                 api.getCreatedAt(),
                 api.getUpdatedAt(),
-                endpoints.stream().map(endpointMapper::toSummary).toList()
+                endpoints.stream().map(endpointMapper::toSummary).toList(),
+                api.getOrganization() == null ? null : api.getOrganization().getId(),
+                api.getOrganization() == null ? null : api.getOrganization().getCode(),
+                api.getOrganization() == null ? null : api.getOrganization().getName()
         );
     }
 }

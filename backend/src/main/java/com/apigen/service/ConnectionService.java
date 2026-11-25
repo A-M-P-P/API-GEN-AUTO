@@ -2,6 +2,7 @@ package com.apigen.service;
 
 import com.apigen.domain.Connection;
 import com.apigen.domain.ConnectionType;
+import com.apigen.service.connector.JdbcConnectionProps;
 import com.apigen.dto.ConnectionDtos;
 import com.apigen.repository.ConnectionRepository;
 import com.apigen.security.SecurityUtils;
@@ -187,7 +188,19 @@ public class ConnectionService {
                     // connectionTimeout de 10 s et retente, ce qui est trop lent pour un bouton).
                     int previousTimeout = DriverManager.getLoginTimeout();
                     DriverManager.setLoginTimeout(5);
-                    try (var connection = DriverManager.getConnection(url, user, password)) {
+                    // Mêmes propriétés que le pool : le bouton « Tester » doit se comporter
+                    // exactement comme l'exécution réelle.
+                    java.util.Map<String, String> overrides = new java.util.LinkedHashMap<>();
+                    if (request.baseConfig() != null && request.baseConfig().hasNonNull("driverProperties")
+                            && request.baseConfig().get("driverProperties").isObject()) {
+                        request.baseConfig().get("driverProperties").fields().forEachRemaining(entry -> {
+                            if (!entry.getValue().isNull()) {
+                                overrides.put(entry.getKey(), entry.getValue().asText());
+                            }
+                        });
+                    }
+                    try (var connection = DriverManager.getConnection(url, JdbcConnectionProps.toProperties(
+                            JdbcConnectionProps.merge(url, overrides), user, password))) {
                         ok = connection.isValid(5);
                         message = ok ? "Connexion base de données établie" : "Base de données inaccessible";
                     } finally {

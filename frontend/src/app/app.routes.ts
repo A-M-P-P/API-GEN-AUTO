@@ -31,6 +31,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/apis/api-builder.component').then((m) => m.ApiBuilderComponent)
       },
       {
+        path: 'organizations',
+        loadComponent: () => import('./features/organizations/organizations.component').then((m) => m.OrganizationsComponent)
+      },
+      {
         path: 'connections',
         loadComponent: () => import('./features/connections/connections.component').then((m) => m.ConnectionsComponent)
       },

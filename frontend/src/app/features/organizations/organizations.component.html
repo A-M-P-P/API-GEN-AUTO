@@ -1,0 +1,129 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Organisations</h1>
+      <p class="page-sub">
+        Une organisation regroupe zéro ou plusieurs API. Les API non rattachées restent
+        utilisables et apparaissent comme « non classées ».
+      </p>
+    </div>
+    @if (auth.hasRole('ADMIN', 'EDITOR')) {
+      <button class="btn btn-primary" (click)="openNew()">+ Nouvelle organisation</button>
+    }
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <span>⌕</span>
+      <input class="input" type="search" placeholder="Rechercher par nom ou code…"
+             [value]="search()" (input)="search.set($any($event.target).value)">
+    </div>
+    <span class="muted small">{{ organizations().length }} organisation(s)</span>
+  </div>
+
+  <div class="card">
+    @if (loading()) {
+      <div class="empty"><span class="spinner"></span> Chargement…</div>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Organisation</th>
+              <th>Code</th>
+              <th>APIs</th>
+              <th>Statut</th>
+              <th>Créée le</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of organizations(); track item.id) {
+              <tr>
+                <td>
+                  <div class="org-name">
+                    <span class="org-badge">{{ item.name.slice(0, 2).toUpperCase() }}</span>
+                    <div>
+                      <div class="org-title">{{ item.name }}</div>
+                      @if (item.description) { <div class="small muted desc">{{ item.description }}</div> }
+                    </div>
+                  </div>
+                </td>
+                <td><span class="code-chip mono">{{ item.code }}</span></td>
+                <td><span class="count">{{ item.apiCount }}</span></td>
+                <td>
+                  <span class="badge {{ item.active ? 'badge-success' : 'badge-muted' }}">
+                    {{ item.active ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="small muted nowrap">{{ item.createdAt | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  @if (auth.hasRole('ADMIN', 'EDITOR')) {
+                    <div class="actions">
+                      <button class="btn btn-secondary btn-sm" (click)="openEdit(item)">Modifier</button>
+                      <button class="btn btn-ghost btn-sm" (click)="toggleActive(item)">
+                        {{ item.active ? 'Désactiver' : 'Activer' }}
+                      </button>
+                      @if (auth.hasRole('ADMIN')) {
+                        <button class="btn btn-ghost btn-sm danger" (click)="remove(item)">Supprimer</button>
+                      }
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (editorOpen()) {
+  <div class="modal-backdrop" (click)="close()"></div>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3>{{ editing() ? 'Modifier l\u2019organisation' : 'Nouvelle organisation' }}</h3>
+        <p class="small muted">Les API de cette organisation restent rattachées même si elle est désactivée.</p>
+      </div>
+      <button class="btn btn-ghost btn-icon" (click)="close()">✕</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-row">
+        <div class="field">
+          <label>Code</label>
+          <input class="input mono" formControlName="code" placeholder="Ex. DGI" [readonly]="!!editing()">
+          <span class="hint">Lettres, chiffres et tirets. Unique dans la plateforme.</span>
+        </div>
+        <div class="field">
+          <label>Nom</label>
+          <input class="input" formControlName="name" placeholder="Ex. Direction Générale des Impôts">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Description</label>
+        <textarea class="textarea" formControlName="description" rows="3"
+                  placeholder="Périmètre, systèmes concernés, responsable…"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="check">
+          <input type="checkbox" formControlName="active"> Organisation active
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <span></span>
+        <div class="row">
+          <button type="button" class="btn btn-ghost" (click)="close()">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            @if (saving()) { <span class="spinner"></span> } @else { Enregistrer }
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+}

@@ -3,6 +3,7 @@ package com.apigen.config;
 import com.apigen.domain.*;
 import com.apigen.repository.ApiDefinitionRepository;
 import com.apigen.repository.ConnectionRepository;
+import com.apigen.repository.OrganizationRepository;
 import com.apigen.repository.EndpointRepository;
 import com.apigen.repository.ScheduleRepository;
 import com.apigen.repository.UserRepository;
@@ -23,6 +24,7 @@ public class DataInitializer implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
     private final UserRepository userRepository;
+    private final OrganizationRepository organizationRepository;
     private final ApiDefinitionRepository apiRepository;
     private final EndpointRepository endpointRepository;
     private final ConnectionRepository connectionRepository;
@@ -31,6 +33,7 @@ public class DataInitializer implements CommandLineRunner {
     private final AppProperties properties;
 
     public DataInitializer(UserRepository userRepository,
+                           OrganizationRepository organizationRepository,
                            ApiDefinitionRepository apiRepository,
                            EndpointRepository endpointRepository,
                            ConnectionRepository connectionRepository,
@@ -38,6 +41,7 @@ public class DataInitializer implements CommandLineRunner {
                            PasswordEncoder passwordEncoder,
                            AppProperties properties) {
         this.userRepository = userRepository;
+        this.organizationRepository = organizationRepository;
         this.apiRepository = apiRepository;
         this.endpointRepository = endpointRepository;
         this.connectionRepository = connectionRepository;
@@ -59,12 +63,41 @@ public class DataInitializer implements CommandLineRunner {
             log.warn("Compte admin créé : admin / ChangeMe123! — changez ce mot de passe en production.");
         }
 
+        Organization defaultOrganization = ensureDefaultOrganization();
+
         if (properties.seed().demo() && apiRepository.count() == 0) {
-            seedDemo();
+            seedDemo(defaultOrganization);
         }
     }
 
-    private void seedDemo() {
+    /** Organisation de rassemblement des API non affectées à une organisation nominative. */
+    private Organization ensureDefaultOrganization() {
+        if (organizationRepository.count() > 0) {
+            return organizationRepository.findAll().stream()
+                    .filter(Organization::isActive)
+                    .findFirst()
+                    .orElse(null);
+        }
+        Organization organization = new Organization();
+        organization.setCode("default");
+        organization.setName("Organisation par défaut");
+        organization.setDescription("Regroupe les API qui ne sont rattachées à aucune organisation nominative.");
+        organization.setActive(true);
+        Organization saved = organizationRepository.save(organization);
+        log.info("Organisation par défaut créée.");
+
+        // Lors de la montée de version, les API existantes n'ont pas d'organisation :
+        // on les range dans l'organisation par défaut plutôt que de les laisser non classées.
+        for (ApiDefinition api : apiRepository.findAll()) {
+            if (api.getOrganization() == null) {
+                api.setOrganization(saved);
+                apiRepository.save(api);
+            }
+        }
+        return saved;
+    }
+
+    private void seedDemo(Organization organization) {
         Connection rest = new Connection();
         rest.setName("JSONPlaceholder");
         rest.setType(ConnectionType.REST);
@@ -89,6 +122,7 @@ public class DataInitializer implements CommandLineRunner {
         api.setStatus(ApiStatus.ACTIVE);
         api.setInboundAuth(InboundAuth.NONE);
         api.setCreatedBy("system");
+        api.setOrganization(organization);
         api = apiRepository.save(api);
 
         createEndpoint(api, "Écho", "POST", "/echo", Direction.INBOUND,
@@ -157,7 +191,8 @@ public class DataInitializer implements CommandLineRunner {
         createSchedule(posts, "0 */5 * * * *", false);
         createSchedule(export, "0 0 2 * * *", false);
 
-        log.info("Jeu de démonstration créé : API « demo » (echo, hello, posts, export).");
+        log.info("Jeu de démonstration créé : API « demo » (echo, hello, posts, export) dans l'organisation « {} ».",
+                organization != null ? organization.getCode() : "default");
     }
 
     private Endpoint createEndpoint(ApiDefinition api, String name, String method, String path,

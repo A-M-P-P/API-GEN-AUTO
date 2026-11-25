@@ -1,0 +1,33 @@
+# Profil « local » — H2 embarquée, aucune base à installer.
+# Utilisé pour la démonstration, les tests et le démarrage sans Oracle.
+# Le profil « dev » et le profil « prod » visent, eux, Oracle 12c.
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/apigen;MODE=Oracle;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: PUBLIC
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+
+apigen:
+  seed:
+    demo: true
+
+logging:
+  level:
+    com.apigen: DEBUG

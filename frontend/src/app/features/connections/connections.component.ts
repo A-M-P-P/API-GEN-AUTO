@@ -59,6 +59,7 @@ export class ConnectionsComponent implements OnInit {
     username: [''],
     password: [''],
     maxPoolSize: [5, [Validators.min(1), Validators.max(20)]],
+    driverProperties: [''],
     // REST
     baseUrl: [''],
     authType: ['NONE'],
@@ -105,7 +106,7 @@ export class ConnectionsComponent implements OnInit {
     this.selectedTable.set(null);
     this.form.reset({
       name: '', type: 'REST', description: '', host: '', port: 0, database: '',
-      addressing: 'SERVICE', username: '', password: '', maxPoolSize: 5,
+      addressing: 'SERVICE', username: '', password: '', maxPoolSize: 5, driverProperties: '',
       baseUrl: '', authType: 'NONE', token: '', apiKey: '', apiKeyHeader: 'X-API-Key',
       basePath: '', active: true
     });
@@ -149,6 +150,9 @@ export class ConnectionsComponent implements OnInit {
       apiKey: '',
       apiKeyHeader: String(cfg.apiKeyHeader ?? 'X-API-Key'),
       basePath: String(cfg.basePath ?? ''),
+      driverProperties: cfg.driverProperties && typeof cfg.driverProperties === 'object'
+        ? JSON.stringify(cfg.driverProperties, null, 2)
+        : '',
       active: connection.active
     });
     this.editorOpen.set(true);
@@ -301,6 +305,10 @@ export class ConnectionsComponent implements OnInit {
       if (raw.type === 'ORACLE') {
         baseConfig['addressing'] = raw.addressing;
       }
+      const driverProperties = this.parseDriverProperties();
+      if (driverProperties && Object.keys(driverProperties).length) {
+        baseConfig['driverProperties'] = driverProperties;
+      }
       const credentials: any = {};
       if (raw.username.trim()) credentials['username'] = raw.username.trim();
       if (raw.password) credentials['password'] = raw.password;
@@ -323,6 +331,30 @@ export class ConnectionsComponent implements OnInit {
     return { baseConfig: { basePath: raw.basePath.trim() } };
   }
 
+  /** Propriétés du pilote JDBC saisies en JSON (objet plat clé/valeur). */
+  parseDriverProperties(): Record<string, string> | null {
+    const raw = (this.form.getRawValue().driverProperties ?? '').trim();
+    if (!raw) {
+      return {};
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') {
+        return null;
+      }
+      const out: Record<string, string> = {};
+      for (const [key, value] of Object.entries(parsed)) {
+        if (value === null || value === undefined) {
+          continue;
+        }
+        out[key] = String(value);
+      }
+      return out;
+    } catch {
+      return null;
+    }
+  }
+
   /** Aperçu JSON de ce qui sera enregistré. */
   previewJson(): string {
     const raw = this.form.getRawValue();
@@ -341,6 +373,10 @@ export class ConnectionsComponent implements OnInit {
       return;
     }
     const raw = this.form.getRawValue();
+    if (this.isDb(raw.type) && this.parseDriverProperties() === null) {
+      this.toast.error('Les propriétés du pilote JDBC doivent être un objet JSON valide.');
+      return;
+    }
     const { baseConfig, credentials } = this.buildPayload();
     const payload = {
       name: raw.name.trim(),
@@ -382,6 +418,10 @@ export class ConnectionsComponent implements OnInit {
       return;
     }
     const raw = this.form.getRawValue();
+    if (this.isDb(raw.type) && this.parseDriverProperties() === null) {
+      this.toast.error('Les propriétés du pilote JDBC doivent être un objet JSON valide.');
+      return;
+    }
     const { baseConfig, credentials } = this.buildPayload();
     this.testing.set(true);
     this.testResult.set(null);

@@ -17,6 +17,7 @@ public final class CommonDtos {
     public record DashboardResponse(
             long apiCount,
             long activeApiCount,
+            long organizationCount,
             long endpointCount,
             long connectionCount,
             long runsToday,

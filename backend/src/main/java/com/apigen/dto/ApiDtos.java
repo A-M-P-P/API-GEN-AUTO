@@ -26,7 +26,10 @@ public final class ApiDtos {
             String createdBy,
             Instant createdAt,
             Instant updatedAt,
-            long endpointCount
+            long endpointCount,
+            Long organizationId,
+            String organizationCode,
+            String organizationName
     ) {
     }
 
@@ -41,7 +44,10 @@ public final class ApiDtos {
             String createdBy,
             Instant createdAt,
             Instant updatedAt,
-            List<EndpointSummary> endpoints
+            List<EndpointSummary> endpoints,
+            Long organizationId,
+            String organizationCode,
+            String organizationName
     ) {
     }
 
@@ -54,7 +60,8 @@ public final class ApiDtos {
             String description,
             String version,
             ApiStatus status,
-            InboundAuth inboundAuth
+            InboundAuth inboundAuth,
+            Long organizationId
     ) {
     }
 
@@ -63,7 +70,8 @@ public final class ApiDtos {
             String description,
             String version,
             ApiStatus status,
-            InboundAuth inboundAuth
+            InboundAuth inboundAuth,
+            Long organizationId
     ) {
     }
 

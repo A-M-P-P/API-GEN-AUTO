@@ -7,6 +7,24 @@ export type TriggerType = 'MANUAL' | 'SCHEDULE' | 'INBOUND';
 export type Role = 'ADMIN' | 'EDITOR' | 'VIEWER';
 export type ConnectionType = 'ORACLE' | 'POSTGRESQL' | 'MYSQL' | 'SQLSERVER' | 'REST' | 'FILE' | 'FTP' | 'SFTP';
 
+export interface Organization {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  apiCount: number;
+}
+
+export interface OrganizationPayload {
+  code: string;
+  name: string;
+  description?: string;
+  active?: boolean;
+}
+
 export interface ApiSummary {
   id: number;
   code: string;
@@ -19,6 +37,9 @@ export interface ApiSummary {
   createdAt: string;
   updatedAt: string;
   endpointCount: number;
+  organizationId?: number | null;
+  organizationCode?: string | null;
+  organizationName?: string | null;
 }
 
 export interface Schedule {
@@ -59,6 +80,7 @@ export interface ApiPayload {
   version?: string;
   status?: ApiStatus;
   inboundAuth?: InboundAuth;
+  organizationId?: number | null;
 }
 
 export interface EndpointPayload {
@@ -180,6 +202,7 @@ export interface User {
 export interface Dashboard {
   apiCount: number;
   activeApiCount: number;
+  organizationCount: number;
   endpointCount: number;
   connectionCount: number;
   runsToday: number;

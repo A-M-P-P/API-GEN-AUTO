@@ -36,8 +36,18 @@ public class JdbcPoolManager {
     private static final long IDLE_EVICTION_MS = 15 * 60 * 1000L;
     private static final int MAX_POOL_CAP = 20;
 
-    /** Spécification immutable d'un pool : tout changement d'un champ recrée le pool. */
-    public record PoolSpec(String jdbcUrl, String username, String password, int maxPoolSize) {
+    /**
+     * Spécification immutable d'un pool : tout changement d'un champ recrée le pool.
+     *
+     * @param driverProperties propriétés transmises au pilote JDBC (fuseau horaire Oracle,
+     *                          options propres à une base exotique)
+     */
+    public record PoolSpec(String jdbcUrl, String username, String password, int maxPoolSize,
+                           Map<String, String> driverProperties) {
+        public PoolSpec(String jdbcUrl, String username, String password, int maxPoolSize) {
+            this(jdbcUrl, username, password, maxPoolSize, Map.of());
+        }
+
         public int effectiveMaxPoolSize() {
             return Math.max(1, Math.min(MAX_POOL_CAP, maxPoolSize));
         }
@@ -62,7 +72,21 @@ public class JdbcPoolManager {
                 maxPoolSize = 5;
             }
         }
-        return new PoolSpec(url, username, password, maxPoolSize);
+        return new PoolSpec(url, username, password, maxPoolSize, driverProperties(baseConfig, url));
+    }
+
+    /** Propriétés du pilote : valeurs par défaut selon l'URL + surcharges de la connexion. */
+    private static Map<String, String> driverProperties(JsonNode baseConfig, String url) {
+        Map<String, String> overrides = new java.util.LinkedHashMap<>();
+        if (baseConfig != null && baseConfig.hasNonNull("driverProperties")
+                && baseConfig.get("driverProperties").isObject()) {
+            baseConfig.get("driverProperties").fields().forEachRemaining(entry -> {
+                if (!entry.getValue().isNull()) {
+                    overrides.put(entry.getKey(), entry.getValue().asText());
+                }
+            });
+        }
+        return JdbcConnectionProps.merge(url, overrides);
     }
 
     private static String text(JsonNode node, String field) {
@@ -152,6 +176,8 @@ public class JdbcPoolManager {
         if (spec.password() != null) {
             config.setPassword(spec.password());
         }
+        config.setDataSourceProperties(JdbcConnectionProps.toProperties(
+                spec.driverProperties(), spec.username(), spec.password()));
         config.setMaximumPoolSize(spec.effectiveMaxPoolSize());
         config.setMinimumIdle(Math.min(1, spec.effectiveMaxPoolSize()));
         config.setConnectionTimeout(10_000);
@@ -168,7 +194,8 @@ public class JdbcPoolManager {
 
     private String fingerprint(PoolSpec spec) {
         String raw = spec.jdbcUrl() + '\u0000' + spec.username() + '\u0000' + spec.password()
-                + '\u0000' + spec.effectiveMaxPoolSize();
+                + '\u0000' + spec.effectiveMaxPoolSize() + '\u0000'
+                + new java.util.TreeMap<>(spec.driverProperties());
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return HexFormat.of().formatHex(digest.digest(raw.getBytes(StandardCharsets.UTF_8)));
