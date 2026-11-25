@@ -249,6 +249,8 @@ Le **contexte** est un objet JSON :
 
 Règles :
 
+- le code d'une API est unique **dans son organisation** : deux organisations peuvent avoir une
+  API `clients`, mais pas deux API `clients` dans la même organisation ;
 - supprimer une organisation **ne supprime pas** ses API : elles deviennent « non classées » ;
 - désactiver une organisation n'empêche pas ses API de fonctionner ;
 - l'organisation par défaut est créée automatiquement au premier démarrage et recueille les API

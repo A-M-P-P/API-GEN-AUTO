@@ -38,7 +38,7 @@
               <div class="field">
                 <label>Code</label>
                 <input class="input mono" formControlName="code" placeholder="rh-sync" [readonly]="!isCreateMode">
-                <span class="hint">Utilisé dans l'URL : /api/gateway/{{ gatewayOrgCode() }}/{{ apiForm.getRawValue().code || 'code' }}/…</span>
+                <span class="hint">Unique dans l'organisation. URL : /api/gateway/{{ gatewayOrgCode() }}/{{ apiForm.getRawValue().code || 'code' }}/…</span>
               </div>
               <div class="field">
                 <label>Version</label>

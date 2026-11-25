@@ -6,14 +6,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "api_definitions")
+@Table(name = "api_definitions", uniqueConstraints = @UniqueConstraint(
+        name = "ux_api_code_org", columnNames = {"organization_id", "code"}))
 public class ApiDefinition {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 80)
+    /** Code unique dans l'organisation (voir ux_api_code_org). */
+    @Column(nullable = false, length = 80)
     private String code;
 
     @Column(nullable = false, length = 150)

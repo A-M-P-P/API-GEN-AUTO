@@ -116,6 +116,71 @@ class ApiGenApplicationTests {
                 .andExpect(jsonPath("$.data.greeting").value("Amina"));
     }
 
+    @Test
+    void apiCodeIsScopedToOrganization() throws Exception {
+        String token = loginToken();
+        long orgA = createOrganization(token, "org-a");
+        long orgB = createOrganization(token, "org-b");
+
+        createApiWithSetStep(token, orgA, "shared", "A");
+        createApiWithSetStep(token, orgB, "shared", "B");
+
+        // Le même code est accepté dans une autre organisation, mais pas deux fois dans la même.
+        mockMvc.perform(post("/api/apis")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"code":"shared","name":"Doublon","organizationId":%d}
+                                """.formatted(orgA)))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(get("/api/gateway/org-a/shared"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value("A"));
+
+        mockMvc.perform(get("/api/gateway/org-b/shared"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value("B"));
+    }
+
+    private long createOrganization(String token, String code) throws Exception {
+        String response = mockMvc.perform(post("/api/organizations")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"code":"%s","name":"Organisation %s"}
+                                """.formatted(code, code)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readTree(response).get("id").asLong();
+    }
+
+    private void createApiWithSetStep(String token, long organizationId, String code, String value) throws Exception {
+        String response = mockMvc.perform(post("/api/apis")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"code":"%s","name":"API %s","status":"ACTIVE","organizationId":%d}
+                                """.formatted(code, code, organizationId)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long apiId = objectMapper.readTree(response).get("id").asLong();
+
+        mockMvc.perform(post("/api/apis/" + apiId + "/endpoints")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Propriétaire",
+                                  "method": "GET",
+                                  "path": "/",
+                                  "direction": "INBOUND",
+                                  "pipeline": [{"type":"SET","key":"owner","value":"%s"}]
+                                }
+                                """.formatted(value)))
+                .andExpect(status().isCreated());
+    }
+
     private String loginToken() throws Exception {
         String response = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

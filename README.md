@@ -520,9 +520,10 @@ ALTER USER SIGIF QUOTA UNLIMITED ON USERS;
 Un périmètre (direction, ministère, partenaire) qui regroupe zéro ou plusieurs API et porte leur
 **contexte propre** : variables, secrets chiffrés et surcharges de configuration (voir ci-dessus).
 Le code de l'organisation préfixe l'URL de la passerelle ; les API non classées utilisent `default`.
+Le code d'une API n'est unique **que dans son organisation** (`ux_api_code_org`).
 
 ### API
-Un conteneur logique : code unique, nom, version, statut (`DRAFT`, `ACTIVE`, `PAUSED`, `ARCHIVED`), mode d'authentification entrant (`NONE`, `API_KEY`, `JWT`).
+Un conteneur logique : **code unique dans son organisation**, nom, version, statut (`DRAFT`, `ACTIVE`, `PAUSED`, `ARCHIVED`), mode d'authentification entrant (`NONE`, `API_KEY`, `JWT`). Deux organisations peuvent donc déclarer une API portant le même code ; la passerelle les distingue par le code d'organisation.
 
 ### Endpoint
 Une route exposée (INBOUND) ou un flux sortant (OUTBOUND) :

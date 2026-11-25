@@ -10,13 +10,13 @@ import java.util.Optional;
 
 public interface ApiDefinitionRepository extends JpaRepository<ApiDefinition, Long> {
 
-    Optional<ApiDefinition> findByCodeIgnoreCase(String code);
-
     Optional<ApiDefinition> findByCodeIgnoreCaseAndOrganizationId(String code, Long organizationId);
 
     Optional<ApiDefinition> findByCodeIgnoreCaseAndOrganizationIsNull(String code);
 
-    boolean existsByCodeIgnoreCase(String code);
+    boolean existsByCodeIgnoreCaseAndOrganizationId(String code, Long organizationId);
+
+    boolean existsByCodeIgnoreCaseAndOrganizationIsNull(String code);
 
     long countByStatus(com.apigen.domain.ApiStatus status);
 

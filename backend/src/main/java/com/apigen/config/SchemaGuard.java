@@ -57,6 +57,12 @@ public class SchemaGuard implements ApplicationRunner {
                     + "FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE SET NULL");
         }
 
+        // Le code d'API devient unique par organisation ; l'ancienne contrainte globale est retirée.
+        if (tableExists("api_definitions")) {
+            safeExecute("ALTER TABLE api_definitions DROP CONSTRAINT ux_api_code");
+            safeExecute("ALTER TABLE api_definitions ADD CONSTRAINT ux_api_code_org UNIQUE (organization_id, code)");
+        }
+
         if (created > 0) {
             log.warn("Schéma auto-complété : {} table(s) créée(s).", created);
         } else {
@@ -123,7 +129,7 @@ public class SchemaGuard implements ApplicationRunner {
                         created_at      TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP NOT NULL,
                         updated_at      TIMESTAMP(6),
                         CONSTRAINT pk_api_def PRIMARY KEY (id),
-                        CONSTRAINT ux_api_code UNIQUE (code),
+                        CONSTRAINT ux_api_code_org UNIQUE (organization_id, code),
                         CONSTRAINT ck_api_status CHECK (status IN ('DRAFT', 'ACTIVE', 'PAUSED', 'ARCHIVED')),
                         CONSTRAINT ck_api_auth CHECK (inbound_auth IN ('NONE', 'API_KEY', 'JWT'))
                     )""", """

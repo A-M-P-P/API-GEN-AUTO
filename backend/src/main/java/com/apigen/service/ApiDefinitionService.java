@@ -3,6 +3,7 @@ package com.apigen.service;
 import com.apigen.domain.ApiDefinition;
 import com.apigen.domain.ApiStatus;
 import com.apigen.domain.Endpoint;
+import com.apigen.domain.Organization;
 import com.apigen.dto.ApiDtos;
 import com.apigen.repository.ApiDefinitionRepository;
 import com.apigen.repository.OrganizationRepository;
@@ -14,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 @Service
 public class ApiDefinitionService {
@@ -61,18 +64,18 @@ public class ApiDefinitionService {
 
     @Transactional
     public ApiDtos.ApiDetail create(ApiDtos.ApiCreateRequest request) {
-        if (repository.existsByCodeIgnoreCase(request.code())) {
-            throw ApiException.conflict("Une API avec ce code existe déjà");
-        }
+        Organization organization = resolveOrganization(request.organizationId());
+        String code = request.code().trim().toLowerCase(Locale.ROOT);
+        ensureCodeAvailable(code, organization == null ? null : organization.getId());
         ApiDefinition api = new ApiDefinition();
-        api.setCode(request.code().toLowerCase());
+        api.setCode(code);
         api.setName(request.name().trim());
         api.setDescription(request.description());
         api.setVersion(request.version() == null || request.version().isBlank() ? "1.0" : request.version());
         api.setStatus(request.status() == null ? ApiStatus.DRAFT : request.status());
         api.setInboundAuth(request.inboundAuth() == null ? com.apigen.domain.InboundAuth.NONE : request.inboundAuth());
         api.setCreatedBy(securityUtils.currentUsername());
-        api.setOrganization(resolveOrganization(request.organizationId()));
+        api.setOrganization(organization);
         ApiDefinition saved = repository.save(api);
         auditService.record("API_CREATE", "ApiDefinition", String.valueOf(saved.getId()), "Création de l'API " + saved.getCode());
         return toDetail(saved);
@@ -96,7 +99,13 @@ public class ApiDefinitionService {
             }
         }
         // null explicite = retirer l'API de son organisation
-        api.setOrganization(resolveOrganization(request.organizationId()));
+        Organization organization = resolveOrganization(request.organizationId());
+        Long currentOrganizationId = api.getOrganization() == null ? null : api.getOrganization().getId();
+        Long targetOrganizationId = organization == null ? null : organization.getId();
+        if (!Objects.equals(currentOrganizationId, targetOrganizationId)) {
+            ensureCodeAvailable(api.getCode(), targetOrganizationId);
+        }
+        api.setOrganization(organization);
         api.touch();
         ApiDefinition saved = repository.save(api);
         auditService.record("API_UPDATE", "ApiDefinition", String.valueOf(saved.getId()), "Mise à jour de l'API " + saved.getCode());
@@ -171,6 +180,16 @@ public class ApiDefinitionService {
                 api.getOrganization() == null ? null : api.getOrganization().getCode(),
                 api.getOrganization() == null ? null : api.getOrganization().getName()
         );
+    }
+
+    /** Le code d'une API est unique dans son organisation (ou parmi les API non classées). */
+    private void ensureCodeAvailable(String code, Long organizationId) {
+        boolean exists = organizationId == null
+                ? repository.existsByCodeIgnoreCaseAndOrganizationIsNull(code)
+                : repository.existsByCodeIgnoreCaseAndOrganizationId(code, organizationId);
+        if (exists) {
+            throw ApiException.conflict("Une API avec ce code existe déjà dans cette organisation");
+        }
     }
 
     private com.apigen.domain.Organization resolveOrganization(Long organizationId) {
