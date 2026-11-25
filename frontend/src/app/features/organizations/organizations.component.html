@@ -110,6 +110,17 @@
       </div>
 
       <div class="field">
+        <label>Contexte de l'organisation (JSON)</label>
+        <textarea class="textarea mono" formControlName="contextConfig" rows="6"
+                  placeholder='{"variables":{"region":"centre"},"secrets":{"apiToken":"..."},"overrides":{"rest":{"baseUrl":"https://host:8443/api"},"files":{"baseDir":"./data/exchanges/org"}}}'></textarea>
+        <span class="hint">
+          Appliqué aux API de cette organisation : <code>org.variables.*</code>,
+          <code>org.secrets.*</code>, et surcharges <code>org.overrides.rest.baseUrl</code> /
+          <code>org.overrides.files.baseDir</code>. Les secrets sont chiffrés et masqués à l'écran.
+        </span>
+      </div>
+
+      <div class="field">
         <label class="check">
           <input type="checkbox" formControlName="active"> Organisation active
         </label>

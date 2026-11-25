@@ -16,6 +16,7 @@ export interface Organization {
   createdAt: string;
   updatedAt: string;
   apiCount: number;
+  contextConfig?: string;
 }
 
 export interface OrganizationPayload {
@@ -23,6 +24,7 @@ export interface OrganizationPayload {
   name: string;
   description?: string;
   active?: boolean;
+  contextConfig?: string;
 }
 
 export interface ApiSummary {

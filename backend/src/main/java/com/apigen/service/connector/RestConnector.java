@@ -55,6 +55,12 @@ public class RestConnector {
         if (settings != null && url != null && !url.isBlank() && !url.startsWith("http")) {
             String baseUrl = text(settings.baseConfig(), "baseUrl", "");
             url = stripTrailing(baseUrl) + "/" + stripLeading(url);
+        } else if (url != null && !url.isBlank() && !url.startsWith("http")) {
+            // Pas de connexion REST : le contexte de l'organisation fournit la base d'URL.
+            String baseUrl = orgOverride(context, "rest.baseUrl");
+            if (baseUrl != null && !baseUrl.isBlank()) {
+                url = stripTrailing(baseUrl) + "/" + stripLeading(url);
+            }
         }
         if (url == null || url.isBlank()) {
             throw new IllegalArgumentException("L'étape HTTP doit définir une URL ou une connexion avec baseUrl");
@@ -128,6 +134,11 @@ public class RestConnector {
             throw new IllegalStateException("Le système distant a répondu " + status + " pour " + method + " " + finalUrl);
         }
         return result;
+    }
+
+    private String orgOverride(ExecutionContext context, String path) {
+        Object value = templates.getByPath("org.overrides." + path, context);
+        return value == null ? null : String.valueOf(value);
     }
 
     private ConnectionService.ConnectionSettings resolveConnection(Map<String, Object> step, ExecutionContext context) {

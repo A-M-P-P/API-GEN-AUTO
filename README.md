@@ -61,14 +61,15 @@ Le projet répond à un besoin concret d'entreprise : plutôt que de développer
 - Journal des **exécutions** avec requête, réponse, erreur, durée, déclencheur.
 - **Journal d'audit** des actions de configuration et de sécurité.
 - **Organisations** : chaque API est rattachée à une organisation — une organisation possède
-  zéro ou plusieurs API. Liste des API groupée par organisation, filtre par organisation,
-  sélecteur dans le formulaire d'API, API « non classées » conservées.
+  zéro ou plusieurs API et **son propre contexte de configuration** (variables, secrets chiffrés,
+  surcharges `rest.baseUrl` / `files.baseDir`). Liste des API groupée par organisation, filtre par
+  organisation, sélecteur dans le formulaire d'API, API « non classées » conservées.
 - **Écran de configuration** : adresses, ports, secrets et paramètres de fonctionnement éditables
   sans rebuild, écrits dans un fichier de propriétés externe lu au démarrage.
 - Gestion des rôles : `ADMIN`, `EDITOR`, `VIEWER`.
 
 ### Moteur d'exécution
-- Endpoints **INBOUND** exposés par une passerelle dynamique : `/api/gateway/{code-api}{chemin}`.
+- Endpoints **INBOUND** exposés par une passerelle dynamique : `/api/gateway/{code-organisation}/{code-api}{chemin}`.
 - Endpoints **OUTBOUND** exécutables manuellement ou planifiés par cron (format Spring, 6 champs).
 - Pipelines JSON composés d'étapes ordonnées :
   - `HTTP` / `REST` : appels sortants (GET, POST, PUT, PATCH, DELETE) avec auth Basic, Bearer ou API key.
@@ -77,7 +78,7 @@ Le projet répond à un besoin concret d'entreprise : plutôt que de développer
   - `FILE_READ` / `FILE_WRITE` : CSV, JSON, XLSX (système de fichiers local, protection contre le path traversal).
   - `MAP` : mapping de champs avec transformations (`UPPER`, `LOWER`, `TRIM`, `TO_INT`, `TO_DOUBLE`, `TO_BOOLEAN`, `CONCAT`, `DATE_FORMAT`…).
   - `SET` et `LOG` pour les variables et la traçabilité.
-- Templates `{{chemin.dotted}}` : `request.body.client`, `request.query.id`, `payload`, `steps.0`, `output`.
+- Templates `{{chemin.dotted}}` : `request.body.client`, `request.query.id`, `payload`, `steps.0`, `output`, `org.code`, `org.variables.*`, `org.secrets.*`.
 - Journalisation de chaque exécution avec résumé de requête/réponse et durée.
 
 ### Sécurité
@@ -185,19 +186,19 @@ Studio : `http://localhost:4200` (le proxy Angular redirige `/api/` vers `http:/
 
 ### 3. Utiliser la démonstration
 
-Le profil `local` crée une organisation par défaut et une API `demo` avec quatre endpoints :
+Le profil `local` crée une organisation de code `default` et une API `demo` avec quatre endpoints :
 
 | Méthode | Chemin | Rôle |
 | --- | --- | --- |
-| `POST` | `/api/gateway/demo/echo` | Répond le message reçu en majuscules |
-| `GET` | `/api/gateway/demo/hello?name=Amina` | Salutation avec mapping |
-| `GET` | `/api/gateway/demo/posts` | Appel REST sortant + mapping (JSONPlaceholder) |
-| `POST` | `/api/gateway/demo/export/clients` | Écriture CSV |
+| `POST` | `/api/gateway/default/demo/echo` | Répond le message reçu en majuscules |
+| `GET` | `/api/gateway/default/demo/hello?name=Amina` | Salutation avec mapping |
+| `GET` | `/api/gateway/default/demo/posts` | Appel REST sortant + mapping (JSONPlaceholder) |
+| `POST` | `/api/gateway/default/demo/export/clients` | Écriture CSV |
 
 Exemple :
 
 ```bash
-curl -X POST http://localhost:8080/api/gateway/demo/echo \
+curl -X POST http://localhost:8080/api/gateway/default/demo/echo \
   -H "Content-Type: application/json" \
   -d '{"message":"bonjour"}'
 ```
@@ -338,6 +339,31 @@ jdbc:oracle:thin:@localhost:1521:ORCL
 
 Tout est surchargeable sans rebuild via les variables du tableau ci-dessus ou le fichier externe
 `config/runtime.properties`.
+
+### Contexte propre à chaque organisation
+
+Chaque organisation porte un contexte JSON éditable dans le studio (menu **Organisations**) :
+il est appliqué à toutes les API qui lui sont rattachées et surcharge la configuration globale.
+Les secrets y sont chiffrés en base (AES-256-GCM) et masqués à l'écran.
+
+```json
+{
+  "variables": { "region": "centre", "siret": "12345678900000" },
+  "secrets": { "apiToken": "valeur-secrète" },
+  "overrides": {
+    "rest": { "baseUrl": "https://erp.sigif.cm:8443/api" },
+    "files": { "baseDir": "./data/exchanges/dgi" }
+  }
+}
+```
+
+- `variables` et `secrets` sont accessibles aux pipelines via `{{org.variables.region}}` et
+  `{{org.secrets.apiToken}}` (URL, header, corps, paramètre SQL…).
+- `org.overrides.rest.baseUrl` sert de base aux URLs HTTP **relatives** lorsqu'aucune connexion
+  REST n'est définie dans l'étape ; une connexion explicite reste prioritaire.
+- `org.overrides.files.baseDir` remplace `APIGEN_FILES_BASE_DIR` pour les étapes `FILE_*` sans
+  connexion fichier explicite.
+- Les API non classées utilisent un contexte vide.
 
 ### Bases cibles : Oracle 10g, 11g, 12c, 19c, PostgreSQL, MySQL, SQL Server…
 
@@ -490,6 +516,11 @@ ALTER USER SIGIF QUOTA UNLIMITED ON USERS;
 
 ## Concepts
 
+### Organisation
+Un périmètre (direction, ministère, partenaire) qui regroupe zéro ou plusieurs API et porte leur
+**contexte propre** : variables, secrets chiffrés et surcharges de configuration (voir ci-dessus).
+Le code de l'organisation préfixe l'URL de la passerelle ; les API non classées utilisent `default`.
+
 ### API
 Un conteneur logique : code unique, nom, version, statut (`DRAFT`, `ACTIVE`, `PAUSED`, `ARCHIVED`), mode d'authentification entrant (`NONE`, `API_KEY`, `JWT`).
 
@@ -571,6 +602,7 @@ Les requêtes de métadonnées sont écrites par dialecte : `all_users` / `all_t
 - `steps.<nom>` ou `steps.<index>` (résultat d'une étape)
 - `output` (dernier résultat)
 - `trigger`, `vars`
+- `org.code`, `org.variables`, `org.secrets`, `org.overrides` (contexte de l'organisation)
 
 ---
 
@@ -610,10 +642,14 @@ Toutes les routes `/api/**` (sauf `/api/auth/login` et `/api/gateway/**`) néces
 ### Passerelle dynamique
 
 ```http
-POST /api/gateway/{code-api}/{chemin}
+POST /api/gateway/{code-organisation}/{code-api}/{chemin}
 X-API-Key: agk_...
 Content-Type: application/json
 ```
+
+Le code d'organisation est obligatoire : l'API est résolue **dans cette organisation**.
+Les API non classées restent accessibles sous le namespace réservé `default`. L'ancienne forme
+`/api/gateway/{code-api}/...` n'est plus acceptée.
 
 La réponse contient toujours `runId`, `correlationId`, `status` et `data` (ou `error`).
 

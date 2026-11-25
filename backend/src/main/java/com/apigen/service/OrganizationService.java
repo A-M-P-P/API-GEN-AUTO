@@ -18,13 +18,16 @@ public class OrganizationService {
     private final OrganizationRepository repository;
     private final ApiDefinitionService apiService;
     private final AuditService auditService;
+    private final OrganizationContextService contextService;
 
     public OrganizationService(OrganizationRepository repository,
                                ApiDefinitionService apiService,
-                               AuditService auditService) {
+                               AuditService auditService,
+                               OrganizationContextService contextService) {
         this.repository = repository;
         this.apiService = apiService;
         this.auditService = auditService;
+        this.contextService = contextService;
     }
 
     @Transactional(readOnly = true)
@@ -54,6 +57,7 @@ public class OrganizationService {
         organization.setCode(request.code().trim());
         organization.setName(request.name().trim());
         organization.setDescription(request.description());
+        organization.setContextConfig(contextService.prepareForStorage(request.contextConfig(), null));
         organization.setActive(request.active() == null || request.active());
         Organization saved = repository.save(organization);
         auditService.record("ORGANIZATION_CREATE", "Organization", String.valueOf(saved.getId()),
@@ -66,6 +70,8 @@ public class OrganizationService {
         Organization organization = requireEntity(id);
         organization.setName(request.name().trim());
         organization.setDescription(request.description());
+        organization.setContextConfig(contextService.prepareForStorage(
+                request.contextConfig(), organization.getContextConfig()));
         organization.setActive(request.active() == null || request.active());
         organization.touch();
         Organization saved = repository.save(organization);
@@ -97,7 +103,8 @@ public class OrganizationService {
                 Boolean.TRUE.equals(row[4]),
                 instant(row[5]),
                 instant(row[6]),
-                ((Number) row[7]).longValue()
+                ((Number) row[7]).longValue(),
+                row[8] == null ? null : contextService.redact(String.valueOf(row[8]))
         );
     }
 
@@ -114,6 +121,7 @@ public class OrganizationService {
                 organization.isActive(),
                 organization.getCreatedAt(),
                 organization.getUpdatedAt(),
+                contextService.redact(organization.getContextConfig()),
                 apis
         );
     }

@@ -19,6 +19,10 @@ public interface EndpointRepository extends JpaRepository<Endpoint, Long> {
     @Query("select e from Endpoint e left join fetch e.schedule where e.id = :id")
     Optional<Endpoint> findByIdWithSchedule(@Param("id") Long id);
 
+    /** Identifiant de l'organisation propriétaire de l'API, sans initialiser les relations lazy. */
+    @Query("select e.api.organization.id from Endpoint e where e.id = :id")
+    Optional<Long> findOrganizationIdById(@Param("id") Long id);
+
     @Query("select e from Endpoint e left join fetch e.schedule where e.api.id = :apiId order by e.id asc")
     List<Endpoint> findByApiIdWithSchedule(@Param("apiId") Long apiId);
 }

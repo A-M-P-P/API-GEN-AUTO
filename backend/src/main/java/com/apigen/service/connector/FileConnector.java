@@ -135,7 +135,11 @@ public class FileConnector {
             String basePath = config.hasNonNull("basePath") ? config.get("basePath").asText() : null;
             return Path.of(basePath == null || basePath.isBlank() ? appProperties.files().baseDir() : basePath);
         }
-        return Path.of(appProperties.files().baseDir());
+        // Sans connexion FILE : le contexte de l'organisation surcharge la racine globale.
+        Object orgBase = templates.getByPath("org.overrides.files.baseDir", context);
+        String baseDir = orgBase == null || String.valueOf(orgBase).isBlank()
+                ? appProperties.files().baseDir() : String.valueOf(orgBase);
+        return Path.of(baseDir);
     }
 
     private Path secureResolve(Path base, String relative) {

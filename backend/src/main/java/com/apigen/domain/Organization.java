@@ -25,6 +25,10 @@ public class Organization {
     @Column(columnDefinition = "CLOB")
     private String description;
 
+    /** Contexte JSON propre à l'organisation (variables, secrets chiffrés, surcharges). */
+    @Column(name = "context_config", columnDefinition = "CLOB")
+    private String contextConfig;
+
     @Column(nullable = false)
     private boolean active = true;
 
@@ -49,6 +53,8 @@ public class Organization {
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public String getContextConfig() { return contextConfig; }
+    public void setContextConfig(String contextConfig) { this.contextConfig = contextConfig; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
     public Instant getCreatedAt() { return createdAt; }

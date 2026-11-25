@@ -3,8 +3,10 @@ package com.apigen.web;
 import com.apigen.domain.ApiDefinition;
 import com.apigen.domain.Endpoint;
 import com.apigen.domain.InboundAuth;
+import com.apigen.domain.Organization;
 import com.apigen.repository.ApiDefinitionRepository;
 import com.apigen.repository.EndpointRepository;
+import com.apigen.repository.OrganizationRepository;
 import com.apigen.security.ApiKeyService;
 import com.apigen.security.JwtService;
 import com.apigen.service.ExecutionService;
@@ -33,14 +35,17 @@ import java.util.regex.Pattern;
 
 /**
  * Passerelle dynamique : expose les endpoints INBOUND configurés en base.
- * URL : /api/gateway/{code-api}{chemin-endpoint}
+ * URL : /api/gateway/{code-organisation}/{code-api}{chemin-endpoint}
  */
 @RestController
 public class DynamicGatewayController {
 
     private static final Set<String> SENSITIVE_HEADERS = Set.of("authorization", "x-api-key", "cookie", "proxy-authorization");
+    /** Namespace des API non rattachées à une organisation. */
+    private static final String UNCLASSIFIED_ORG_CODE = "default";
 
     private final ApiDefinitionRepository apiRepository;
+    private final OrganizationRepository organizationRepository;
     private final EndpointRepository endpointRepository;
     private final ApiKeyService apiKeyService;
     private final JwtService jwtService;
@@ -48,12 +53,14 @@ public class DynamicGatewayController {
     private final ObjectMapper objectMapper;
 
     public DynamicGatewayController(ApiDefinitionRepository apiRepository,
+                                    OrganizationRepository organizationRepository,
                                     EndpointRepository endpointRepository,
                                     ApiKeyService apiKeyService,
                                     JwtService jwtService,
                                     ExecutionService executionService,
                                     ObjectMapper objectMapper) {
         this.apiRepository = apiRepository;
+        this.organizationRepository = organizationRepository;
         this.endpointRepository = endpointRepository;
         this.apiKeyService = apiKeyService;
         this.jwtService = jwtService;
@@ -61,18 +68,31 @@ public class DynamicGatewayController {
         this.objectMapper = objectMapper;
     }
 
-    @RequestMapping(value = "/api/gateway/{apiCode}/**")
-    public ResponseEntity<Object> handle(@PathVariable String apiCode,
+    @RequestMapping(value = "/api/gateway/{organizationCode}/{apiCode}/**")
+    public ResponseEntity<Object> handle(@PathVariable String organizationCode,
+                                         @PathVariable String apiCode,
                                          HttpServletRequest request,
                                          @RequestBody(required = false) String rawBody) {
         String method = request.getMethod().toUpperCase(Locale.ROOT);
-        String path = normalizePath(extractEndpointPath(apiCode, request));
+        String path = normalizePath(extractEndpointPath(organizationCode, apiCode, request));
 
-        ApiDefinition api = apiRepository.findByCodeIgnoreCase(apiCode)
-                .filter(candidate -> candidate.getStatus() == com.apigen.domain.ApiStatus.ACTIVE)
-                .orElse(null);
+        Organization organization = organizationRepository.findByCodeIgnoreCase(organizationCode).orElse(null);
+        if (organization == null && !UNCLASSIFIED_ORG_CODE.equalsIgnoreCase(organizationCode)) {
+            return error(HttpStatus.NOT_FOUND, "Organisation introuvable : " + organizationCode);
+        }
+
+        ApiDefinition api = null;
+        if (organization != null) {
+            api = apiRepository.findByCodeIgnoreCaseAndOrganizationId(apiCode, organization.getId()).orElse(null);
+        }
+        if (api == null && (organization == null || UNCLASSIFIED_ORG_CODE.equalsIgnoreCase(organizationCode))) {
+            // « default » désigne aussi les API non classées (rétrocompatibilité des données).
+            api = apiRepository.findByCodeIgnoreCaseAndOrganizationIsNull(apiCode).orElse(null);
+        }
+        api = api == null || api.getStatus() != com.apigen.domain.ApiStatus.ACTIVE ? null : api;
         if (api == null) {
-            return error(HttpStatus.NOT_FOUND, "API inactive ou introuvable : " + apiCode);
+            return error(HttpStatus.NOT_FOUND,
+                    "API inactive ou introuvable : " + organizationCode + "/" + apiCode);
         }
 
         EndpointMatch match = findEndpoint(api.getId(), method, path);
@@ -208,13 +228,13 @@ public class DynamicGatewayController {
         return context;
     }
 
-    private String extractEndpointPath(String apiCode, HttpServletRequest request) {
+    private String extractEndpointPath(String organizationCode, String apiCode, HttpServletRequest request) {
         String uri = request.getRequestURI();
         String contextPath = request.getContextPath();
         if (contextPath != null && !contextPath.isBlank() && uri.startsWith(contextPath)) {
             uri = uri.substring(contextPath.length());
         }
-        String prefix = "/api/gateway/" + apiCode;
+        String prefix = "/api/gateway/" + organizationCode + "/" + apiCode;
         int index = uri.indexOf(prefix);
         String path = index >= 0 ? uri.substring(index + prefix.length()) : "/";
         try {

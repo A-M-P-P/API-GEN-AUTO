@@ -214,14 +214,38 @@ L'application redémarre normalement, le compte `admin` est rétabli. Aucun scri
 > **Note** : `APIGEN_SEED_DEMO=false` en production. Si vous le laissez à `true`, l'API et les
 > endpoints de démonstration sont recréés à chaque démarrage.
 
-### 4.3. Organisations et rattachement des API
+### 4.3. Organisations, contexte et rattachement des API
 
 Une **organisation** possède zéro ou plusieurs API ; une API peut aussi rester « non classée ».
+Chaque organisation dispose de **son propre contexte**, appliqué à toutes ses API.
 
-1. Menu **Organisations** → **+ Nouvelle organisation** (code, nom, description).
+1. Menu **Organisations** → **+ Nouvelle organisation** (code, nom, description, contexte JSON).
 2. Menu **APIs → + Nouvelle API** → champ **Organisation** (ou **Aucune** pour une API non classée).
 3. La liste des API est **groupée par organisation**, avec un filtre « Toutes les organisations »
    en haut de page.
+4. Les appels à la passerelle utilisent toujours le code de l'organisation :
+   `/api/gateway/{code-organisation}/{code-api}/...`. L'ancienne URL sans organisation n'est plus
+   acceptée. Les API non classées sont accessibles sous `default`.
+
+Le **contexte** est un objet JSON :
+
+```json
+{
+  "variables": { "region": "centre" },
+  "secrets": { "apiToken": "valeur-secrète" },
+  "overrides": {
+    "rest": { "baseUrl": "https://erp.sigif.cm:8443/api" },
+    "files": { "baseDir": "./data/exchanges/dgi" }
+  }
+}
+```
+
+- `{{org.variables.region}}` et `{{org.secrets.apiToken}}` sont utilisables dans les étapes de pipeline.
+- `org.overrides.rest.baseUrl` sert de base aux URL HTTP relatives sans connexion REST explicite.
+- `org.overrides.files.baseDir` remplace la racine globale `APIGEN_FILES_BASE_DIR` pour les étapes
+  fichier sans connexion explicite.
+- Les secrets sont chiffrés en base et affichés masqués (`********`) dans le studio ; laisser le
+  masque lors d'une modification conserve la valeur précédente.
 
 Règles :
 

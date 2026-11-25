@@ -117,6 +117,12 @@ export class ApiBuilderComponent implements OnInit {
     return !this.route.snapshot.paramMap.get('id');
   }
 
+  /** Code de l'organisation qui préfixe l'URL de la passerelle. */
+  gatewayOrgCode(): string {
+    const organizationId = this.apiForm.getRawValue().organizationId;
+    return this.organizations().find((organization) => organization.id === organizationId)?.code ?? 'default';
+  }
+
   loadApi(id: number, selectId?: number | null): void {
     this.loading.set(true);
     this.api.get(id).subscribe({

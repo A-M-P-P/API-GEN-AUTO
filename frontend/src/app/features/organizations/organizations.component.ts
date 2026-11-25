@@ -30,7 +30,8 @@ export class OrganizationsComponent implements OnInit {
     code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9][A-Za-z0-9-]{1,59}$/)]],
     name: ['', [Validators.required, Validators.maxLength(150)]],
     description: ['', Validators.maxLength(4000)],
-    active: [true]
+    active: [true],
+    contextConfig: ['']
   });
 
   ngOnInit(): void {
@@ -53,7 +54,7 @@ export class OrganizationsComponent implements OnInit {
 
   openNew(): void {
     this.editing.set(null);
-    this.form.reset({ code: '', name: '', description: '', active: true });
+    this.form.reset({ code: '', name: '', description: '', active: true, contextConfig: '' });
     this.editorOpen.set(true);
   }
 
@@ -63,7 +64,8 @@ export class OrganizationsComponent implements OnInit {
       code: organization.code,
       name: organization.name,
       description: organization.description ?? '',
-      active: organization.active
+      active: organization.active,
+      contextConfig: organization.contextConfig ?? ''
     });
     this.editorOpen.set(true);
   }
@@ -84,7 +86,8 @@ export class OrganizationsComponent implements OnInit {
       code: raw.code.trim(),
       name: raw.name.trim(),
       description: raw.description,
-      active: raw.active
+      active: raw.active,
+      contextConfig: raw.contextConfig?.trim() || ''
     };
     this.saving.set(true);
     const operation = current ? this.service.update(current.id, payload) : this.service.create(payload);
@@ -98,7 +101,7 @@ export class OrganizationsComponent implements OnInit {
       },
       error: () => {
         this.saving.set(false);
-        this.toast.error('Enregistrement impossible (code déjà utilisé ?).');
+        this.toast.error('Enregistrement impossible (code déjà utilisé ou contexte JSON invalide).');
       }
     });
   }
@@ -108,7 +111,8 @@ export class OrganizationsComponent implements OnInit {
       code: organization.code,
       name: organization.name,
       description: organization.description,
-      active: !organization.active
+      active: !organization.active,
+      contextConfig: organization.contextConfig
     }).subscribe({
       next: () => this.load(),
       error: () => this.toast.error('Modification impossible.')

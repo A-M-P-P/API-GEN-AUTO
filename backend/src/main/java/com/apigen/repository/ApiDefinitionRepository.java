@@ -12,6 +12,10 @@ public interface ApiDefinitionRepository extends JpaRepository<ApiDefinition, Lo
 
     Optional<ApiDefinition> findByCodeIgnoreCase(String code);
 
+    Optional<ApiDefinition> findByCodeIgnoreCaseAndOrganizationId(String code, Long organizationId);
+
+    Optional<ApiDefinition> findByCodeIgnoreCaseAndOrganizationIsNull(String code);
+
     boolean existsByCodeIgnoreCase(String code);
 
     long countByStatus(com.apigen.domain.ApiStatus status);

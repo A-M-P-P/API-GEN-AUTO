@@ -31,13 +31,16 @@ public class ExecutionService {
 
     private final StepExecutor stepExecutor;
     private final ExchangeRunRepository runRepository;
+    private final OrganizationContextService organizationContextService;
     private final ObjectMapper objectMapper;
 
     public ExecutionService(StepExecutor stepExecutor,
                             ExchangeRunRepository runRepository,
+                            OrganizationContextService organizationContextService,
                             ObjectMapper objectMapper) {
         this.stepExecutor = stepExecutor;
         this.runRepository = runRepository;
+        this.organizationContextService = organizationContextService;
         this.objectMapper = objectMapper;
     }
 
@@ -67,6 +70,8 @@ public class ExecutionService {
         }
         root.putIfAbsent("trigger", trigger.name());
         context.setInitial(root);
+        // Chaque organisation fournit son propre contexte (variables, secrets, surcharges).
+        context.setRootValue("org", organizationContextService.forEndpoint(endpoint.getId()).asRoot());
 
         Object output = null;
         Throwable failure = null;

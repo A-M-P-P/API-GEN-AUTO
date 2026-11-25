@@ -20,7 +20,8 @@ public final class OrganizationDtos {
             boolean active,
             Instant createdAt,
             Instant updatedAt,
-            long apiCount
+            long apiCount,
+            String contextConfig
     ) {
     }
 
@@ -32,6 +33,7 @@ public final class OrganizationDtos {
             boolean active,
             Instant createdAt,
             Instant updatedAt,
+            String contextConfig,
             List<ApiDtos.ApiSummary> apis
     ) {
     }
@@ -43,7 +45,8 @@ public final class OrganizationDtos {
             String code,
             @NotBlank @Size(max = 150) String name,
             @Size(max = 4000) String description,
-            Boolean active
+            Boolean active,
+            @Size(max = 20000) String contextConfig
     ) {
     }
 }

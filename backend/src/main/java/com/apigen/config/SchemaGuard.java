@@ -44,6 +44,11 @@ public class SchemaGuard implements ApplicationRunner {
             }
         }
 
+        if (tableExists("organizations") && !columnExists("organizations", "context_config")) {
+            jdbc.execute("ALTER TABLE organizations ADD context_config CLOB");
+            log.warn("Colonne organizations.context_config absente : ajoutée automatiquement.");
+        }
+
         if (tableExists("api_definitions") && !columnExists("api_definitions", "organization_id")) {
             jdbc.execute("ALTER TABLE api_definitions ADD organization_id NUMBER(19)");
             log.warn("Colonne api_definitions.organization_id absente : ajoutée automatiquement.");
@@ -96,6 +101,7 @@ public class SchemaGuard implements ApplicationRunner {
                         code            VARCHAR(60) NOT NULL,
                         name            VARCHAR(150) NOT NULL,
                         description     CLOB,
+                        context_config  CLOB,
                         active          NUMBER(1) DEFAULT 1 NOT NULL,
                         created_at      TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP NOT NULL,
                         updated_at      TIMESTAMP(6),
