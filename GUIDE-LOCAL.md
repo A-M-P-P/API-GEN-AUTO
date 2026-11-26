@@ -88,7 +88,7 @@ npm start
 
 | Utilisateur | Mot de passe |
 | --- | --- |
-| `admin` | `ChangeMe123!` |
+| `admin` | `Admin2026!` |
 
 Le formulaire de connexion a un bouton **« Remplir les champs »** qui saisit ces identifiants pour vous.
 
@@ -202,7 +202,7 @@ Cas concret : la table `app_users` (utilisateurs de l'application) a été suppr
 ```
 Table app_users absente : créée automatiquement.
 Schéma auto-complété : 1 table(s) créée(s).
-Compte admin créé : admin / ChangeMe123!
+Compte admin créé : admin / Admin2026!
 ```
 
 L'application redémarre normalement, le compte `admin` est rétabli. Aucun script SQL à rejouer.

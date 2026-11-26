@@ -78,7 +78,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         if (userRepository.count() == 0) {
             String username = environment.getProperty("apigen.seed.admin-username", "admin");
-            String password = environment.getProperty("apigen.seed.admin-password", "ChangeMe123!");
+            String password = environment.getProperty("apigen.seed.admin-password", "Admin2026!");
             AppUser admin = new AppUser();
             admin.setUsername(username);
             admin.setPasswordHash(passwordEncoder.encode(password));
@@ -87,7 +87,7 @@ public class DataInitializer implements CommandLineRunner {
             admin.setEnabled(true);
             userRepository.save(admin);
             log.warn("Compte administrateur créé : {} — mot de passe fourni par apigen.seed.admin-password "
-                    + "ou « ChangeMe123! » par défaut. Changez-le en production.", username);
+                    + "ou « Admin2026! » par défaut. Changez-le en production.", username);
         }
 
         Organization defaultOrganization = ensureDefaultOrganization();

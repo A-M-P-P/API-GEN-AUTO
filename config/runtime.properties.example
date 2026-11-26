@@ -35,7 +35,8 @@ apigen.seed.demo=false
 # --- Premier compte administrateur (uniquement si la base est vide) ---
 apigen.seed.admin-username=admin
 # Soit ici, soit APIGEN_ADMIN_PASSWORD dans l'environnement (pas les deux).
-apigen.seed.admin-password=A_REMPLACER
+# Valeur initiale ; à changer dès la première connexion en production.
+apigen.seed.admin-password=Admin2026!
 
 # --- Connexions des pipelines (systèmes cibles) ---
 apigen.seed.connections-file=/opt/apigen/config/connections.json

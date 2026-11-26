@@ -174,7 +174,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 - API : `http://localhost:8080`
 - Swagger : `http://localhost:8080/swagger-ui.html`
 - Console H2 : `http://localhost:8080/h2-console` (profil `local` uniquement)
-- Compte admin créé au premier démarrage : **admin / ChangeMe123!**
+- Compte admin créé au premier démarrage : **admin / Admin2026!**
 
 ### 2. Frontend
 
@@ -326,7 +326,7 @@ Copier `.env.example` vers `.env` (ou exporter les variables) :
 | `APIGEN_SCHEDULER_POLL_MS` | `15000` | Fréquence de scrutation |
 | `APIGEN_FILES_BASE_DIR` | `./data/exchanges` | Racine des fichiers |
 | `APIGEN_SEED_DEMO` | `true` en dev | Crée le jeu de démonstration |
-| `APIGEN_ADMIN_PASSWORD` | `ChangeMe123!` | Mot de passe du premier compte admin (si aucun utilisateur) |
+| `APIGEN_ADMIN_PASSWORD` | `Admin2026!` | Mot de passe du premier compte admin (si aucun utilisateur) |
 | `APIGEN_SEED_CONNECTIONS_FILE` | `./config/connections.json` | Connexions des pipelines créées au démarrage |
 | `APIGEN_JWT_EXPIRATION_HOURS` | `8` | Durée de vie des jetons |
 | `APIGEN_JDBC_POOL_EVICT_MS` | `300000` | Fréquence de fermeture des pools inactifs |

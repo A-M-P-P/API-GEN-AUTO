@@ -40,7 +40,7 @@ class ApiGenApplicationTests {
 
         String response = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\":\"admin\",\"password\":\"ChangeMe123!\"}"))
+                        .content("{\"username\":\"admin\",\"password\":\"Admin2026!\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.user.username").value("admin"))
@@ -265,7 +265,7 @@ class ApiGenApplicationTests {
     private String loginToken() throws Exception {
         String response = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\":\"admin\",\"password\":\"ChangeMe123!\"}"))
+                        .content("{\"username\":\"admin\",\"password\":\"Admin2026!\"}"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         JsonNode node = objectMapper.readTree(response);
