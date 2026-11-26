@@ -373,6 +373,8 @@ Les connexions JDBC passent par un pool HikariCP propre à chaque base cible, et
 du pilote sont construites automatiquement selon l'URL. Deux règles :
 
 - **toute URL Oracle** reçoit `oracle.jdbc.timezoneAsRegion=false` ;
+- `oracle.jdbc.languageMap` / `oracle.jdbc.territoryMap` traduisent le Locale de la JVM vers
+  `AMERICAN_AMERICA`, pour éviter `ORA-12705` sur les bases anciennes ;
 - une base non-Oracle ne reçoit aucune propriété parasite.
 
 Le point Oracle est important : par défaut le pilote envoie le **nom** de la région de la JVM

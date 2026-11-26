@@ -1,6 +1,7 @@
 package com.apigen.service.connector;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
@@ -14,10 +15,42 @@ import java.util.Properties;
  * cette région répond alors {@code ORA-01882: timezone region not found}, ou
  * {@code ORA-00604} au niveau SQL récursif. En demandant un décalage numérique
  * ({@code oracle.jdbc.timezoneAsRegion=false}), la connexion passe sur toutes les versions.</p>
+ *
+ * <p>Sur une Oracle 10g, le pilote traduit aussi le Locale de la JVM en
+ * {@code NLS_LANGUAGE}/{@code NLS_TERRITORY} ; un territoire inconnu déclenche
+ * {@code ORA-12705}. Les maps {@code oracle.jdbc.languageMap} et
+ * {@code oracle.jdbc.territoryMap} sont donc initialisées vers AMERICAN_AMERICA.</p>
  */
 public final class JdbcConnectionProps {
 
+    /**
+     * Le pilote Oracle dérive NLS_LANGUAGE / NLS_TERRITORY du Locale de la JVM et exécute un
+     * ALTER SESSION à chaque connexion. Sur une 10g, un territoire comme CAMEROON est inconnu :
+     * ORA-00604 / ORA-12705. On traduit le Locale courant vers AMERICAN_AMERICA, valeurs
+     * acceptées par toutes les versions, sans toucher au Locale global de l'application.
+     */
+    static {
+        Locale locale = Locale.getDefault(Locale.Category.FORMAT);
+        String language = locale.getLanguage();
+        String country = locale.getCountry();
+        setIfAbsent("oracle.jdbc.languageMap", pair(language, "AMERICAN"));
+        setIfAbsent("oracle.jdbc.territoryMap", pair(country, "AMERICA"));
+    }
+
     private JdbcConnectionProps() {
+    }
+
+    private static String pair(String code, String oracleName) {
+        if (code == null || code.isBlank()) {
+            return null;
+        }
+        return code + "=" + oracleName + ";" + code.toUpperCase(Locale.ROOT) + "=" + oracleName;
+    }
+
+    private static void setIfAbsent(String key, String value) {
+        if (value != null && System.getProperty(key) == null) {
+            System.setProperty(key, value);
+        }
     }
 
     /** Vrai pour toute URL Oracle, quelle que soit la version du serveur. */

@@ -529,6 +529,39 @@ et saisissez :
 { "oracle.jdbc.timezoneAsRegion": "true" }
 ```
 
+### Oracle 10g : `ORA-00604` / `ORA-12705: impossible d'accéder aux fichiers de données NLS`
+
+Le pilote Oracle exécute implicitement, à chaque connexion, une instruction du type :
+`ALTER SESSION SET TIME_ZONE='...' NLS_LANGUAGE='...' NLS_TERRITORY='...'`. Les deux dernières
+valeurs sont déduites du `Locale` de la JVM. Avec un poste configuré en français/Cameroun, la
+10g peut recevoir un territoire qu'elle ne connaît pas et répondre `ORA-12705`, enveloppé dans
+`ORA-00604` au niveau SQL récursif.
+
+**Correctif intégré** : `JdbcConnectionProps` initialise aussi, au premier chargement :
+
+```
+oracle.jdbc.languageMap  = <lang>=AMERICAN;<LANG>=AMERICAN
+oracle.jdbc.territoryMap = <pays>=AMERICA;<PAYS>=AMERICA
+```
+
+Le Locale de l'application n'est pas modifié ; seules les valeurs envoyées à Oracle sont
+neutralisées. Vous pouvez forcer d'autres valeurs dans les VM options d'IntelliJ, par exemple :
+
+```
+-Doracle.jdbc.languageMap=fr=FRENCH;FR=FRENCH
+-Doracle.jdbc.territoryMap=cm=FRANCE;CM=FRANCE
+```
+
+Le correctif n'est appliqué que si les propriétés ne sont pas déjà définies. Si l'erreur
+persiste, vérifiez aussi la variable d'environnement `NLS_LANG` de Windows (registre
+`HKEY_LOCAL_MACHINE\SOFTWARE\ORACLE`) : une valeur invalide produit la même erreur.
+
+> **Limite** : le livrable utilise `ojdbc11` 23.5 (Java 17). Selon la matrice de compatibilité
+> Oracle, ce pilote est certifié pour les bases 19c/21c/23ai, **pas pour la 10g**. Les
+> correctifs ci-dessus permettent souvent de se connecter, mais pour un support officiel de la
+> 10g il faut un pilote ancien (ojdbc6 11.2) et donc une JVM 8 — incompatible avec Spring Boot 3.3.
+> La migration de la base vers 11g/12c reste la voie recommandée.
+
 ### Oracle : `ORA-18716: ... n'est dans aucun fuseau horaire` au démarrage
 
 Au lancement, le contexte Spring échoue dans `DataInitializer` avec
