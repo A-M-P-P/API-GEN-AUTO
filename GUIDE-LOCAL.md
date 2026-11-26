@@ -99,8 +99,8 @@ Le formulaire de connexion a un bouton **« Remplir les champs »** qui saisit c
 Une fois connecté, ces quatre vérifications confirment que l'ensemble de la chaîne tourne :
 
 1. **Tableau de bord** — les compteurs affichent 1 API, 4 endpoints, 2 connexions et 1 organisation.
-2. **APIs → API de démonstration** — sélectionnez l'endpoint « Dernier article » et cliquez **« Exécuter maintenant »**. Un appel REST réel vers JSONPlaceholder part, le résultat s'affiche en ~350 ms.
-3. **Connexions → JSONPlaceholder → Tester** — renvoie « Connexion HTTP établie » avec la latence mesurée.
+2. **APIs → API de démonstration** — sélectionnez l'endpoint « Dernier article » et cliquez **« Exécuter maintenant »**. L'appel vers JSONPlaceholder est tenté ; si la machine n'a pas accès à Internet, l'endpoint affiche tout de même un titre et un contenu de démonstration. Le test ne dépend donc pas du réseau.
+3. **Connexions → JSONPlaceholder → Tester** — renvoie « Connexion HTTP établie » avec la latence mesurée si Internet est accessible ; sinon ce test seul échoue, sans empêcher la démo de fonctionner.
 4. **Connexions → Fichiers d'échange → Tester** — renvoie le chemin du répertoire.
 
 Si ces quatre points passent, l'application est opérationnelle.

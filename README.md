@@ -209,6 +209,11 @@ curl -X POST http://localhost:8080/default/api/gateway/demo/echo \
 {"runId":1,"correlationId":"bd69b4cd","status":"SUCCESS","data":{"echo":"BONJOUR","receivedVia":"POST"}}
 ```
 
+Dans le studio, le JSON saisi dans **Payload JSON** est injecté à la fois dans `payload` et dans
+`request.body` (avec `request.query` si le payload contient une clé `query`). Les endpoints entrants
+de la démo se testent donc sans passer par la passerelle. L'endpoint « Dernier article » tente un
+appel réel mais retombe sur des valeurs de démonstration si Internet n'est pas accessible.
+
 ---
 
 ## Se connecter à votre Oracle local

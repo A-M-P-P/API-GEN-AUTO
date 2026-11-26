@@ -92,6 +92,7 @@ public class RestConnector {
 
         Object bodyValue = serializeBody(body);
         long start = System.nanoTime();
+        boolean failOnError = !Boolean.FALSE.equals(step.get("failOnError"));
 
         Map<String, Object> result;
         try {
@@ -125,11 +126,22 @@ public class RestConnector {
             result.put("url", finalUrl);
             result.put("method", method);
         } catch (Exception e) {
-            throw new IllegalStateException("Appel HTTP " + method + " " + finalUrl + " échoué : " + rootMessage(e), e);
+            if (failOnError) {
+                throw new IllegalStateException("Appel HTTP " + method + " " + finalUrl + " échoué : " + rootMessage(e), e);
+            }
+            // failOnError=false : on poursuit avec un résultat vide pour que les étapes
+            // suivantes puissent appliquer leurs valeurs par défaut (démo hors ligne).
+            result = new LinkedHashMap<>();
+            result.put("status", 0);
+            result.put("ok", false);
+            result.put("error", rootMessage(e));
+            result.put("body", Map.of());
+            result.put("durationMs", (System.nanoTime() - start) / 1_000_000);
+            result.put("url", finalUrl);
+            result.put("method", method);
         }
 
         Integer status = (Integer) result.get("status");
-        boolean failOnError = !Boolean.FALSE.equals(step.get("failOnError"));
         if (failOnError && (status == null || status >= 400)) {
             throw new IllegalStateException("Le système distant a répondu " + status + " pour " + method + " " + finalUrl);
         }

@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Initialise le compte administrateur et, en développement, un jeu de démonstration.
@@ -22,6 +24,24 @@ import java.util.Optional;
 public class DataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
+
+    private static final Pattern CONNECTION_ID = Pattern.compile("\"connectionId\"\\s*:\\s*(\\d+)");
+
+    private static final String DEMO_POSTS_PIPELINE = """
+            [
+              { "type": "HTTP", "name": "fetch", "method": "GET", "url": "/posts/1",
+                "connectionId": %d, "failOnError": false },
+              {
+                "type": "MAP",
+                "name": "shape",
+                "source": "output",
+                "mappings": [
+                  { "source": "body.title", "target": "titre", "default": "Titre de démonstration" },
+                  { "source": "body.body", "target": "contenu", "default": "Exemple affiché hors connexion" }
+                ]
+              }
+            ]
+            """;
 
     private final UserRepository userRepository;
     private final OrganizationRepository organizationRepository;
@@ -68,6 +88,9 @@ public class DataInitializer implements CommandLineRunner {
         if (properties.seed().demo() && apiRepository.count() == 0) {
             seedDemo(defaultOrganization);
         }
+        // Les installations déjà créées conservent leurs données : on met à jour les endpoints
+        // de la démo qui utilisaient l'ancien pipeline sans valeur de repli.
+        patchDemoEndpoints();
     }
 
     /** Organisation de rassemblement des API non affectées à une organisation nominative. */
@@ -158,20 +181,7 @@ public class DataInitializer implements CommandLineRunner {
 
         Endpoint posts = createEndpoint(api, "Dernier article", "GET", "/posts", Direction.OUTBOUND,
                 "Récupère un article depuis JSONPlaceholder et le remappe.",
-                """
-                [
-                  { "type": "HTTP", "name": "fetch", "method": "GET", "url": "/posts/1", "connectionId": %d },
-                  {
-                    "type": "MAP",
-                    "name": "shape",
-                    "source": "output",
-                    "mappings": [
-                      { "source": "body.title", "target": "titre" },
-                      { "source": "body.body", "target": "contenu" }
-                    ]
-                  }
-                ]
-                """.formatted(rest.getId()));
+                DEMO_POSTS_PIPELINE.formatted(rest.getId()));
 
         Endpoint export = createEndpoint(api, "Export clients", "POST", "/export/clients", Direction.OUTBOUND,
                 "Écrit les données reçues dans un fichier CSV.",
@@ -193,6 +203,31 @@ public class DataInitializer implements CommandLineRunner {
 
         log.info("Jeu de démonstration créé : API « demo » (echo, hello, posts, export) dans l'organisation « {} ».",
                 organization != null ? organization.getCode() : "default");
+    }
+
+    /** Rend le pipeline « Dernier article » compatible hors ligne sur les bases déjà initialisées. */
+    private void patchDemoEndpoints() {
+        for (ApiDefinition api : apiRepository.findAll()) {
+            if (!"demo".equalsIgnoreCase(api.getCode())) {
+                continue;
+            }
+            for (Endpoint endpoint : endpointRepository.findByApiIdWithSchedule(api.getId())) {
+                String pipeline = endpoint.getPipeline();
+                if (!"Dernier article".equals(endpoint.getName())
+                        || pipeline == null
+                        || !pipeline.contains("/posts/1")
+                        || pipeline.contains("failOnError")) {
+                    continue;
+                }
+                Matcher matcher = CONNECTION_ID.matcher(pipeline);
+                if (!matcher.find()) {
+                    continue;
+                }
+                endpoint.setPipeline(DEMO_POSTS_PIPELINE.formatted(matcher.group(1)));
+                endpointRepository.save(endpoint);
+                log.info("Endpoint de démonstration « Dernier article » mis à jour (mode hors ligne).");
+            }
+        }
     }
 
     private Endpoint createEndpoint(ApiDefinition api, String name, String method, String path,

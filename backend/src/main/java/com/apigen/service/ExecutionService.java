@@ -109,21 +109,46 @@ public class ExecutionService {
     public ExecutionOutcome manualRun(Endpoint endpoint, JsonNode payload) {
         Map<String, Object> initial = new LinkedHashMap<>();
         initial.put("trigger", TriggerType.MANUAL.name());
-        initial.put("payload", payload == null || payload.isNull()
-                ? new LinkedHashMap<String, Object>()
-                : objectMapper.convertValue(payload, new TypeReference<Object>() {
-        }));
+        Object body = readPayload(payload);
+        initial.put("payload", body);
+        // Un test depuis le studio doit se comporter comme un appel réel : les pipelines
+        // INBOUND lisent request.body / request.query, et pas seulement payload.
+        initial.put("request", simulatedRequest(endpoint, body));
         return run(endpoint, initial, TriggerType.MANUAL, shortId());
     }
 
     public ExecutionOutcome scheduledRun(Endpoint endpoint, JsonNode payload) {
         Map<String, Object> initial = new LinkedHashMap<>();
         initial.put("trigger", TriggerType.SCHEDULE.name());
-        initial.put("payload", payload == null || payload.isNull()
+        Object body = readPayload(payload);
+        initial.put("payload", body);
+        initial.put("request", simulatedRequest(endpoint, body));
+        return run(endpoint, initial, TriggerType.SCHEDULE, shortId());
+    }
+
+    private Object readPayload(JsonNode payload) {
+        return payload == null || payload.isNull()
                 ? new LinkedHashMap<String, Object>()
                 : objectMapper.convertValue(payload, new TypeReference<Object>() {
-        }));
-        return run(endpoint, initial, TriggerType.SCHEDULE, shortId());
+        });
+    }
+
+    /** Construit un contexte {@code request} cohérent pour les tests sans serveur HTTP. */
+    private Map<String, Object> simulatedRequest(Endpoint endpoint, Object body) {
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("method", endpoint.getMethod());
+        request.put("path", endpoint.getPath());
+        request.put("headers", Map.of());
+        if (body instanceof Map<?, ?> map) {
+            Object query = map.get("query");
+            request.put("query", query instanceof Map<?, ?> values ? values : Map.of());
+            Object nestedBody = map.get("body");
+            request.put("body", nestedBody == null ? body : nestedBody);
+        } else {
+            request.put("query", Map.of());
+            request.put("body", body);
+        }
+        return request;
     }
 
     public ExecutionOutcome inboundRun(Endpoint endpoint, Map<String, Object> request) {
