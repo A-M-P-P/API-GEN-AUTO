@@ -30,14 +30,23 @@ public final class JdbcConnectionProps {
      * acceptées par toutes les versions, sans toucher au Locale global de l'application.
      */
     static {
+        configureOracleNls();
+    }
+
+    private JdbcConnectionProps() {
+    }
+
+    /**
+     * À appeler avant tout chargement du pilote Oracle : le pilote lit ces maps une seule fois,
+     * lors de l'initialisation de sa classe NLS. Sans cela, un réglage posé au moment de la
+     * première connexion peut arriver trop tard.
+     */
+    public static void configureOracleNls() {
         Locale locale = Locale.getDefault(Locale.Category.FORMAT);
         String language = locale.getLanguage();
         String country = locale.getCountry();
         setIfAbsent("oracle.jdbc.languageMap", pair(language, "AMERICAN"));
         setIfAbsent("oracle.jdbc.territoryMap", pair(country, "AMERICA"));
-    }
-
-    private JdbcConnectionProps() {
     }
 
     private static String pair(String code, String oracleName) {
