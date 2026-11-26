@@ -66,9 +66,9 @@
               <div class="field">
                 <label>Organisation</label>
                 <select class="select" formControlName="organizationId">
-                  <option [value]="null">Aucune (non classée)</option>
+                  <option [ngValue]="null">Aucune (non classée)</option>
                   @for (organization of organizations(); track organization.id) {
-                    <option [value]="organization.id">{{ organization.name }}</option>
+                    <option [ngValue]="organization.id">{{ organization.name }}</option>
                   }
                 </select>
                 <span class="hint">Une organisation peut contenir zéro ou plusieurs API.</span>

@@ -164,14 +164,25 @@ export class ApiBuilderComponent implements OnInit {
   }
 
   saveApi(): void {
-    if (this.apiForm.invalid || this.saving()) {
+    if (this.saving()) {
+      return;
+    }
+    if (this.apiForm.invalid) {
       this.apiForm.markAllAsTouched();
+      const problems: string[] = [];
+      if (this.apiForm.controls.code.invalid) {
+        problems.push('Code : 2 à 80 caractères, minuscules, chiffres et tirets');
+      }
+      if (this.apiForm.controls.name.invalid) {
+        problems.push('Nom obligatoire');
+      }
+      this.toast.error(problems.length ? 'Vérifiez : ' + problems.join(' ; ') + '.' : 'Formulaire incomplet.');
       return;
     }
     this.saving.set(true);
     const raw = this.apiForm.getRawValue();
-    // Un <option [value]="null"> fournit la chaîne "null" : on la ramène à un vrai null,
-    // sinon le backend reçoit organizationId="null" et refuse la création.
+    // [ngValue] fournit déjà un number ou null ; on normalise aussi les anciennes
+    // valeurs "null" pour ne jamais envoyer une chaîne au champ Long du backend.
     const selectedOrganization: unknown = raw.organizationId;
     const organizationId = selectedOrganization == null
       || selectedOrganization === '' || selectedOrganization === 'null'
@@ -192,7 +203,7 @@ export class ApiBuilderComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
         const detail = typeof err.error?.message === 'string' ? err.error.message : null;
-        this.toast.error(detail ?? 'Enregistrement de l\u2019API impossible.');
+        this.toast.error(detail ?? 'Enregistrement de l’API impossible.');
       }
     });
   }
@@ -242,7 +253,7 @@ export class ApiBuilderComponent implements OnInit {
         this.runResult.set(null);
         this.pipelineError.set(null);
       },
-      error: () => this.toast.error('Chargement de l\u2019endpoint impossible.')
+      error: () => this.toast.error('Chargement de l’endpoint impossible.')
     });
   }
 
@@ -311,7 +322,7 @@ export class ApiBuilderComponent implements OnInit {
       },
       error: () => {
         this.savingEndpoint.set(false);
-        this.toast.error('Enregistrement de l\u2019endpoint impossible.');
+        this.toast.error('Enregistrement de l’endpoint impossible.');
       }
     });
   }
@@ -388,7 +399,7 @@ export class ApiBuilderComponent implements OnInit {
   runTest(): void {
     const id = this.selectedEndpointId();
     if (!id) {
-      this.toast.warning('Enregistrez d\u2019abord l\u2019endpoint.');
+      this.toast.warning('Enregistrez d\u2019abord l’endpoint.');
       return;
     }
     const payload = this.parseJson(this.runPayload(), 'Le payload doit être un JSON valide.');
