@@ -10,8 +10,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -141,6 +144,84 @@ class ApiGenApplicationTests {
         mockMvc.perform(get("/org-b/api/gateway/shared"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value("B"));
+    }
+
+    @Test
+    void textAndRedirectResponseFormats() throws Exception {
+        String token = loginToken();
+        long textApi = createApi(token, "fmt-text", null, null);
+        createEndpoint(token, textApi, "GET", "TEXT", null,
+                "[{\"type\":\"SET\",\"key\":\"value\",\"value\":\"bonjour\"}]");
+
+        mockMvc.perform(get("/default/api/gateway/fmt-text"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
+                .andExpect(content().string("bonjour"))
+                .andExpect(header().exists("X-Run-Id"));
+
+        long redirectApi = createApi(token, "fmt-redirect", null, null);
+        createEndpoint(token, redirectApi, "GET", "REDIRECT", null,
+                "[{\"type\":\"SET\",\"key\":\"value\",\"value\":\"https://exemple.fr/page\"}]");
+
+        mockMvc.perform(get("/default/api/gateway/fmt-redirect"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", startsWith("https://exemple.fr/")));
+    }
+
+    @Test
+    void xmlInputIsParsedIntoRequestBody() throws Exception {
+        String token = loginToken();
+        long apiId = createApi(token, "fmt-xml", null, null);
+        createEndpoint(token, apiId, "POST", "JSON", null, """
+                [{"type":"MAP","mappings":[
+                  {"source":"request.body.client.nom","target":"greeting"}
+                ]}]
+                """);
+
+        mockMvc.perform(post("/default/api/gateway/fmt-xml")
+                        .contentType("application/xml")
+                        .content("<client><nom>Amina</nom></client>"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.greeting").value("Amina"));
+    }
+
+    private long createApi(String token, String code, String responseFormat, String redirectLocation) throws Exception {
+        String content = """
+                {"code":"%s","name":"API %s","status":"ACTIVE"}
+                """.formatted(code, code);
+        if (responseFormat != null || redirectLocation != null) {
+            content = content.replace("\"status\":\"ACTIVE\"",
+                    "\"status\":\"ACTIVE\"" + (responseFormat == null ? "" : ",\"responseFormat\":\"" + responseFormat + "\"")
+                            + (redirectLocation == null ? "" : ",\"redirectLocation\":\"" + redirectLocation + "\""));
+        }
+        String response = mockMvc.perform(post("/api/apis")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readTree(response).get("id").asLong();
+    }
+
+    private void createEndpoint(String token, long apiId, String method, String format, String fileName, String pipeline) throws Exception {
+        String content = """
+                {
+                  "name": "Test",
+                  "method": "%s",
+                  "path": "/",
+                  "direction": "INBOUND",
+                  "responseFormat": "%s",
+                  "pipeline": %s
+                }
+                """.formatted(method, format, pipeline);
+        if (fileName != null) {
+            content = content.replace("\"responseFormat\"", "\"responseFileName\":\"" + fileName + "\",\"responseFormat\"");
+        }
+        mockMvc.perform(post("/api/apis/" + apiId + "/endpoints")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content))
+                .andExpect(status().isCreated());
     }
 
     private long createOrganization(String token, String code) throws Exception {

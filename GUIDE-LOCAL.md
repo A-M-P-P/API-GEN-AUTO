@@ -258,6 +258,34 @@ Règles :
 - l'organisation par défaut est créée automatiquement au premier démarrage et recueille les API
   existantes lors d'une montée de version.
 
+### 4.4. Formats acceptés et rendus par un endpoint
+
+Dans l'éditeur d'API, rubrique **Réponse de la passerelle**, chaque endpoint choisit son format de
+sortie : `JSON` (défaut), `TEXT`, `XML`, `FILE`, `BINARY` ou `REDIRECT`.
+
+- `TEXT` renvoie le résultat en `text/plain` ; les identifiants d'exécution passent dans les
+  en-têtes `X-Run-Id` et `X-Correlation-Id`.
+- `XML` sérialise le résultat sous `<response>…</response>`, sauf si le pipeline produit déjà une
+  chaîne XML.
+- `FILE` télécharge le fichier écrit par une étape `FILE_WRITE` (le champ `path` du résultat sert
+  de source) avec l'en-tête `Content-Disposition`.
+- `BINARY` décode une valeur base64 issue des champs `base64`, `content` ou `data` du résultat.
+- `REDIRECT` répond `302` vers `redirectLocation` ; `{runId}` et `{correlationId}` y sont remplacés.
+
+En entrée, la passerelle détecte le format via le `Content-Type` : JSON, XML, texte, formulaire
+urlencodé, `multipart/form-data` (fichiers exposés en base64 dans `request.files.<nom>.base64`)
+et binaire (`request.body` en base64). Les requêtes sont limitées à 20 Mo.
+
+Exemple avec un XML entrant :
+
+```bash
+curl -X POST http://localhost:8081/default/api/gateway/mon-api/orders \
+  -H "Content-Type: application/xml" \
+  -d '<order><reference>CM-123</reference></order>'
+```
+
+Le pipeline lit alors `{{request.body.order.reference}}`.
+
 ---
 
 ## 5. Modifier les adresses, ports et paramètres sans rebuild

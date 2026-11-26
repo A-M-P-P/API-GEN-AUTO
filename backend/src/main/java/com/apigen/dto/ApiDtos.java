@@ -3,6 +3,7 @@ package com.apigen.dto;
 import com.apigen.domain.ApiStatus;
 import com.apigen.domain.Direction;
 import com.apigen.domain.InboundAuth;
+import com.apigen.domain.ResponseFormat;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -85,7 +86,8 @@ public final class ApiDtos {
             String path,
             Direction direction,
             boolean active,
-            ScheduleResponse schedule
+            ScheduleResponse schedule,
+            ResponseFormat responseFormat
     ) {
     }
 
@@ -101,7 +103,11 @@ public final class ApiDtos {
             boolean active,
             Instant createdAt,
             Instant updatedAt,
-            ScheduleResponse schedule
+            ScheduleResponse schedule,
+            ResponseFormat responseFormat,
+            String responseFileName,
+            String responseContentType,
+            String redirectLocation
     ) {
     }
 
@@ -116,7 +122,11 @@ public final class ApiDtos {
             Direction direction,
             String description,
             JsonNode pipeline,
-            Boolean active
+            Boolean active,
+            ResponseFormat responseFormat,
+            String responseFileName,
+            String responseContentType,
+            String redirectLocation
     ) {
     }
 

@@ -6,6 +6,7 @@ export type RunStatus = 'RUNNING' | 'SUCCESS' | 'FAILED';
 export type TriggerType = 'MANUAL' | 'SCHEDULE' | 'INBOUND';
 export type Role = 'ADMIN' | 'EDITOR' | 'VIEWER';
 export type ConnectionType = 'ORACLE' | 'POSTGRESQL' | 'MYSQL' | 'SQLSERVER' | 'REST' | 'FILE' | 'FTP' | 'SFTP';
+export type ResponseFormat = 'JSON' | 'TEXT' | 'XML' | 'FILE' | 'BINARY' | 'REDIRECT';
 
 export interface Organization {
   id: number;
@@ -61,6 +62,7 @@ export interface EndpointSummary {
   direction: Direction;
   active: boolean;
   schedule?: Schedule | null;
+  responseFormat?: ResponseFormat;
 }
 
 export interface EndpointDetail extends EndpointSummary {
@@ -69,6 +71,9 @@ export interface EndpointDetail extends EndpointSummary {
   pipeline: any[];
   createdAt: string;
   updatedAt: string;
+  responseFileName?: string | null;
+  responseContentType?: string | null;
+  redirectLocation?: string | null;
 }
 
 export interface ApiDetail extends ApiSummary {
@@ -93,6 +98,10 @@ export interface EndpointPayload {
   description?: string;
   pipeline: any[];
   active: boolean;
+  responseFormat?: ResponseFormat;
+  responseFileName?: string;
+  responseContentType?: string;
+  redirectLocation?: string;
 }
 
 export interface ApiKeyResponse {

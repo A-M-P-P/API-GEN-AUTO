@@ -63,6 +63,14 @@ public class SchemaGuard implements ApplicationRunner {
             safeExecute("ALTER TABLE api_definitions ADD CONSTRAINT ux_api_code_org UNIQUE (organization_id, code)");
         }
 
+        // Formats de réponse des endpoints.
+        if (tableExists("endpoints")) {
+            safeExecute("ALTER TABLE endpoints ADD response_format VARCHAR(20) DEFAULT 'JSON' NOT NULL");
+            safeExecute("ALTER TABLE endpoints ADD response_file_name VARCHAR(200)");
+            safeExecute("ALTER TABLE endpoints ADD response_content_type VARCHAR(100)");
+            safeExecute("ALTER TABLE endpoints ADD redirect_location VARCHAR(500)");
+        }
+
         if (created > 0) {
             log.warn("Schéma auto-complété : {} table(s) créée(s).", created);
         } else {
@@ -146,6 +154,10 @@ public class SchemaGuard implements ApplicationRunner {
                         path            VARCHAR(300) NOT NULL,
                         direction       VARCHAR(20) DEFAULT 'INBOUND' NOT NULL,
                         description     CLOB,
+                        response_format VARCHAR(20) DEFAULT 'JSON' NOT NULL,
+                        response_file_name VARCHAR(200),
+                        response_content_type VARCHAR(100),
+                        redirect_location VARCHAR(500),
                         pipeline        CLOB,
                         active          NUMBER(1) DEFAULT 1 NOT NULL,
                         created_at      TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP NOT NULL,

@@ -143,6 +143,7 @@
                     <div class="endpoint-path mono">{{ endpoint.path }}</div>
                   </div>
                   <div class="endpoint-side">
+                    <span class="badge badge-muted">{{ endpoint.responseFormat || 'JSON' }}</span>
                     <span class="badge {{ endpoint.direction === 'INBOUND' ? 'badge-info' : 'badge-brand' }}">
                       {{ directionLabel(endpoint.direction) }}
                     </span>
@@ -212,6 +213,47 @@
               <input type="checkbox" formControlName="active">
               Endpoint actif
             </label>
+
+            <div class="divider"></div>
+
+            <div class="spread mb-8">
+              <strong class="small">Réponse de la passerelle</strong>
+              <span class="hint">Format du corps renvoyé aux appelants.</span>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label>Format</label>
+                <select class="select" formControlName="responseFormat">
+                  <option value="JSON">JSON (enveloppe runId / data)</option>
+                  <option value="TEXT">Texte brut</option>
+                  <option value="XML">XML</option>
+                  <option value="FILE">Fichier téléchargeable</option>
+                  <option value="BINARY">Binaire</option>
+                  <option value="REDIRECT">Redirection 302</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Type MIME (optionnel)</label>
+                <input class="input mono" formControlName="responseContentType" placeholder="application/xml">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label>Nom de fichier (FILE / BINARY)</label>
+                <input class="input" formControlName="responseFileName" placeholder="export-{runId}.csv">
+              </div>
+              <div class="field">
+                <label>URL de redirection (REDIRECT)</label>
+                <input class="input" formControlName="redirectLocation" placeholder="https://exemple.fr/accueil">
+              </div>
+            </div>
+            <span class="hint">
+              FILE utilise le chemin produit par une étape FILE_WRITE ; BINARY attend une valeur
+              base64 (champ <code>base64</code>, <code>content</code> ou <code>data</code>).
+              <code>{runId}</code> et <code>{correlationId}</code> sont remplacés dans le nom de
+              fichier et l'URL. En entrée, JSON, XML, texte, formulaire, multipart et binaire sont
+              détectés via le Content-Type.
+            </span>
 
             <div class="divider"></div>
 

@@ -122,6 +122,12 @@
             <version>${poi.version}</version>
         </dependency>
 
+        <!-- Sérialisation XML des réponses et parsing des corps XML entrants -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+        </dependency>
+
         <!-- Documentation API -->
         <dependency>
             <groupId>org.springdoc</groupId>

@@ -24,7 +24,8 @@ public class EndpointMapper {
                 endpoint.getPath(),
                 endpoint.getDirection(),
                 endpoint.isActive(),
-                toScheduleResponse(endpoint.getSchedule())
+                toScheduleResponse(endpoint.getSchedule()),
+                endpoint.getResponseFormat()
         );
     }
 
@@ -41,7 +42,11 @@ public class EndpointMapper {
                 endpoint.isActive(),
                 endpoint.getCreatedAt(),
                 endpoint.getUpdatedAt(),
-                toScheduleResponse(endpoint.getSchedule())
+                toScheduleResponse(endpoint.getSchedule()),
+                endpoint.getResponseFormat(),
+                endpoint.getResponseFileName(),
+                endpoint.getResponseContentType(),
+                endpoint.getRedirectLocation()
         );
     }
 

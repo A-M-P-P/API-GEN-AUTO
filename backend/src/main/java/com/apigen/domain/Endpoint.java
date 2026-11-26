@@ -31,6 +31,23 @@ public class Endpoint {
     @Column(columnDefinition = "CLOB")
     private String description;
 
+    /** Format de la réponse renvoyée par la passerelle (json par défaut). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "response_format", nullable = false, length = 20)
+    private ResponseFormat responseFormat = ResponseFormat.JSON;
+
+    /** Nom du fichier téléchargé (FILE/BINARY), template simple {runId} accepté. */
+    @Column(name = "response_file_name", length = 200)
+    private String responseFileName;
+
+    /** Type MIME explicite pour TEXT/XML/FILE/BINARY ; sinon déduit du format. */
+    @Column(name = "response_content_type", length = 100)
+    private String responseContentType;
+
+    /** URL de redirection (REDIRECT), template simple {runId} accepté. */
+    @Column(name = "redirect_location", length = 500)
+    private String redirectLocation;
+
     /** JSON : tableau ordonné d'étapes d'exécution. */
     @Column(columnDefinition = "CLOB")
     private String pipeline;
@@ -65,6 +82,14 @@ public class Endpoint {
     public void setDirection(Direction direction) { this.direction = direction; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public ResponseFormat getResponseFormat() { return responseFormat; }
+    public void setResponseFormat(ResponseFormat responseFormat) { this.responseFormat = responseFormat; }
+    public String getResponseFileName() { return responseFileName; }
+    public void setResponseFileName(String responseFileName) { this.responseFileName = responseFileName; }
+    public String getResponseContentType() { return responseContentType; }
+    public void setResponseContentType(String responseContentType) { this.responseContentType = responseContentType; }
+    public String getRedirectLocation() { return redirectLocation; }
+    public void setRedirectLocation(String redirectLocation) { this.redirectLocation = redirectLocation; }
     public String getPipeline() { return pipeline; }
     public void setPipeline(String pipeline) { this.pipeline = pipeline; }
     public boolean isActive() { return active; }

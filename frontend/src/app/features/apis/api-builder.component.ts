@@ -17,6 +17,7 @@ import {
   HttpMethod,
   InboundAuth,
   Organization,
+  ResponseFormat,
   Run,
   Schedule
 } from '../../core/models';
@@ -92,6 +93,10 @@ export class ApiBuilderComponent implements OnInit {
     direction: ['INBOUND' as Direction],
     description: [''],
     active: [true],
+    responseFormat: ['JSON' as ResponseFormat],
+    responseFileName: [''],
+    responseContentType: [''],
+    redirectLocation: [''],
     pipeline: ['[]'],
     cron: [''],
     scheduleEnabled: [false],
@@ -237,6 +242,10 @@ export class ApiBuilderComponent implements OnInit {
       direction: detail.direction,
       description: detail.description ?? '',
       active: detail.active,
+      responseFormat: detail.responseFormat ?? 'JSON',
+      responseFileName: detail.responseFileName ?? '',
+      responseContentType: detail.responseContentType ?? '',
+      redirectLocation: detail.redirectLocation ?? '',
       pipeline: JSON.stringify(detail.pipeline ?? [], null, 2),
       cron: detail.schedule?.cronExpression ?? '',
       scheduleEnabled: detail.schedule?.enabled ?? false,
@@ -270,7 +279,11 @@ export class ApiBuilderComponent implements OnInit {
       direction: raw.direction,
       description: raw.description,
       pipeline,
-      active: raw.active
+      active: raw.active,
+      responseFormat: raw.responseFormat,
+      responseFileName: raw.responseFileName,
+      responseContentType: raw.responseContentType,
+      redirectLocation: raw.redirectLocation
     };
 
     this.savingEndpoint.set(true);
@@ -473,6 +486,10 @@ export class ApiBuilderComponent implements OnInit {
       direction: 'INBOUND',
       description: '',
       active: true,
+      responseFormat: 'JSON',
+      responseFileName: '',
+      responseContentType: '',
+      redirectLocation: '',
       pipeline: '[]',
       cron: '',
       scheduleEnabled: false,

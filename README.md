@@ -71,6 +71,8 @@ Le projet répond à un besoin concret d'entreprise : plutôt que de développer
 ### Moteur d'exécution
 - Endpoints **INBOUND** exposés par une passerelle dynamique : `/{code-organisation}/api/gateway/{code-api}{chemin}`.
 - Endpoints **OUTBOUND** exécutables manuellement ou planifiés par cron (format Spring, 6 champs).
+- Entrée : **JSON, XML, texte, formulaire, multipart (fichiers) et binaire** détectés par `Content-Type`.
+- Sortie : **JSON, texte, XML, fichier téléchargeable, binaire et redirection 302**, configurable par endpoint.
 - Pipelines JSON composés d'étapes ordonnées :
   - `HTTP` / `REST` : appels sortants (GET, POST, PUT, PATCH, DELETE) avec auth Basic, Bearer ou API key.
   - `DB_QUERY` : lecture Oracle, PostgreSQL, MySQL, SQL Server (JDBC).
@@ -532,6 +534,8 @@ Une route exposée (INBOUND) ou un flux sortant (OUTBOUND) :
 - `pipeline` : tableau JSON d'étapes,
 - `active` : interrupteur sans suppression,
 - `schedule` : cron optionnel + payload JSON.
+- `responseFormat` : `JSON` (défaut), `TEXT`, `XML`, `FILE`, `BINARY` ou `REDIRECT`, avec
+  `responseFileName`, `responseContentType` et `redirectLocation` optionnels.
 
 ### Connexion
 Une source ou destination réutilisée : REST, Oracle, PostgreSQL, MySQL, SQL Server, fichiers, FTP/SFTP (connecteurs FTP/SFTP à venir).
@@ -604,6 +608,36 @@ Les requêtes de métadonnées sont écrites par dialecte : `all_users` / `all_t
 - `output` (dernier résultat)
 - `trigger`, `vars`
 - `org.code`, `org.variables`, `org.secrets`, `org.overrides` (contexte de l'organisation)
+- `request.rawBody`, `request.files.<nom>.{filename,contentType,size,base64}`, `request.link`, `request.binary`
+
+#### Formats d'entrée et de sortie
+
+**Entrée** — la passerelle analyse le corps selon le `Content-Type` :
+
+| Content-Type | `request.body` |
+|---|---|
+| `application/json` | objet/listier JSON |
+| `application/xml`, `text/xml` | objet JSON issu du XML (`request.body.client.nom`) |
+| `text/plain` | chaîne (et `request.link` si c'est une URL) |
+| `application/x-www-form-urlencoded` | objet clé/valeur |
+| `multipart/form-data` | `{fields, files}` ; chaque fichier expose `base64`, `filename`, `contentType`, `size` |
+| autre (octet-stream, image…) | chaîne **base64** + `request.binary=true`, `request.size` |
+
+Un paramètre de requête `url=...` alimente aussi `request.link`.
+
+**Sortie** — le format est configuré sur l'endpoint (rubrique « Réponse de la passerelle ») :
+
+| Format | Réponse |
+|---|---|
+| `JSON` | enveloppe `{runId, correlationId, status, data}` (comportement historique) |
+| `TEXT` | `text/plain` avec le résultat du pipeline |
+| `XML` | `application/xml`, racine `<response>` (ou XML déjà produit par le pipeline) |
+| `FILE` | fichier créé par `FILE_WRITE`, téléchargé en pièce jointe (`path` lu dans le résultat) |
+| `BINARY` | octets décodés depuis un champ `base64`/`content`/`data` du résultat (une étape `SET` avec `{{request.body}}` permet de renvoyer un binaire reçu) |
+| `REDIRECT` | `302 Location` (champ `redirectLocation`, `{runId}` accepté) |
+
+Pour les formats non-JSON, `X-Run-Id` et `X-Correlation-Id` sont renvoyés dans les en-têtes ;
+les échecs d'exécution restent une réponse JSON `502`.
 
 ---
 

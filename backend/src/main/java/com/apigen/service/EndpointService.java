@@ -71,6 +71,7 @@ public class EndpointService {
         endpoint.setPath(request.path());
         endpoint.setDirection(request.direction() == null ? com.apigen.domain.Direction.INBOUND : request.direction());
         endpoint.setDescription(request.description());
+        applyResponseFormat(endpoint, request);
         endpoint.setPipeline(writePipeline(request.pipeline()));
         endpoint.setActive(request.active() == null || request.active());
         Endpoint saved = endpointRepository.save(endpoint);
@@ -97,6 +98,7 @@ public class EndpointService {
             endpoint.setDirection(request.direction());
         }
         endpoint.setDescription(request.description());
+        applyResponseFormat(endpoint, request);
         endpoint.setPipeline(writePipeline(request.pipeline()));
         if (request.active() != null) {
             endpoint.setActive(request.active());
@@ -193,6 +195,18 @@ public class EndpointService {
         if (!PATH_PATTERN.matcher(path).matches()) {
             throw ApiException.badRequest("Chemin d'endpoint invalide");
         }
+    }
+
+    private void applyResponseFormat(Endpoint endpoint, ApiDtos.EndpointRequest request) {
+        endpoint.setResponseFormat(request.responseFormat() == null
+                ? com.apigen.domain.ResponseFormat.JSON : request.responseFormat());
+        endpoint.setResponseFileName(blankToNull(request.responseFileName()));
+        endpoint.setResponseContentType(blankToNull(request.responseContentType()));
+        endpoint.setRedirectLocation(blankToNull(request.redirectLocation()));
+    }
+
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private String writePipeline(JsonNode pipeline) {

@@ -10,14 +10,14 @@ import com.apigen.repository.OrganizationRepository;
 import com.apigen.security.ApiKeyService;
 import com.apigen.security.JwtService;
 import com.apigen.service.ExecutionService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.apigen.service.InboundRequestParser;
+import com.apigen.service.ResponseFormatService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -50,7 +50,8 @@ public class DynamicGatewayController {
     private final ApiKeyService apiKeyService;
     private final JwtService jwtService;
     private final ExecutionService executionService;
-    private final ObjectMapper objectMapper;
+    private final InboundRequestParser requestParser;
+    private final ResponseFormatService responseFormatService;
 
     public DynamicGatewayController(ApiDefinitionRepository apiRepository,
                                     OrganizationRepository organizationRepository,
@@ -58,21 +59,22 @@ public class DynamicGatewayController {
                                     ApiKeyService apiKeyService,
                                     JwtService jwtService,
                                     ExecutionService executionService,
-                                    ObjectMapper objectMapper) {
+                                    InboundRequestParser requestParser,
+                                    ResponseFormatService responseFormatService) {
         this.apiRepository = apiRepository;
         this.organizationRepository = organizationRepository;
         this.endpointRepository = endpointRepository;
         this.apiKeyService = apiKeyService;
         this.jwtService = jwtService;
         this.executionService = executionService;
-        this.objectMapper = objectMapper;
+        this.requestParser = requestParser;
+        this.responseFormatService = responseFormatService;
     }
 
     @RequestMapping(value = "/{organizationCode}/api/gateway/{apiCode}/**")
     public ResponseEntity<Object> handle(@PathVariable String organizationCode,
                                          @PathVariable String apiCode,
-                                         HttpServletRequest request,
-                                         @RequestBody(required = false) String rawBody) {
+                                         HttpServletRequest request) {
         String method = request.getMethod().toUpperCase(Locale.ROOT);
         String path = normalizePath(extractEndpointPath(organizationCode, apiCode, request));
 
@@ -109,20 +111,14 @@ public class DynamicGatewayController {
             return authFailure;
         }
 
-        Map<String, Object> requestContext = buildRequestContext(request, method, path, match.variables(), rawBody);
-        ExecutionService.ExecutionOutcome outcome = executionService.inboundRun(endpoint, requestContext);
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("runId", outcome.run().getId());
-        response.put("correlationId", outcome.run().getCorrelationId());
-        if (outcome.success()) {
-            response.put("status", "SUCCESS");
-            response.put("data", outcome.output());
-            return ResponseEntity.ok(response);
+        Map<String, Object> requestContext;
+        try {
+            requestContext = buildRequestContext(request, method, path, match.variables());
+        } catch (IllegalArgumentException e) {
+            return error(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-        response.put("status", "FAILED");
-        response.put("error", outcome.run().getErrorMessage());
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(response);
+        ExecutionService.ExecutionOutcome outcome = executionService.inboundRun(endpoint, requestContext);
+        return responseFormatService.render(endpoint, outcome);
     }
 
     private ResponseEntity<Object> checkInboundAuth(ApiDefinition api, HttpServletRequest request) {
@@ -187,7 +183,7 @@ public class DynamicGatewayController {
     }
 
     private Map<String, Object> buildRequestContext(HttpServletRequest request, String method, String path,
-                                                     Map<String, String> pathVariables, String rawBody) {
+                                                     Map<String, String> pathVariables) {
         Map<String, Object> context = new LinkedHashMap<>();
         context.put("method", method);
         context.put("path", path);
@@ -210,21 +206,8 @@ public class DynamicGatewayController {
         context.put("remoteAddr", request.getRemoteAddr());
         context.put("pathVariables", pathVariables == null ? Map.of() : pathVariables);
 
-        Object body = null;
-        String contentType = request.getContentType();
-        if (rawBody != null && !rawBody.isBlank()) {
-            if (contentType != null && contentType.toLowerCase(Locale.ROOT).contains("json")) {
-                try {
-                    body = objectMapper.readValue(rawBody, Object.class);
-                } catch (Exception ignored) {
-                    body = rawBody;
-                }
-            } else {
-                body = rawBody;
-            }
-        }
-        context.put("body", body);
-        context.put("contentType", contentType);
+        // Corps JSON, XML, texte, formulaire, fichiers (multipart) ou binaire.
+        requestParser.enrich(request, context);
         return context;
     }
 
