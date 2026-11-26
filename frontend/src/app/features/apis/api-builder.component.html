@@ -320,16 +320,31 @@
 
             <div class="spread mb-8">
               <strong class="small">Planification</strong>
-              <span class="hint">Optionnel · format cron à 6 champs</span>
+              <span class="hint">Optionnel · exécute cet endpoint sans appelant externe</span>
             </div>
-            <div class="form-row">
+            <p class="hint mb-8">
+              Choisissez une fréquence toute prête, ou laissez « Personnalisé » et saisissez
+              une expression cron à 6 champs (seconde, minute, heure, jour, mois, jour de la semaine).
+            </p>
+            <div class="field">
+              <label>Fréquence</label>
+              <select class="select" [value]="cronPreset()"
+                      (change)="applyCronPreset($any($event.target).value)">
+                <option value="">Personnalisé</option>
+                @for (preset of cronPresets; track preset.value) {
+                  <option [value]="preset.value">{{ preset.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-row mt-8">
               <div class="field">
                 <label>Expression cron</label>
-                <input class="input mono" formControlName="cron" placeholder="0 */5 * * * *">
+                <input class="input mono" formControlName="cron" placeholder="0 */5 * * * *"
+                       (input)="onCronInput($any($event.target).value)">
               </div>
               <div class="field">
-                <label>Payload JSON</label>
-                <input class="input mono" formControlName="schedulePayload" placeholder="objet JSON">
+                <label>Payload JSON transmis à l'exécution</label>
+                <input class="input mono" formControlName="schedulePayload" placeholder="{}">
               </div>
             </div>
             <label class="check">
@@ -404,11 +419,11 @@
 
 @if (browserOpen()) {
   <div class="modal-backdrop" (click)="closeBrowser()"></div>
-  <div class="modal modal-lg" role="dialog" aria-modal="true">
+  <div class="modal modal-xl" role="dialog" aria-modal="true">
     <div class="modal-head">
       <div>
         <h3>Parcourir la base</h3>
-        <p class="small muted">Sélectionnez une table : une étape de lecture est générée automatiquement.</p>
+        <p class="small muted">Choisissez une ou plusieurs tables, les colonnes et leurs alias : la requête est générée automatiquement.</p>
       </div>
       <button class="btn btn-ghost btn-icon" (click)="closeBrowser()">✕</button>
     </div>
@@ -432,14 +447,49 @@
       </div>
 
       @if (browserQuery(); as query) {
-        <app-schema-browser [query]="query" (tableChosen)="onBrowserTable($event)"></app-schema-browser>
+        <app-schema-browser [query]="query" [multi]="true"
+                            (selectionChanged)="onBrowserSelection($event)"></app-schema-browser>
       }
 
-      @if (browserTable(); as ref) {
-        <div class="browser-footer">
-          <code class="browser-preview">SELECT * FROM {{ ref.schema }}.{{ ref.table }}</code>
-          <button type="button" class="btn btn-primary btn-sm" (click)="insertTableStep()">
-            Insérer l'étape DB_QUERY
+      <p class="hint mt-8">
+        Cochez une ou plusieurs tables, puis les colonnes à garder. Le champ à droite de chaque
+        colonne est son alias : c'est le nom du champ dans le résultat. Les jointures sont
+        renseignées ci-dessous quand vous choisissez plusieurs tables.
+      </p>
+
+      @if (queryTables().length > 1) {
+        <div class="builder-joins">
+          <strong class="small">Jointures</strong>
+          @for (join of queryJoins(); track join.tableKey) {
+            <div class="join-row">
+              <span class="small muted">{{ queryTables()[0].alias }}.{{ queryTables()[0].table }}</span>
+              <select class="select" [value]="join.left"
+                      (change)="setJoin(join.tableKey, 'left', $any($event.target).value)">
+                <option value="">Choisir une colonne…</option>
+                @for (ref of columnRefs(); track ref.value) {
+                  <option [value]="ref.value">{{ ref.label }}</option>
+                }
+              </select>
+              <span class="small muted">=</span>
+              <select class="select" [value]="join.right"
+                      (change)="setJoin(join.tableKey, 'right', $any($event.target).value)">
+                <option value="">Choisir une colonne…</option>
+                @for (ref of columnRefs(); track ref.value) {
+                  <option [value]="ref.value">{{ ref.label }}</option>
+                }
+              </select>
+              <span class="small muted">{{ joinTableLabel(join.tableKey) }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      @if (generatedSql()) {
+        <div class="builder-preview">
+          <strong class="small">Requête générée</strong>
+          <pre class="code-block">{{ generatedSql() }}</pre>
+          <button type="button" class="btn btn-primary btn-sm" (click)="insertQueryStep()">
+            Ajouter cette requête au pipeline
           </button>
         </div>
       }

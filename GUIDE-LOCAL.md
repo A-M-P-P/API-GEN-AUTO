@@ -295,6 +295,33 @@ Le pipeline lit alors `{{request.body.order.reference}}`.
 
 ---
 
+### 4.5. Planification et constructeur de requête, sans jargon
+
+**La planification n'est pas un webservice.** C'est la plateforme qui exécute automatiquement un
+endpoint que vous avez déjà configuré, à une heure choisie, sans appelant externe.
+
+Exemple : un endpoint sortant « Export clients » dont le pipeline lit une table, met les champs en
+forme et écrit un fichier CSV. Cochez **Activer la planification**, choisissez « Chaque jour à
+02:00 », et l'export se fera tout seul. Le **Payload JSON** est la donnée d'entrée donnée au
+pipeline (utilisez `{}` s'il n'a pas besoin d'entrée). La plateforme vérifie les tâches dues
+toutes les 15 secondes, puis trace chaque exécution dans **Exécutions**.
+
+Fréquences proposées : toutes les 5 minutes, chaque heure, chaque jour à 02:00, chaque lundi à
+08:00, le 1er du mois à 00:00. Le champ **Expression cron** reste disponible pour un besoin
+particulier : 6 champs = seconde, minute, heure, jour du mois, mois, jour de la semaine.
+Un endpoint ne peut avoir qu'une seule planification.
+
+**Le constructeur de requête** remplace la saisie manuelle du SQL pour les cas courants. Dans
+l'éditeur d'API, cliquez sur **⊞ Parcourir la base** au-dessus du pipeline :
+
+1. choisissez **une** connexion (les tables doivent être dans la même base) ;
+2. cochez une ou plusieurs tables, puis les colonnes à garder ;
+3. renseignez l'alias de chaque colonne : c'est le nom du champ dans le résultat ;
+4. si vous avez choisi plusieurs tables, indiquez les jointures (`t1.ID = t2.ID`) ;
+5. vérifiez la requête affichée, puis cliquez sur **Ajouter cette requête au pipeline**.
+
+Le JSON du pipeline reste éditable à la main pour les traitements avancés.
+
 ## 5. Modifier les adresses, ports et paramètres sans rebuild
 
 Tout ce qui est réglé dans `application.yml` est figé dans le WAR/EAR une fois construit. Pour

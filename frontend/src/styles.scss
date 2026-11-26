@@ -349,3 +349,5 @@ table.table { width: 100%; border-collapse: collapse; }
   color: var(--danger, #dc2626);
   font-size: 12px;
 }
+
+.modal-xl { width: min(1000px, calc(100vw - 32px)); }

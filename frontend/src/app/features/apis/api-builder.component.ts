@@ -22,7 +22,21 @@ import {
   Run,
   Schedule
 } from '../../core/models';
-import { SchemaBrowserComponent } from '../../shared/schema-browser.component';
+import { ColumnSelection, SchemaBrowserComponent } from '../../shared/schema-browser.component';
+
+interface QueryTable {
+  key: string;
+  schema: string;
+  table: string;
+  alias: string;
+  columns: ColumnSelection[];
+}
+
+interface QueryJoin {
+  tableKey: string;
+  left: string;
+  right: string;
+}
 
 @Component({
   selector: 'app-api-builder',
@@ -70,10 +84,70 @@ export class ApiBuilderComponent implements OnInit {
     return id ? { connectionId: id } : null;
   });
   readonly browserTable = signal<{ schema: string; table: string } | null>(null);
+  /** Colonnes cochées dans l'explorateur (mode construction de requête). */
+  readonly browserSelection = signal<ColumnSelection[]>([]);
+  readonly queryJoins = signal<QueryJoin[]>([]);
+
+  readonly cronPresets = [
+    { label: 'Toutes les 5 minutes', value: '0 */5 * * * *' },
+    { label: 'Chaque heure', value: '0 0 * * * *' },
+    { label: 'Chaque jour à 02:00', value: '0 0 2 * * *' },
+    { label: 'Chaque lundi à 08:00', value: '0 0 8 * * MON' },
+    { label: 'Le 1er du mois à 00:00', value: '0 0 1 * * *' }
+  ];
+  readonly cronPreset = signal('');
+
   readonly browserConnectionType = computed(() => {
     const id = this.browserConnectionId();
     return this.browserConnections().find((connection) => connection.id === id)?.type ?? 'POSTGRESQL';
   });
+
+  readonly queryTables = computed<QueryTable[]>(() => {
+    const groups = new Map<string, QueryTable>();
+    for (const column of this.browserSelection()) {
+      const key = `${column.schema}.${column.table}`;
+      let table = groups.get(key);
+      if (!table) {
+        table = { key, schema: column.schema, table: column.table, alias: 't' + (groups.size + 1), columns: [] };
+        groups.set(key, table);
+      }
+      table.columns.push(column);
+    }
+    return [...groups.values()];
+  });
+
+  readonly columnRefs = computed(() => this.queryTables().flatMap((table) =>
+    table.columns.map((column) => ({
+      value: table.alias + '.' + column.column,
+      label: table.alias + '.' + column.column + ' → ' + (column.alias || column.column)
+    }))));
+
+  readonly generatedSql = computed(() => {
+    const tables = this.queryTables();
+    if (tables.length === 0) {
+      return '';
+    }
+    const oracle = this.browserConnectionType() === 'ORACLE';
+    const quote = (name: string) => (oracle && name !== name.toUpperCase() ? `"${name}"` : name);
+    const alias = (name: string) => (/^[A-Za-z_][A-Za-z0-9_]*$/.test(name) ? name : quote(name));
+    const selections = tables.flatMap((table) => table.columns.map((column) =>
+      `${table.alias}.${quote(column.column)} AS ${alias(column.alias || column.column)}`));
+    if (selections.length === 0) {
+      return '';
+    }
+    let sql = 'SELECT ' + selections.join(',\n       ')
+      + '\nFROM ' + quote(tables[0].schema) + '.' + quote(tables[0].table) + ' ' + tables[0].alias;
+    for (const join of this.queryJoins()) {
+      const table = tables.find((candidate) => candidate.key === join.tableKey);
+      if (!table || !join.left || !join.right) {
+        continue;
+      }
+      sql += '\nJOIN ' + quote(table.schema) + '.' + quote(table.table) + ' ' + table.alias
+        + ' ON ' + join.left + ' = ' + join.right;
+    }
+    return sql;
+  });
+
 
   private scheduleId: number | null = null;
 
@@ -279,6 +353,7 @@ export class ApiBuilderComponent implements OnInit {
       scheduleEnabled: detail.schedule?.enabled ?? false,
       schedulePayload: detail.schedule?.payload ? JSON.stringify(detail.schedule.payload, null, 2) : '{}'
     });
+    this.onCronInput(detail.schedule?.cronExpression ?? '');
   }
 
   newEndpoint(): void {
@@ -477,41 +552,81 @@ export class ApiBuilderComponent implements OnInit {
     const value = Number((event.target as HTMLSelectElement).value);
     this.browserConnectionId.set(value || null);
     this.browserTable.set(null);
+    this.browserSelection.set([]);
+    this.queryJoins.set([]);
   }
 
   onBrowserTable(ref: { schema: string; table: string }): void {
     this.browserTable.set(ref);
   }
 
+  /** Reçoit les colonnes cochées (table + alias) depuis l'explorateur. */
+  onBrowserSelection(selection: ColumnSelection[]): void {
+    this.browserSelection.set(selection);
+    const tables = this.queryTables();
+    const previous = this.queryJoins();
+    this.queryJoins.set(tables.slice(1).map((table) => {
+      const existing = previous.find((join) => join.tableKey === table.key);
+      if (existing) {
+        return existing;
+      }
+      const first = tables[0]?.columns[0];
+      return {
+        tableKey: table.key,
+        left: first ? 't1.' + first.column : '',
+        right: table.columns[0] ? table.alias + '.' + table.columns[0].column : ''
+      };
+    }));
+  }
+
+  joinTableLabel(tableKey: string): string {
+    const table = this.queryTables().find((candidate) => candidate.key === tableKey);
+    return table ? `${table.alias}.${table.table}` : '';
+  }
+
+  setJoin(tableKey: string, side: 'left' | 'right', value: string): void {
+    this.queryJoins.update((joins) => joins.map((join) =>
+      join.tableKey === tableKey ? { ...join, [side]: value } : join));
+  }
+
   closeBrowser(): void {
     this.browserOpen.set(false);
     this.browserTable.set(null);
+    this.browserSelection.set([]);
+    this.queryJoins.set([]);
   }
 
-  /** Ajoute une étape DB_QUERY lisant la table sélectionnée dans l'explorateur. */
-  insertTableStep(): void {
-    const ref = this.browserTable();
+  /** Ajoute une étape DB_QUERY construite à partir des tables/colonnes/jointures choisies. */
+  insertQueryStep(): void {
     const connectionId = this.browserConnectionId();
-    if (!ref || !connectionId) {
-      this.toast.error('Sélectionnez une table dans la liste.');
+    const sql = this.generatedSql();
+    if (!connectionId || !sql) {
+      this.toast.error('Cochez au moins une colonne dans une table.');
       return;
     }
-    const oracle = this.browserConnectionType() === 'ORACLE';
-    // Oracle stocke les identifiants en majuscules : on ne cite que les noms mixtes.
-    const quote = (name: string) => (oracle && name !== name.toUpperCase() ? `"${name}"` : name);
     const current = this.parseJson(this.endpointForm.getRawValue().pipeline, null);
     const steps: any[] = Array.isArray(current) ? current : [];
     steps.push({
       type: 'DB_QUERY',
-      name: 'lecture-' + ref.table.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      name: 'requete-guidee',
       connectionId,
-      sql: 'SELECT * FROM ' + quote(ref.schema) + '.' + quote(ref.table),
+      sql,
       params: [],
       maxRows: 500
     });
     this.endpointForm.patchValue({ pipeline: JSON.stringify(steps, null, 2) });
-    this.toast.success('Étape DB_QUERY ajoutée pour ' + ref.table + '.');
+    this.toast.success('Requête SQL ajoutée au pipeline.');
     this.closeBrowser();
+  }
+
+  applyCronPreset(value: string): void {
+    this.cronPreset.set(value);
+    this.endpointForm.patchValue({ cron: value });
+  }
+
+  onCronInput(value: string): void {
+    const known = this.cronPresets.find((preset) => preset.value === value.trim());
+    this.cronPreset.set(known ? known.value : '');
   }
 
   private resetEndpointForm(): void {    this.scheduleId = null;
@@ -533,6 +648,7 @@ export class ApiBuilderComponent implements OnInit {
     });
     this.runResult.set(null);
     this.pipelineError.set(null);
+    this.cronPreset.set('');
   }
 
   private parseJson(raw: string, errorMessage: string | null): any {

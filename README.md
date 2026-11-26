@@ -57,7 +57,7 @@ Le projet répond à un besoin concret d'entreprise : plutôt que de développer
 - CRUD complet des **APIs**, **endpoints**, **connexions** et **utilisateurs**.
 - Assistant de configuration : informations générales, sécurité, endpoints, pipeline, planification, test.
 - **Explorateur de base** : schémas → tables → colonnes (nom, type, nullabilité), sans écrire de SQL.
-- **Génération d'étape** : sélectionner une table dans l'explorateur ajoute automatiquement une étape `DB_QUERY` au pipeline.
+- **Constructeur de requête** : choisir plusieurs tables, cocher les colonnes, leur donner un alias, définir les jointures, puis ajouter l'étape `DB_QUERY` générée au pipeline.
 - Journal des **exécutions** avec requête, réponse, erreur, durée, déclencheur.
 - **Journal d'audit** des actions de configuration et de sécurité.
 - **Organisations** : chaque API est rattachée à une organisation — une organisation possède
@@ -70,7 +70,7 @@ Le projet répond à un besoin concret d'entreprise : plutôt que de développer
 
 ### Moteur d'exécution
 - Endpoints **INBOUND** exposés par une passerelle dynamique : `/{code-organisation}/api/gateway/{code-api}{chemin}`.
-- Endpoints **OUTBOUND** exécutables manuellement ou planifiés par cron (format Spring, 6 champs).
+- Endpoints **OUTBOUND** exécutables manuellement ou planifiés avec des fréquences prêtes à l’emploi (cron 6 champs en mode avancé).
 - Entrée : **JSON, XML, texte, formulaire, multipart (fichiers) et binaire** détectés par `Content-Type`.
 - Sortie : **JSON, texte, XML, fichier téléchargeable, binaire et redirection 302**, configurable par endpoint.
 - Pipelines JSON composés d'étapes ordonnées :
@@ -279,7 +279,7 @@ Cliquez **« Tester la connexion »** : le résultat s'affiche avec la latence m
 
 Deux façons :
 
-**Sans écrire de SQL** — dans l'éditeur d'API, cliquez sur **« ⊞ Parcourir la base »** au-dessus du pipeline. Choisissez la connexion, dépliez le schéma, cliquez sur une table : la requête `SELECT * FROM SCHÉMA.TABLE` est proposée, et le bouton « Insérer l'étape DB_QUERY » l'ajoute au pipeline.
+**Sans écrire de SQL** — dans l'éditeur d'API, cliquez sur **« ⊞ Parcourir la base »** au-dessus du pipeline. Choisissez la connexion, dépliez les schémas, cochez une ou plusieurs tables puis les colonnes voulues. Le champ à droite de chaque colonne est son alias (nom du champ en sortie). Si vous avez choisi plusieurs tables, renseignez les jointures proposées (`t1.ID = t2.ID`), vérifiez la requête générée, puis cliquez sur **« Ajouter cette requête au pipeline »**.
 
 **À la main** :
 
@@ -599,7 +599,7 @@ Le formulaire du studio **n'exige pas d'écrire de JSON** : choisissez le type, 
 
 **Pool de connexions** : chaque connexion de type base de données dispose de son propre pool HikariCP, dimensionné par le champ « Pool (max) » (1 à 20, 5 par défaut). Le pool est recréé automatiquement quand l'URL ou les identifiants changent, et fermé après **15 minutes d'inactivité**. L'exécution d'une étape `DB_QUERY` réutilise ainsi une connexion déjà établie au lieu d'ouvrir une nouvelle connexion à chaque appel — sur Oracle, cela évite un handshake réseau complet par exécution.
 
-**Découverte de la structure** : le bouton « Découvrir les tables » liste les schémas, puis les tables et vues de chaque schéma, puis les colonnes d'une table sélectionnée (nom, type, `NOT NULL`). L'explorateur est aussi disponible depuis l'éditeur d'API via « ⊞ Parcourir la base » : choisir une table génère une étape `DB_QUERY` complète avec le nom qualifié et le bon `connectionId`.
+**Découverte de la structure** : le bouton « Découvrir les tables » liste les schémas, puis les tables et vues de chaque schéma, puis les colonnes d'une table sélectionnée (nom, type, `NOT NULL`). L'explorateur est aussi disponible depuis l'éditeur d'API via « ⊞ Parcourir la base » : le mode construction permet de choisir plusieurs tables, des colonnes avec alias et des jointures, puis génère une étape `DB_QUERY` complète avec le bon `connectionId`.
 
 Les requêtes de métadonnées sont écrites par dialecte : `all_users` / `all_tables` / `all_tab_columns` côté Oracle (en écartant les schémas maintenus par Oracle via `oracle_maintained = 'N'`), `information_schema` pour PostgreSQL, MySQL et SQL Server. Sur **Oracle 11g**, où `ORACLE_MAINTAINED` n'existe pas, une liste d'exclusion explicite prend le relais. Un schéma illisible — faute de droits — est silencieusement omis plutôt que de faire échouer toute la découverte.
 

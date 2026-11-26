@@ -38,12 +38,30 @@
 
                 @if (isSelected(schema.name, table.name)) {
                   <div class="columns">
+                    @if (multi) {
+                      <div class="col-tools">
+                        <label class="col-check all">
+                          <input type="checkbox" [checked]="allColumnsChecked(schema.name, table.name)"
+                                 (change)="toggleAllColumns(schema.name, table.name, $any($event.target).checked)">
+                          Toutes les colonnes
+                        </label>
+                      </div>
+                    }
                     @if (loadingColumnsFor(schema.name, table.name)) {
                       <span class="spinner"></span>
                     } @else {
                       @for (column of columnsFor(schema.name, table.name); track column.name) {
                         <div class="col">
-                          <span class="col-name">{{ column.name }}</span>
+                          @if (multi) {
+                            <input class="col-pick" type="checkbox"
+                                   [checked]="isColumnChecked(schema.name, table.name, column.name)"
+                                   (change)="toggleColumn(schema.name, table.name, column.name, $any($event.target).checked)">
+                            <input class="alias-input" aria-label="Alias de sortie"
+                                   [value]="aliasFor(schema.name, table.name, column.name)"
+                                   (input)="setAlias(schema.name, table.name, column.name, $any($event.target).value)">
+                          } @else {
+                            <span class="col-name">{{ column.name }}</span>
+                          }
                           <span class="col-type">{{ column.type }}</span>
                           @if (!column.nullable) { <span class="col-null">NOT NULL</span> }
                         </div>
