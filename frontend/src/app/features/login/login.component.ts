@@ -88,8 +88,4 @@ export class LoginComponent {
     this.frontendConfig.resetOverride();
     window.location.reload();
   }
-
-  fillDemo(): void {
-    this.form.patchValue({ username: 'admin', password: 'ChangeMe123!' });
-  }
 }

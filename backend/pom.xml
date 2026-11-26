@@ -14,6 +14,7 @@
     <groupId>com.apigen</groupId>
     <artifactId>apigen-platform</artifactId>
     <version>0.1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
     <name>API-GEN-AUTO Platform</name>
     <description>Plateforme de configuration et d'exécution d'API d'échange de données</description>
 
@@ -31,6 +32,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- Fourni par Tomcat 10.1+ lors d'un déploiement WAR ; conservé pour `java -jar`. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

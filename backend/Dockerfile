@@ -8,7 +8,7 @@ RUN mvn -q -B -DskipTests package
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 RUN useradd --system --uid 1001 apigen && mkdir -p /app/data && chown -R apigen:apigen /app
-COPY --from=build /app/target/apigen-platform.jar /app/app.jar
+COPY --from=build /app/target/apigen-platform.war /app/app.war
 USER apigen
 EXPOSE 8080
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/app.war"]

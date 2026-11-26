@@ -2,16 +2,16 @@
   {
     "name": "ERP Oracle",
     "type": "ORACLE",
-    "description": "Base métier utilisée par les pipelines",
+    "description": "Base métier interrogée par les pipelines",
     "baseConfig": {
-      "jdbcUrl": "jdbc:oracle:thin:@//serveur-oracle:1521/SERVICE",
-      "host": "serveur-oracle",
+      "jdbcUrl": "jdbc:oracle:thin:@//SERVEUR_ORACLE:1521/SERVICE",
+      "host": "SERVEUR_ORACLE",
       "port": 1521,
       "database": "SERVICE",
       "addressing": "SERVICE",
       "maxPoolSize": 10
     },
-    "credentials": { "username": "lecteur", "password": "change-moi" },
+    "credentials": { "username": "A_REMPLACER", "password": "A_REMPLACER" },
     "active": true
   },
   {
@@ -25,8 +25,8 @@
   {
     "name": "Fichiers d'échange",
     "type": "FILE",
-    "description": "Répertoire local des fichiers",
-    "baseConfig": { "basePath": "./data/exchanges" },
+    "description": "Répertoire des fichiers traités par les pipelines",
+    "baseConfig": { "basePath": "/opt/apigen/data/exchanges" },
     "credentials": {},
     "active": true
   }

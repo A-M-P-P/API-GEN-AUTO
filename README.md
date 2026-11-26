@@ -502,6 +502,14 @@ En développement : `APIGEN_BACKEND=http://serveur-backend:8081 npm start`.
 
 Avec Docker : `BACKEND_URL=http://serveur-backend:8081 CONTEXT_PATH=/apigen docker compose up -d`.
 
+### Déploiement de production (Tomcat + frontend statique)
+
+Le backend est livré en **WAR** (`backend/target/apigen-platform.war`) pour Tomcat **10.1+**. Le
+frontend est un dossier statique à déployer dans WebLogic ou Apache/XAMPP/WAMP. La procédure
+complète (fichiers à remplir, `setenv.sh`, `config.json`, CORS, checklist) est dans
+[`DEPLOY-PROD.md`](DEPLOY-PROD.md). Le profil reste `dev` par défaut dans le code : la production
+doit définir `APIGEN_PROFILE=prod` avant le démarrage.
+
 ### Déploiement sur serveur d'application (WebLogic)
 
 Le livrable Spring Boot 3.3 / Jakarta EE 9+ **ne se déploie pas tel quel sur WebLogic 12c** :
@@ -532,7 +540,7 @@ Il suffit donc de lancer en profil `prod`, et de surcharger uniquement les secre
 export APIGEN_PROFILE=prod
 export APIGEN_JWT_SECRET="$(openssl rand -hex 48)"
 export APIGEN_CRYPTO_KEY="$(openssl rand -base64 32)"
-java -jar backend/target/apigen-platform.jar
+java -jar backend/target/apigen-platform.war
 ```
 
 Pour pointer ailleurs (autre hôte, autre SID, autre service) :

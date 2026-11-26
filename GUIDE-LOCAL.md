@@ -320,7 +320,7 @@ cp config/runtime.properties.example config/runtime.properties
 cp config/connections.json.example config/connections.json
 # Éditer les deux fichiers, puis lancer le backend :
 set APIGEN_PROFILE=prod
-java -jar apigen-platform.jar
+java -jar apigen-platform.war
 ```
 
 Points importants :
@@ -368,7 +368,7 @@ enregistrement depuis l'interface. Pour le placer ailleurs (partage réseau, vol
 set APIGEN_RUNTIME_CONFIG=D:\apigen\conf\runtime.properties
 
 # Ou en argument de lancement
-java -jar apigen-platform.jar --apigen.runtime-config=/opt/apigen/conf/runtime.properties
+java -jar apigen-platform.war --apigen.runtime-config=/opt/apigen/conf/runtime.properties
 ```
 
 ### 5.2. Depuis le studio
@@ -463,7 +463,15 @@ BACKEND_URL=http://serveur-backend:8081 CONTEXT_PATH=/apigen docker compose up -
 
 Le script `frontend/docker-entrypoint.sh` régénère alors `config.json` au démarrage du conteneur.
 
-### 5.6. Et le déploiement sur WebLogic 12c ?
+### 5.6. Passage en production (Tomcat + frontend statique)
+
+Le backend est désormais packagé en **WAR** pour Tomcat **10.1+** ; le frontend est un dossier
+statique destiné à WebLogic ou Apache/XAMPP/WAMP. La procédure complète est décrite dans
+[`DEPLOY-PROD.md`](DEPLOY-PROD.md) : modèles `.env` / `runtime.properties` / `connections.json`,
+`setenv.sh` Tomcat, adresse du backend dans `config.json`, CORS et checklist de mise en prod.
+Le profil par défaut reste `dev` : définissez `APIGEN_PROFILE=prod` avant le démarrage.
+
+### 5.7. Et le déploiement sur WebLogic 12c ?
 
 **Point bloquant à connaître avant tout packaging.** Spring Boot 3.3 repose sur Jakarta EE 9+
 (`jakarta.*`) et exige Java 17. WebLogic 12c (12.2.1.x) est certifié **Java EE 7 / JDK 8** :
@@ -775,8 +783,8 @@ cd backend && mvn test                            # tests
 cd frontend && npm run build                      # build de production
 ```
 
-Le jar exécutable produit par le build se trouve dans `backend/target/apigen-platform.jar` et se lance avec :
+Le WAR exécutable produit par le build se trouve dans `backend/target/apigen-platform.war` et se lance avec :
 
 ```bash
-java -jar backend/target/apigen-platform.jar --spring.profiles.active=dev
+java -jar backend/target/apigen-platform.war --spring.profiles.active=dev
 ```
