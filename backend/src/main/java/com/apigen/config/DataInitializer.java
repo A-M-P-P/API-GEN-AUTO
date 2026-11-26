@@ -86,11 +86,20 @@ public class DataInitializer implements CommandLineRunner {
         Organization defaultOrganization = ensureDefaultOrganization();
 
         if (properties.seed().demo() && apiRepository.count() == 0) {
-            seedDemo(defaultOrganization);
+            try {
+                seedDemo(defaultOrganization);
+            } catch (Exception e) {
+                // Le jeu de démonstration ne doit jamais empêcher le démarrage de la plateforme.
+                log.warn("Jeu de démonstration non créé : {}", e.getMessage());
+            }
         }
         // Les installations déjà créées conservent leurs données : on met à jour les endpoints
         // de la démo qui utilisaient l'ancien pipeline sans valeur de repli.
-        patchDemoEndpoints();
+        try {
+            patchDemoEndpoints();
+        } catch (Exception e) {
+            log.warn("Mise à jour des endpoints de démonstration ignorée : {}", e.getMessage());
+        }
     }
 
     /** Organisation de rassemblement des API non affectées à une organisation nominative. */
@@ -121,21 +130,15 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedDemo(Organization organization) {
-        Connection rest = new Connection();
-        rest.setName("JSONPlaceholder");
-        rest.setType(ConnectionType.REST);
-        rest.setDescription("Service public de démonstration pour les appels REST sortants.");
-        rest.setBaseConfig("{\"baseUrl\":\"https://jsonplaceholder.typicode.com\",\"authType\":\"NONE\"}");
-        rest.setActive(true);
-        rest = connectionRepository.save(rest);
+        // Les connexions peuvent exister alors que l'API de démo a été supprimée : on les
+        // réutilise au lieu de tenter un insert qui viole UX_CONNECTION_NAME.
+        Connection rest = ensureDemoConnection("JSONPlaceholder", ConnectionType.REST,
+                "Service public de démonstration pour les appels REST sortants.",
+                "{\"baseUrl\":\"https://jsonplaceholder.typicode.com\",\"authType\":\"NONE\"}");
 
-        Connection files = new Connection();
-        files.setName("Fichiers d'échange");
-        files.setType(ConnectionType.FILE);
-        files.setDescription("Répertoire local des échanges CSV/JSON/XLSX.");
-        files.setBaseConfig("{\"basePath\":\"./data/exchanges\"}");
-        files.setActive(true);
-        files = connectionRepository.save(files);
+        Connection files = ensureDemoConnection("Fichiers d'échange", ConnectionType.FILE,
+                "Répertoire local des échanges CSV/JSON/XLSX.",
+                "{\"basePath\":\"./data/exchanges\"}");
 
         ApiDefinition api = new ApiDefinition();
         api.setCode("demo");
@@ -203,6 +206,20 @@ public class DataInitializer implements CommandLineRunner {
 
         log.info("Jeu de démonstration créé : API « demo » (echo, hello, posts, export) dans l'organisation « {} ».",
                 organization != null ? organization.getCode() : "default");
+    }
+
+    /** Réutilise une connexion existante portant le même nom, sans écraser sa configuration. */
+    private Connection ensureDemoConnection(String name, ConnectionType type,
+                                            String description, String baseConfig) {
+        return connectionRepository.findByNameIgnoreCase(name).orElseGet(() -> {
+            Connection connection = new Connection();
+            connection.setName(name);
+            connection.setType(type);
+            connection.setDescription(description);
+            connection.setBaseConfig(baseConfig);
+            connection.setActive(true);
+            return connectionRepository.save(connection);
+        });
     }
 
     /** Rend le pipeline « Dernier article » compatible hors ligne sur les bases déjà initialisées. */
