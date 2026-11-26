@@ -24,6 +24,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     List<Object[]> findSummaries();
 
     /** Lecture légère du contexte, sans charger la collection d'API. */
-    @Query("select o.code, o.contextConfig from Organization o where o.id = :id")
-    Optional<Object[]> findContextById(@Param("id") Long id);
+    @Query("select o from Organization o where o.id = :id")
+    Optional<Organization> findContextById(@Param("id") Long id);
 }

@@ -161,11 +161,10 @@ public class EndpointService {
         auditService.record("SCHEDULE_DELETE", "Endpoint", String.valueOf(endpointId), "Suppression de la planification");
     }
 
-    @Transactional
     public RunDtos.RunResponse runNow(Long endpointId, JsonNode payload) {
         Endpoint endpoint = endpointWithSchedule(endpointId);
         try {
-            return runResponse(executionService.manualRun(endpoint, payload));
+            return runResponse(executionService.manualRun(endpoint, payload), endpoint);
         } catch (Exception e) {
             // Dernier filet de sécurité : même une panne inattendue doit donner un message
             // exploitable dans le studio plutôt qu'un toast « Exécution impossible ».
@@ -198,7 +197,7 @@ public class EndpointService {
         Schedule schedule = endpoint.getSchedule();
         JsonNode payload = readJson(schedule == null ? null : schedule.getPayload());
         ExecutionService.ExecutionOutcome outcome = executionService.scheduledRun(endpoint, payload);
-        return runResponse(outcome);
+        return runResponse(outcome, endpoint);
     }
 
     private Endpoint endpointWithSchedule(Long id) {
@@ -270,10 +269,9 @@ public class EndpointService {
         }
     }
 
-    private RunDtos.RunResponse runResponse(ExecutionService.ExecutionOutcome outcome) {
+    private RunDtos.RunResponse runResponse(ExecutionService.ExecutionOutcome outcome, Endpoint endpoint) {
         var run = outcome.run();
-        var endpoint = run.getEndpoint();
-        var api = run.getApi();
+        var api = endpoint == null ? null : endpoint.getApi();
         return new RunDtos.RunResponse(
                 run.getId(),
                 api == null ? null : api.getId(),

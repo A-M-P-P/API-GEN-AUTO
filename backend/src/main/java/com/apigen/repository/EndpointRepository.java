@@ -16,7 +16,7 @@ public interface EndpointRepository extends JpaRepository<Endpoint, Long> {
 
     Optional<Endpoint> findByApiIdAndMethodIgnoreCaseAndPath(Long apiId, String method, String path);
 
-    @Query("select e from Endpoint e left join fetch e.schedule where e.id = :id")
+    @Query("select e from Endpoint e left join fetch e.api left join fetch e.schedule where e.id = :id")
     Optional<Endpoint> findByIdWithSchedule(@Param("id") Long id);
 
     /** Identifiant de l'organisation propriétaire de l'API, sans initialiser les relations lazy. */

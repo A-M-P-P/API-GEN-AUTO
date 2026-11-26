@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -47,8 +46,13 @@ public class OrganizationContextService {
         this.objectMapper = objectMapper;
     }
 
-    /** Contexte d'exécution d'un endpoint : organisation de l'API, ou contexte vide si non classée. */
-    @Transactional(readOnly = true)
+    /**
+     * Contexte d'exécution d'un endpoint : organisation de l'API, ou contexte vide si non classée.
+     *
+     * <p>Pas de transaction propre ici : une erreur de lecture du contexte doit pouvoir être
+     * transformée en run FAILED par {@code ExecutionService} sans marquer la transaction
+     * d'exécution comme « rollback-only ».</p>
+     */
     public OrganizationContext forEndpoint(Long endpointId) {
         if (endpointId == null) {
             return OrganizationContext.empty(null);
@@ -57,11 +61,10 @@ public class OrganizationContextService {
         if (organizationId == null) {
             return OrganizationContext.empty(null);
         }
-        Object[] row = organizationRepository.findContextById(organizationId).orElse(null);
-        if (row == null) {
-            return OrganizationContext.empty(null);
-        }
-        return parseContext(String.valueOf(row[0]), row[1] == null ? null : String.valueOf(row[1]));
+        Organization organization = organizationRepository.findContextById(organizationId).orElse(null);
+        return organization == null
+                ? OrganizationContext.empty(null)
+                : parseContext(organization.getCode(), organization.getContextConfig());
     }
 
     /** Déchiffre les secrets pour les rendre disponibles aux seules étapes de pipeline. */
