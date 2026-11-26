@@ -240,7 +240,7 @@
             <div class="form-row">
               <div class="field">
                 <label>Nom de fichier (FILE / BINARY)</label>
-                <input class="input" formControlName="responseFileName" placeholder="export-{runId}.csv">
+                <input class="input" formControlName="responseFileName" placeholder="export-&#123;runId&#125;.csv">
               </div>
               <div class="field">
                 <label>URL de redirection (REDIRECT)</label>
@@ -250,7 +250,7 @@
             <span class="hint">
               FILE utilise le chemin produit par une étape FILE_WRITE ; BINARY attend une valeur
               base64 (champ <code>base64</code>, <code>content</code> ou <code>data</code>).
-              <code>{runId}</code> et <code>{correlationId}</code> sont remplacés dans le nom de
+              <code>&#123;runId&#125;</code> et <code>&#123;correlationId&#125;</code> sont remplacés dans le nom de
               fichier et l'URL. En entrée, JSON, XML, texte, formulaire, multipart et binaire sont
               détectés via le Content-Type.
             </span>
