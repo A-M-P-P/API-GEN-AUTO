@@ -137,25 +137,25 @@
             </p>
 
             <div class="sub-title">Variables</div>
-            @for (row of variables(); track $index; let i = $index) {
+            @for (row of variables(); track $index) {
               <div class="row">
                 <input class="input" placeholder="Nom (ex. region)" [value]="row.key"
-                       (input)="updateRow(variables, i, 'key', $any($event.target).value)">
+                       (input)="updateRow(variables, $index, 'key', $any($event.target).value)">
                 <input class="input" placeholder="Valeur (ex. centre)" [value]="row.value"
-                       (input)="updateRow(variables, i, 'value', $any($event.target).value)">
-                <button type="button" class="btn btn-ghost btn-icon" (click)="removeRow(variables, i)">✕</button>
+                       (input)="updateRow(variables, $index, 'value', $any($event.target).value)">
+                <button type="button" class="btn btn-ghost btn-icon" (click)="removeRow(variables, $index)">✕</button>
               </div>
             }
             <button type="button" class="btn btn-ghost btn-sm" (click)="addRow(variables)">+ Ajouter une variable</button>
 
             <div class="sub-title mt-8">Secrets</div>
-            @for (row of secrets(); track $index; let i = $index) {
+            @for (row of secrets(); track $index) {
               <div class="row">
                 <input class="input" placeholder="Nom (ex. apiToken)" [value]="row.key"
-                       (input)="updateRow(secrets, i, 'key', $any($event.target).value)">
+                       (input)="updateRow(secrets, $index, 'key', $any($event.target).value)">
                 <input class="input" type="password" placeholder="Valeur secrète" [value]="row.value === '********' ? '' : row.value"
-                       (input)="updateRow(secrets, i, 'value', $any($event.target).value)">
-                <button type="button" class="btn btn-ghost btn-icon" (click)="removeRow(secrets, i)">✕</button>
+                       (input)="updateRow(secrets, $index, 'value', $any($event.target).value)">
+                <button type="button" class="btn btn-ghost btn-icon" (click)="removeRow(secrets, $index)">✕</button>
               </div>
             }
             <button type="button" class="btn btn-ghost btn-sm" (click)="addRow(secrets)">+ Ajouter un secret</button>
