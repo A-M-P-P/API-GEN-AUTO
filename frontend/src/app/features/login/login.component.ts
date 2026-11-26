@@ -32,25 +32,40 @@ export class LoginComponent {
     this.submitting.set(true);
     this.error.set(null);
     const { username, password } = this.form.getRawValue();
-    this.auth.login(username, password).subscribe({
-      next: () => {
-        this.submitting.set(false);
-        this.router.navigate(['/dashboard']);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.submitting.set(false);
-        const detail = typeof err.error?.message === 'string' ? err.error.message : null;
-        if (err.status === 401) {
-          this.error.set('Identifiants incorrects ou compte désactivé.');
-        } else if (err.status === 0) {
-          this.error.set('Le serveur n’est pas joignable. Vérifiez qu’il est démarré.');
-        } else if (err.status === 404) {
-          this.error.set('La connexion est introuvable. Vérifiez le chemin de contexte (/apigen) dans Configuration, puis redémarrez le backend.');
-        } else {
-          this.error.set(detail ?? 'Connexion impossible. Réessayez.');
+    let retried = false;
+    const attempt = (): void => {
+      this.auth.login(username, password).subscribe({
+        next: () => {
+          this.submitting.set(false);
+          this.router.navigate(['/dashboard']);
+        },
+        error: (err: HttpErrorResponse) => {
+          // Le proxy détecte le préfixe au démarrage ; si le backend a été redémarré
+          // entre-temps, un 404 déclenche une nouvelle détection. On réessaie une fois.
+          if (err.status === 404 && !retried) {
+            retried = true;
+            window.setTimeout(attempt, 1700);
+            return;
+          }
+          this.submitting.set(false);
+          this.showError(err);
         }
-      }
-    });
+      });
+    };
+    attempt();
+  }
+
+  private showError(err: HttpErrorResponse): void {
+    const detail = typeof err.error?.message === 'string' ? err.error.message : null;
+    if (err.status === 401) {
+      this.error.set('Identifiants incorrects ou compte désactivé.');
+    } else if (err.status === 0) {
+      this.error.set('Le serveur n’est pas joignable. Vérifiez qu’il est démarré.');
+    } else if (err.status === 404) {
+      this.error.set('La connexion est introuvable. Vérifiez le chemin de contexte dans Configuration, redémarrez le backend puis rechargez le studio.');
+    } else {
+      this.error.set(detail ?? 'Connexion impossible. Réessayez.');
+    }
   }
 
   togglePassword(): void {

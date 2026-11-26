@@ -473,10 +473,20 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 Dans IntelliJ : **Run → Edit Configurations → Environment variables** → ajoutez `SERVER_PORT=8081`.
 
 Le studio Angular trouve le backend via `frontend/proxy.conf.js`. Ce proxy cible
-`http://localhost:8081` (ou `APIGEN_BACKEND`) et **ajoute automatiquement le chemin de contexte**
-défini dans **Configuration** (`server.servlet.context-path`, par exemple `/apigen`). Il relit
-`config/runtime.properties` à chaque requête : après avoir changé le chemin et redémarré le backend,
-rechargez simplement la page du studio.
+`http://localhost:8081` (ou `APIGEN_BACKEND`) et **détecte automatiquement le chemin de contexte**
+réellement appliqué par le backend (`/actuator/health` testé avec et sans préfixe). Il n'a donc pas
+besoin de savoir depuis quel dossier le backend a été lancé. Après avoir changé le chemin dans
+**Configuration** et redémarré le backend, rechargez la page du studio.
+
+La ligne suivante apparaît dans le terminal où tourne `npm start` et indique le préfixe retenu :
+
+```
+[api-gen] proxy : backend http://localhost:8081, préfixe actif = /apigen
+```
+
+Si un 404 survient sur la connexion (backend redémarré entre-temps), le proxy relance la détection
+et l'écran de connexion réessaie une fois automatiquement. En dernier recours, redémarrez
+`npm start` (le proxy est lu au démarrage du serveur Angular).
 
 Si le backend tourne sur un autre port, utilisez `APIGEN_BACKEND=http://localhost:8080 npm start`.
 Le chemin peut aussi être forcé avec `APIGEN_CONTEXT_PATH=/apigen`.
