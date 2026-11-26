@@ -44,13 +44,17 @@
       </div>
 
       <form [formGroup]="form" (ngSubmit)="submit()">
+        <p class="hint mb-8">Les champs marqués d'un <span class="required">*</span> sont obligatoires.</p>
         <div class="field">
-          <label for="username">Identifiant</label>
+          <label for="username">Identifiant <span class="required">*</span></label>
           <input id="username" class="input" formControlName="username" autocomplete="username" placeholder="admin">
+          @if (form.get('username')?.invalid && form.get('username')?.touched) {
+            <span class="field-error">Indiquez votre identifiant.</span>
+          }
         </div>
 
         <div class="field">
-          <label for="password">Mot de passe</label>
+          <label for="password">Mot de passe <span class="required">*</span></label>
           <div class="password-wrap">
             <input id="password" class="input" formControlName="password" autocomplete="current-password"
                    [type]="showPassword() ? 'text' : 'password'" placeholder="••••••••">

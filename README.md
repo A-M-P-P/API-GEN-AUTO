@@ -697,7 +697,9 @@ Le code d'organisation est le **préfixe de contexte** de l'URL : l'API est rés
 organisation. Les API non classées restent accessibles sous le préfixe réservé `default`. Les
 formes `/api/gateway/{code-api}/...` et `/api/gateway/{code-organisation}/{code-api}/...` ne sont
 plus acceptées. Si un `server.servlet.context-path` global est défini, il s'ajoute avant le préfixe
-(ex. `/apigen/dgi/api/gateway/clients/...`).
+(ex. `/apigen/dgi/api/gateway/clients/...`). Le proxy du studio (`frontend/proxy.conf.js`) lit ce
+même chemin dans `config/runtime.properties` : après avoir enregistré `/apigen` dans **Configuration**
+et redémarré le backend, rechargez le studio, la connexion fonctionne sans changer l'URL du frontend.
 
 La réponse contient toujours `runId`, `correlationId`, `status` et `data` (ou `error`).
 

@@ -472,19 +472,14 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 Dans IntelliJ : **Run → Edit Configurations → Environment variables** → ajoutez `SERVER_PORT=8081`.
 
-Il faut alors indiquer au studio Angular où trouver le backend. Éditez `frontend/proxy.conf.json` :
+Le studio Angular trouve le backend via `frontend/proxy.conf.js`. Ce proxy cible
+`http://localhost:8081` (ou `APIGEN_BACKEND`) et **ajoute automatiquement le chemin de contexte**
+défini dans **Configuration** (`server.servlet.context-path`, par exemple `/apigen`). Il relit
+`config/runtime.properties` à chaque requête : après avoir changé le chemin et redémarré le backend,
+rechargez simplement la page du studio.
 
-```json
-{
-  "/api/": {
-    "target": "http://localhost:8081",
-    "secure": false,
-    "changeOrigin": true
-  }
-}
-```
-
-Redémarrez `npm start` après cette modification — le fichier de proxy n'est lu qu'au démarrage.
+Si le backend tourne sur un autre port, utilisez `APIGEN_BACKEND=http://localhost:8080 npm start`.
+Le chemin peut aussi être forcé avec `APIGEN_CONTEXT_PATH=/apigen`.
 
 > Les deux serveurs doivent tourner **simultanément** : le backend sur 8080 (ou 8081), le studio sur 4200. Le studio ne parle jamais directement à la base ; il passe par le backend via `/api/`.
 
@@ -654,7 +649,7 @@ API-GEN-AUTO/
 ├── frontend/                   ← Angular 17, TypeScript, SCSS
 │   ├── package.json
 │   ├── angular.json
-│   ├── proxy.conf.json
+│   ├── proxy.conf.js
 │   └── src/app/
 │       ├── core/               ← services, guards, interceptors, modèles
 │       ├── features/           ← login, dashboard, organisations, apis, connexions, runs…

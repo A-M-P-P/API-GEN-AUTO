@@ -39,7 +39,16 @@ export class LoginComponent {
       },
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
-        this.error.set(err.status === 401 ? 'Identifiants incorrects ou compte désactivé.' : 'Le serveur est indisponible. Réessayez.');
+        const detail = typeof err.error?.message === 'string' ? err.error.message : null;
+        if (err.status === 401) {
+          this.error.set('Identifiants incorrects ou compte désactivé.');
+        } else if (err.status === 0) {
+          this.error.set('Le serveur n’est pas joignable. Vérifiez qu’il est démarré.');
+        } else if (err.status === 404) {
+          this.error.set('La connexion est introuvable. Vérifiez le chemin de contexte (/apigen) dans Configuration, puis redémarrez le backend.');
+        } else {
+          this.error.set(detail ?? 'Connexion impossible. Réessayez.');
+        }
       }
     });
   }
