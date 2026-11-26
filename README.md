@@ -69,7 +69,7 @@ Le projet répond à un besoin concret d'entreprise : plutôt que de développer
 - Gestion des rôles : `ADMIN`, `EDITOR`, `VIEWER`.
 
 ### Moteur d'exécution
-- Endpoints **INBOUND** exposés par une passerelle dynamique : `/api/gateway/{code-organisation}/{code-api}{chemin}`.
+- Endpoints **INBOUND** exposés par une passerelle dynamique : `/{code-organisation}/api/gateway/{code-api}{chemin}`.
 - Endpoints **OUTBOUND** exécutables manuellement ou planifiés par cron (format Spring, 6 champs).
 - Pipelines JSON composés d'étapes ordonnées :
   - `HTTP` / `REST` : appels sortants (GET, POST, PUT, PATCH, DELETE) avec auth Basic, Bearer ou API key.
@@ -190,15 +190,15 @@ Le profil `local` crée une organisation de code `default` et une API `demo` ave
 
 | Méthode | Chemin | Rôle |
 | --- | --- | --- |
-| `POST` | `/api/gateway/default/demo/echo` | Répond le message reçu en majuscules |
-| `GET` | `/api/gateway/default/demo/hello?name=Amina` | Salutation avec mapping |
-| `GET` | `/api/gateway/default/demo/posts` | Appel REST sortant + mapping (JSONPlaceholder) |
-| `POST` | `/api/gateway/default/demo/export/clients` | Écriture CSV |
+| `POST` | `/default/api/gateway/demo/echo` | Répond le message reçu en majuscules |
+| `GET` | `/default/api/gateway/demo/hello?name=Amina` | Salutation avec mapping |
+| `GET` | `/default/api/gateway/demo/posts` | Appel REST sortant + mapping (JSONPlaceholder) |
+| `POST` | `/default/api/gateway/demo/export/clients` | Écriture CSV |
 
 Exemple :
 
 ```bash
-curl -X POST http://localhost:8080/api/gateway/default/demo/echo \
+curl -X POST http://localhost:8080/default/api/gateway/demo/echo \
   -H "Content-Type: application/json" \
   -d '{"message":"bonjour"}'
 ```
@@ -609,7 +609,7 @@ Les requêtes de métadonnées sont écrites par dialecte : `all_users` / `all_t
 
 ## API REST de gestion
 
-Toutes les routes `/api/**` (sauf `/api/auth/login` et `/api/gateway/**`) nécessitent un `Authorization: Bearer <JWT>`.
+Toutes les routes `/api/**` (sauf `/api/auth/login`) nécessitent un `Authorization: Bearer <JWT>`. Les routes de passerelle `/{code-organisation}/api/gateway/**` sont publiques et authentifiées selon le mode de l'API.
 
 | Méthode | Route | Rôle |
 | --- | --- | --- |
@@ -643,14 +643,16 @@ Toutes les routes `/api/**` (sauf `/api/auth/login` et `/api/gateway/**`) néces
 ### Passerelle dynamique
 
 ```http
-POST /api/gateway/{code-organisation}/{code-api}/{chemin}
+POST /{code-organisation}/api/gateway/{code-api}/{chemin}
 X-API-Key: agk_...
 Content-Type: application/json
 ```
 
-Le code d'organisation est obligatoire : l'API est résolue **dans cette organisation**.
-Les API non classées restent accessibles sous le namespace réservé `default`. L'ancienne forme
-`/api/gateway/{code-api}/...` n'est plus acceptée.
+Le code d'organisation est le **préfixe de contexte** de l'URL : l'API est résolue dans cette
+organisation. Les API non classées restent accessibles sous le préfixe réservé `default`. Les
+formes `/api/gateway/{code-api}/...` et `/api/gateway/{code-organisation}/{code-api}/...` ne sont
+plus acceptées. Si un `server.servlet.context-path` global est défini, il s'ajoute avant le préfixe
+(ex. `/apigen/dgi/api/gateway/clients/...`).
 
 La réponse contient toujours `runId`, `correlationId`, `status` et `data` (ou `error`).
 

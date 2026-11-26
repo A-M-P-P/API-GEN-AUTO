@@ -38,7 +38,7 @@
               <div class="field">
                 <label>Code</label>
                 <input class="input mono" formControlName="code" placeholder="rh-sync" [readonly]="!isCreateMode">
-                <span class="hint">Unique dans l'organisation. URL : /api/gateway/{{ gatewayOrgCode() }}/{{ apiForm.getRawValue().code || 'code' }}/…</span>
+                <span class="hint">Unique dans l'organisation. URL : {{ gatewayOrgCode() }}/api/gateway/{{ apiForm.getRawValue().code || 'code' }}/…</span>
               </div>
               <div class="field">
                 <label>Version</label>
@@ -82,7 +82,7 @@
 
         <div class="card card-pad" [formGroup]="apiForm">
           <h3 class="mb-8">Sécurité des appels entrants</h3>
-          <p class="small muted mb-16">Mode d'authentification exigé sur la passerelle <code class="mono">/api/gateway/{{ gatewayOrgCode() }}/{{ apiData()?.code || 'code' }}</code>.</p>
+          <p class="small muted mb-16">Mode d'authentification exigé sur la passerelle <code class="mono">{{ gatewayOrgCode() }}/api/gateway/{{ apiData()?.code || 'code' }}</code>.</p>
 
           <div class="field mb-16">
             <label>Authentification</label>

@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 
 /**
  * Passerelle dynamique : expose les endpoints INBOUND configurés en base.
- * URL : /api/gateway/{code-organisation}/{code-api}{chemin-endpoint}
+ * URL : /{code-organisation}/api/gateway/{code-api}{chemin-endpoint}
  */
 @RestController
 public class DynamicGatewayController {
@@ -68,7 +68,7 @@ public class DynamicGatewayController {
         this.objectMapper = objectMapper;
     }
 
-    @RequestMapping(value = "/api/gateway/{organizationCode}/{apiCode}/**")
+    @RequestMapping(value = "/{organizationCode}/api/gateway/{apiCode}/**")
     public ResponseEntity<Object> handle(@PathVariable String organizationCode,
                                          @PathVariable String apiCode,
                                          HttpServletRequest request,
@@ -234,7 +234,7 @@ public class DynamicGatewayController {
         if (contextPath != null && !contextPath.isBlank() && uri.startsWith(contextPath)) {
             uri = uri.substring(contextPath.length());
         }
-        String prefix = "/api/gateway/" + organizationCode + "/" + apiCode;
+        String prefix = "/" + organizationCode + "/api/gateway/" + apiCode;
         int index = uri.indexOf(prefix);
         String path = index >= 0 ? uri.substring(index + prefix.length()) : "/";
         try {

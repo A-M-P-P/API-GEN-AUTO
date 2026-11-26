@@ -53,7 +53,7 @@ class ApiGenApplicationTests {
 
     @Test
     void gatewayExecutesDemoPipeline() throws Exception {
-        mockMvc.perform(post("/api/gateway/default/demo/echo")
+        mockMvc.perform(post("/default/api/gateway/demo/echo")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"message\":\"bonjour\"}"))
                 .andExpect(status().isOk())
@@ -61,11 +61,11 @@ class ApiGenApplicationTests {
                 .andExpect(jsonPath("$.data.echo").value("BONJOUR"))
                 .andExpect(jsonPath("$.data.receivedVia").value("POST"));
 
-        mockMvc.perform(get("/api/gateway/default/demo/hello").param("name", "Amina"))
+        mockMvc.perform(get("/default/api/gateway/demo/hello").param("name", "Amina"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.greeting").value("Bonjour Amina"));
 
-        mockMvc.perform(get("/api/gateway/default/demo/unknown"))
+        mockMvc.perform(get("/default/api/gateway/demo/unknown"))
                 .andExpect(status().isNotFound());
     }
 
@@ -107,10 +107,10 @@ class ApiGenApplicationTests {
                 .andReturn().getResponse().getContentAsString();
         String apiKey = objectMapper.readTree(keyResponse).get("apiKey").asText();
 
-        mockMvc.perform(get("/api/gateway/default/test-key/hello").param("name", "Amina"))
+        mockMvc.perform(get("/default/api/gateway/test-key/hello").param("name", "Amina"))
                 .andExpect(status().isUnauthorized());
 
-        mockMvc.perform(get("/api/gateway/default/test-key/hello").param("name", "Amina")
+        mockMvc.perform(get("/default/api/gateway/test-key/hello").param("name", "Amina")
                         .header("X-API-Key", apiKey))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.greeting").value("Amina"));
@@ -134,11 +134,11 @@ class ApiGenApplicationTests {
                                 """.formatted(orgA)))
                 .andExpect(status().isConflict());
 
-        mockMvc.perform(get("/api/gateway/org-a/shared"))
+        mockMvc.perform(get("/org-a/api/gateway/shared"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value("A"));
 
-        mockMvc.perform(get("/api/gateway/org-b/shared"))
+        mockMvc.perform(get("/org-b/api/gateway/shared"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value("B"));
     }

@@ -46,7 +46,7 @@ public class ConfigService {
             new EntrySpec("server.port", "Port d'écoute", false, true,
                     "Ignorée sur WebLogic : le port est celui du serveur WebLogic."),
             new EntrySpec("server.servlet.context-path", "Chemin de contexte", false, true,
-                    "Ex. /apigen — l'API devient /apigen/api/..."),
+                    "Ex. /apigen — la passerelle devient /apigen/{organisation}/api/..."),
             new EntrySpec("apigen.jwt.secret", "Secret JWT", true, true,
                     "Au moins 64 caractères aléatoires."),
             new EntrySpec("apigen.jwt.expiration-hours", "Durée de vie des jetons (heures)", false, true,

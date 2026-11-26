@@ -224,8 +224,10 @@ Chaque organisation dispose de **son propre contexte**, appliqué à toutes ses 
 3. La liste des API est **groupée par organisation**, avec un filtre « Toutes les organisations »
    en haut de page.
 4. Les appels à la passerelle utilisent toujours le code de l'organisation :
-   `/api/gateway/{code-organisation}/{code-api}/...`. L'ancienne URL sans organisation n'est plus
-   acceptée. Les API non classées sont accessibles sous `default`.
+   `/{code-organisation}/api/gateway/{code-api}/...`. L'ancienne URL sans organisation n'est plus
+   acceptée. Les API non classées sont accessibles sous `default`. Le préfixe d'organisation joue
+   le rôle d'un contexte ; si un contexte global est réglé dans **Configuration**, il vient avant
+   (ex. `/apigen/dgi/api/gateway/clients/...`).
 
 Le **contexte** est un objet JSON :
 
