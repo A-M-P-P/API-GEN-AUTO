@@ -391,17 +391,19 @@ export class ApiBuilderComponent implements OnInit {
         if (run.status === 'SUCCESS') {
           this.toast.success('Exécution réussie.');
         } else {
-          this.toast.error('Exécution échouée : ' + (run.errorMessage ?? 'erreur inconnue'));
+          this.toast.error(run.errorMessage ?? 'L’exécution n’a pas pu aboutir. Vérifiez la configuration de l’endpoint.');
         }
       },
       error: (err: HttpErrorResponse) => {
         this.running.set(false);
-        const detail = typeof err.error?.message === 'string'
-          ? err.error.message
-          : (typeof err.message === 'string' ? err.message : null);
-        this.toast.error(detail
-          ? `Exécution impossible (${err.status}) : ${detail}`
-          : `Exécution impossible (${err.status}).`);
+        const detail = typeof err.error?.message === 'string' ? err.error.message : null;
+        if (err.status === 0) {
+          this.toast.error('Le serveur n’est pas joignable. Vérifiez qu’il est démarré, puis réessayez.');
+        } else if (detail) {
+          this.toast.error(detail);
+        } else {
+          this.toast.error('L’exécution n’a pas pu démarrer. Réessayez ou reconnectez-vous.');
+        }
         console.error('POST /api/endpoints/' + id + '/run', err);
       }
     });

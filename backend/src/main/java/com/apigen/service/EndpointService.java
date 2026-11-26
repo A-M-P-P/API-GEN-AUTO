@@ -2,7 +2,9 @@ package com.apigen.service;
 
 import com.apigen.domain.ApiDefinition;
 import com.apigen.domain.Endpoint;
+import com.apigen.domain.RunStatus;
 import com.apigen.domain.Schedule;
+import com.apigen.domain.TriggerType;
 import com.apigen.dto.ApiDtos;
 import com.apigen.dto.RunDtos;
 import com.apigen.repository.EndpointRepository;
@@ -11,6 +13,8 @@ import com.apigen.security.SecurityUtils;
 import com.apigen.web.ApiException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +27,7 @@ import java.util.regex.Pattern;
 @Service
 public class EndpointService {
 
+    private static final Logger log = LoggerFactory.getLogger(EndpointService.class);
     private static final Pattern PATH_PATTERN = Pattern.compile("^/[A-Za-z0-9_/\\-{}.]*$");
 
     private final EndpointRepository endpointRepository;
@@ -159,8 +164,32 @@ public class EndpointService {
     @Transactional
     public RunDtos.RunResponse runNow(Long endpointId, JsonNode payload) {
         Endpoint endpoint = endpointWithSchedule(endpointId);
-        ExecutionService.ExecutionOutcome outcome = executionService.manualRun(endpoint, payload);
-        return runResponse(outcome);
+        try {
+            return runResponse(executionService.manualRun(endpoint, payload));
+        } catch (Exception e) {
+            // Dernier filet de sécurité : même une panne inattendue doit donner un message
+            // exploitable dans le studio plutôt qu'un toast « Exécution impossible ».
+            log.error("Impossible de lancer l'endpoint {}", endpointId, e);
+            Instant now = Instant.now();
+            return new RunDtos.RunResponse(
+                    null,
+                    endpoint.getApi() == null ? null : endpoint.getApi().getId(),
+                    endpoint.getApi() == null ? null : endpoint.getApi().getCode(),
+                    endpoint.getApi() == null ? null : endpoint.getApi().getName(),
+                    endpoint.getId(),
+                    endpoint.getName(),
+                    RunStatus.FAILED,
+                    endpoint.getDirection(),
+                    TriggerType.MANUAL,
+                    null,
+                    null,
+                    null,
+                    executionService.friendlyMessage(e),
+                    now,
+                    now,
+                    0L
+            );
+        }
     }
 
     @Transactional

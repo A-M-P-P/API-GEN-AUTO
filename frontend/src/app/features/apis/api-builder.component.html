@@ -325,12 +325,17 @@
                 <div class="spread">
                   <div class="row">
                     <span class="badge {{ statusClass(run.status) }}">{{ statusLabel(run.status) }}</span>
-                    <span class="small muted">run #{{ run.id }} · {{ triggerLabel(run.triggerType) }} · {{ run.durationMs }} ms</span>
+                    @if (run.id) {
+                      <span class="small muted">run #{{ run.id }} · {{ triggerLabel(run.triggerType) }} · {{ run.durationMs }} ms</span>
+                    } @else {
+                      <span class="small muted">{{ triggerLabel(run.triggerType) }} · historique indisponible</span>
+                    }
                   </div>
                   <span class="small muted mono">{{ run.correlationId }}</span>
                 </div>
                 @if (run.errorMessage) {
                   <div class="alert alert-error mt-8 small">{{ run.errorMessage }}</div>
+                  <div class="hint mt-8">Corrigez l’étape indiquée, enregistrez l’endpoint, puis réessayez.</div>
                 }
                 @if (run.responseSummary) {
                   <div class="code-block mt-8">{{ formatSummary(run.responseSummary) }}</div>

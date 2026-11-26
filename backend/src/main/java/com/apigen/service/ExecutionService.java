@@ -8,6 +8,7 @@ import com.apigen.execution.ExecutionContext;
 import com.apigen.execution.ExecutionException;
 import com.apigen.execution.StepExecutor;
 import com.apigen.repository.ExchangeRunRepository;
+import com.apigen.web.ApiException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,9 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +64,6 @@ public class ExecutionService {
         run.setStatus(RunStatus.RUNNING);
         run.setStartedAt(started);
         run.setRequestSummary(summarize(initial));
-        run = runRepository.save(run);
 
         ExecutionContext context = new ExecutionContext();
         Map<String, Object> root = new LinkedHashMap<>();
@@ -74,15 +76,15 @@ public class ExecutionService {
         Object output = null;
         Throwable failure = null;
         try {
+            // Tout ce qui peut échouer fait partie de l'exécution : le studio doit toujours
+            // recevoir un résultat lisible, jamais un HTTP 500 sans explication.
+            run = runRepository.save(run);
             // Chaque organisation fournit son propre contexte (variables, secrets, surcharges).
-            // La résolution du contexte fait partie de l'exécution : une erreur ici doit
-            // produire un run FAILED lisible dans le studio, pas un HTTP 500 générique.
             context.setRootValue("org", organizationContextService.forEndpoint(endpoint.getId()).asRoot());
             output = executePipeline(endpoint.getPipeline(), context);
         } catch (Exception e) {
             failure = e;
-            log.warn("Exécution échouée pour l'endpoint {} ({}) : {}",
-                    endpoint.getId(), endpoint.getName(), e.getMessage(), e);
+            log.warn("Exécution échouée pour l'endpoint {} ({})", endpoint.getId(), endpoint.getName(), e);
         }
 
         Instant finished = Instant.now();
@@ -93,9 +95,14 @@ public class ExecutionService {
             run.setStatus(RunStatus.SUCCESS);
         } else {
             run.setStatus(RunStatus.FAILED);
-            run.setErrorMessage(truncate(failure.getMessage() == null ? failure.getClass().getSimpleName() : failure.getMessage(), 4000));
+            run.setErrorMessage(friendlyMessage(failure));
         }
-        runRepository.save(run);
+        try {
+            runRepository.save(run);
+        } catch (Exception e) {
+            // Même si l'historique n'est pas disponible, on renvoie le résultat à l'utilisateur.
+            log.warn("Impossible d'enregistrer l'historique de l'exécution {}", correlationId, e);
+        }
         return new ExecutionOutcome(run, output, failure);
     }
 
@@ -178,6 +185,41 @@ public class ExecutionService {
         } catch (Exception e) {
             return truncate(String.valueOf(value), MAX_SUMMARY);
         }
+    }
+
+    /**
+     * Message destiné à un utilisateur non technique : on garde le libellé métier quand il
+     * existe, on traduit les erreurs techniques en phrase d'action et on laisse le détail
+     * court entre parenthèses. La pile complète reste dans les logs serveur.
+     */
+    public String friendlyMessage(Throwable failure) {
+        if (failure == null) {
+            return null;
+        }
+        if (failure instanceof ApiException) {
+            return truncate(failure.getMessage(), 4000);
+        }
+        String detail = failure.getMessage() == null
+                ? failure.getClass().getSimpleName() : failure.getMessage();
+        Throwable root = failure;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        String rootDetail = root.getMessage() == null ? root.getClass().getSimpleName() : root.getMessage();
+        String lower = (detail + " " + rootDetail).toLowerCase(Locale.ROOT);
+
+        String headline;
+        if (root instanceof SQLException || lower.contains("ora-") || lower.contains("jdbc")) {
+            headline = "La base de données n'a pas pu être utilisée. Vérifiez la connexion choisie dans l'endpoint.";
+        } else if (lower.contains("unknownhost") || lower.contains("connect") || lower.contains("timeout")
+                || lower.contains("timed out") || lower.contains("econnrefused")) {
+            headline = "Le service distant n'a pas répondu. Vérifiez l'URL et réessayez.";
+        } else if (lower.contains("type d'étape inconnu") || lower.contains("pipeline json illisible")) {
+            headline = "Le pipeline de l'endpoint contient une étape ou un JSON non reconnu.";
+        } else {
+            headline = "L'exécution n'a pas pu aboutir. Vérifiez la configuration de l'endpoint et réessayez.";
+        }
+        return truncate(headline + " (détail : " + detail + ")", 4000);
     }
 
     private String truncate(String value, int max) {
