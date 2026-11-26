@@ -260,23 +260,40 @@
             <div class="spread mb-8">
               <div>
                 <strong class="small">Pipeline d'exécution</strong>
-                <div class="hint">Tableau JSON d'étapes exécutées dans l'ordre : HTTP, DB_QUERY, DB_EXEC, FILE_READ, FILE_WRITE, MAP, LOG, SET.</div>
+                <div class="hint">Les actions à faire, dans l'ordre. Choisissez un modèle ci-dessous : le JSON est écrit pour vous.</div>
               </div>
               <div class="row">
                 <button type="button" class="btn btn-secondary btn-sm" (click)="openBrowser()">
                   ⊞ Parcourir la base
                 </button>
+                <span class="hint">Sans écrire de SQL : choisissez une table, une lecture est ajoutée.</span>
+              </div>
+              <div class="row mt-8">
                 <select class="select select-sm" (change)="insertTemplate($any($event.target).value)">
-                  <option value="">+ Insérer un modèle</option>
+                  <option value="">+ Insérer une action</option>
                   <option value="http">Appel HTTP</option>
                   <option value="dbQuery">Requête SQL (lecture)</option>
                   <option value="dbExec">Écriture SQL</option>
                   <option value="fileRead">Lecture fichier</option>
                   <option value="fileWrite">Écriture fichier</option>
-                  <option value="map">Mapping de champs</option>
-                  <option value="log">Journalisation</option>
+                  <option value="map">Mise en forme des données</option>
+                  <option value="log">Message dans le journal</option>
                 </select>
               </div>
+
+              <details class="pipeline-help mt-8">
+                <summary class="hint">À quoi sert chaque action ?</summary>
+                <ul class="small muted">
+                  <li><strong>Appel HTTP</strong> — interroge un service externe (un ERP, un partenaire, une API).</li>
+                  <li><strong>Requête SQL (lecture)</strong> — récupère des lignes dans une base via une connexion déclarée.</li>
+                  <li><strong>Écriture SQL</strong> — modifie des données (ajout, mise à jour, suppression).</li>
+                  <li><strong>Lecture fichier</strong> — lit un CSV, JSON ou XLSX déposé dans le dossier d'échanges.</li>
+                  <li><strong>Écriture fichier</strong> — produit un fichier avec le résultat reçu.</li>
+                  <li><strong>Mise en forme des données</strong> — renomme des champs, met en majuscules, applique une valeur par défaut.</li>
+                  <li><strong>Message dans le journal</strong> — ajoute une trace pour comprendre l'exécution, sans modifier le résultat.</li>
+                </ul>
+                <p class="hint">Chaque action reçoit le résultat de la précédente. Les modèles insérés sont modifiables dans le cadre ci-dessous.</p>
+              </details>
             </div>
 
             <textarea class="textarea code" formControlName="pipeline" rows="14" spellcheck="false"></textarea>

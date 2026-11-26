@@ -77,6 +77,16 @@
   background: var(--surface-2);
 }
 
+.pipeline-help {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  summary { cursor: pointer; }
+  ul { margin: 8px 0 6px; padding-left: 18px; }
+  li { margin-bottom: 4px; }
+}
+
 @media (max-width: 1180px) {
   .builder-grid { grid-template-columns: 1fr; }
 }
