@@ -14,9 +14,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class XmlMapperProvider {
 
-    private final XmlMapper mapper = new XmlMapper().registerModule(new JavaTimeModule());
+    private final XmlMapper mapper = createMapper();
 
     public XmlMapper mapper() {
+        return mapper;
+    }
+
+    private static XmlMapper createMapper() {
+        XmlMapper mapper = new XmlMapper();
+        // registerModule() est déclaré sur ObjectMapper : on ne peut pas chaîner l'appel ici.
+        mapper.registerModule(new JavaTimeModule());
         return mapper;
     }
 }
