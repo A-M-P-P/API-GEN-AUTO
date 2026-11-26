@@ -60,9 +60,9 @@ export class LoginComponent {
     if (err.status === 401) {
       this.error.set('Identifiants incorrects ou compte désactivé.');
     } else if (err.status === 0) {
-      this.error.set('Le serveur n’est pas joignable. Vérifiez qu’il est démarré.');
+      this.error.set('Le serveur n’est pas joignable. Vérifiez qu’il est démarré et que l’adresse du backend dans config.json est correcte.');
     } else if (err.status === 404) {
-      this.error.set('La connexion est introuvable. Vérifiez le chemin de contexte dans Configuration, redémarrez le backend puis rechargez le studio.');
+      this.error.set('La connexion est introuvable. Vérifiez l’adresse du backend et son chemin de contexte dans Configuration, puis rechargez le studio.');
     } else {
       this.error.set(detail ?? 'Connexion impossible. Réessayez.');
     }

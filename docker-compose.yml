@@ -38,6 +38,12 @@ services:
     build: ./frontend
     depends_on:
       - backend
+    environment:
+      # Laisser vide pour utiliser le proxy nginx du conteneur (/api -> backend:8080).
+      # Renseigner pour pointer le studio vers un backend situé sur un autre serveur :
+      #   BACKEND_URL=http://srv-backend:8081 CONTEXT_PATH=/apigen docker compose up
+      BACKEND_URL: ${BACKEND_URL:-}
+      CONTEXT_PATH: ${CONTEXT_PATH:-}
     ports:
       - "4200:80"
     restart: unless-stopped

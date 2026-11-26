@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ConfigService } from '../../core/config.service';
+import { FrontendConfigService } from '../../core/frontend-config.service';
 import { ToastService } from '../../core/toast.service';
 import { ConfigEntry, ConfigView } from '../../core/models';
 
@@ -19,6 +20,7 @@ interface ConfigGroup {
 export class ConfigComponent implements OnInit {
   private service = inject(ConfigService);
   private toast = inject(ToastService);
+  readonly frontendConfig = inject(FrontendConfigService);
 
   readonly view = signal<ConfigView | null>(null);
   readonly loading = signal(true);

@@ -471,6 +471,26 @@ repackaging. Deux limites à connaître :
 - les secrets saisis ici sont écrits **en clair** dans le fichier. En production, préférez les
   variables d'environnement ou un coffre à secrets.
 
+#### Studio et backend sur deux serveurs différents
+
+L'adresse du backend utilisée par le studio se règle dans `config.json`, à côté des fichiers
+statiques du frontend (`frontend/public/config.json` dans les sources). **Aucun rebuild** n'est
+nécessaire : modifiez le fichier déployé, puis rechargez la page.
+
+```json
+{ "backendUrl": "http://serveur-backend:8081", "contextPath": "/apigen" }
+```
+
+Laissez `backendUrl` vide pour conserver le comportement « même serveur » (proxy Angular en
+développement, nginx en production). Si le chemin de contexte est déjà inclus dans `backendUrl`,
+ne le répétez pas dans `contextPath`. Autorisez ensuite l'origine du studio sur le backend avec
+`APIGEN_CORS_ORIGINS=http://studio.example.com`. L'adresse effective est visible dans le studio,
+menu **Configuration**.
+
+En développement : `APIGEN_BACKEND=http://serveur-backend:8081 npm start`.
+
+Avec Docker : `BACKEND_URL=http://serveur-backend:8081 CONTEXT_PATH=/apigen docker compose up -d`.
+
 ### Déploiement sur serveur d'application (WebLogic)
 
 Le livrable Spring Boot 3.3 / Jakarta EE 9+ **ne se déploie pas tel quel sur WebLogic 12c** :

@@ -42,7 +42,16 @@
         <div class="summary-item">
           <span class="small muted">Chemin de contexte</span>
           <code>{{ config.contextPath }}</code>
-          <span class="hint">Le studio s'adapte tout seul : après redémarrage du backend, rechargez simplement cette page.</span>
+          <span class="hint">Pour les URL publiques. L'adresse utilisée par le studio est indiquée ci-dessous.</span>
+        </div>
+        <div class="summary-item wide">
+          <span class="small muted">Adresse du backend utilisée par le studio</span>
+          <code>{{ frontendConfig.apiBaseUrl() || 'même serveur que le studio' }}</code>
+          <span class="hint">
+            Si le backend est sur un autre serveur, modifiez le fichier <code>config.json</code>
+            placé à côté du studio (champ <code>backendUrl</code>), puis rechargez la page.
+            Aucun rebuild n'est nécessaire.
+          </span>
         </div>
         <div class="summary-item wide">
           <span class="small muted">Fichier de configuration</span>

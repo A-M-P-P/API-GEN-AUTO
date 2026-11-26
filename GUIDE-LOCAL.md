@@ -378,7 +378,51 @@ Les clés inconnues sont listées dans `ignored`, jamais écrites.
 - **Les secrets sont en clair** dans le fichier. En production, préférez les variables
   d'environnement ou un coffre à secrets.
 
-### 5.5. Et le déploiement sur WebLogic 12c ?
+### 5.5. Backend et studio sur deux serveurs différents
+
+Le studio Angular n'a pas besoin d'être hébergé avec le backend. Son adresse cible est lue dans un
+petit fichier **`config.json`** placé à côté de l'application (`dist/apigen-studio/config.json`
+après build, ou `frontend/public/config.json` dans les sources). Ce fichier est lu au chargement de
+la page : **modifiable sans rebuild ni redéploiement**, il suffit de recharger le navigateur.
+
+```json
+{
+  "backendUrl": "http://serveur-backend:8081",
+  "contextPath": "/apigen"
+}
+```
+
+- `backendUrl` vide (valeur par défaut) : le studio appelle son propre serveur. En développement,
+  c'est le proxy Angular (`frontend/proxy.conf.js`) ; en production, c'est nginx.
+- `backendUrl` renseigné : URL complète du backend, avec son port. Le chemin de contexte peut être
+  mis ici directement (`"...:8081/apigen"`) ou dans `contextPath` — pas dans les deux.
+- `contextPath` : préfixe global (`/apigen`) défini dans **Configuration** côté backend.
+
+Le studio affiche l'adresse retenue dans **Configuration → Adresse du backend utilisée par le
+studio**. Si le backend est sur une autre origine (autre host ou autre port), autorisez le studio
+dans les CORS du backend :
+
+```bash
+set APIGEN_CORS_ORIGINS=http://studio.example.com,http://localhost:4200
+```
+
+Exemple en développement (le proxy Angular lit ces variables) :
+
+```bash
+set APIGEN_BACKEND=http://serveur-backend:8081
+set APIGEN_CONTEXT_PATH=/apigen
+npm start
+```
+
+Avec Docker Compose, les mêmes réglages passent par l'environnement :
+
+```bash
+BACKEND_URL=http://serveur-backend:8081 CONTEXT_PATH=/apigen docker compose up -d
+```
+
+Le script `frontend/docker-entrypoint.sh` régénère alors `config.json` au démarrage du conteneur.
+
+### 5.6. Et le déploiement sur WebLogic 12c ?
 
 **Point bloquant à connaître avant tout packaging.** Spring Boot 3.3 repose sur Jakarta EE 9+
 (`jakarta.*`) et exige Java 17. WebLogic 12c (12.2.1.x) est certifié **Java EE 7 / JDK 8** :
