@@ -43,9 +43,9 @@
                 <label>Code <span class="required">*</span></label>
                 <input class="input mono" formControlName="code" placeholder="rh-sync" [readonly]="!isCreateMode">
                 @if (apiForm.get('code')?.invalid && apiForm.get('code')?.touched) {
-                  <span class="field-error">Lettres minuscules, chiffres et tirets (2 à 80 caractères).</span>
+                  <span class="field-error">Lettres, chiffres, tirets ou _ (2 à 80 caractères). Converti en minuscules.</span>
                 }
-                <span class="hint">Unique dans l'organisation. URL : {{ gatewayOrgCode() }}/api/gateway/{{ apiForm.getRawValue().code || 'code' }}/…</span>
+                <span class="hint">Majuscules acceptées (converties en minuscules). Unique dans l'organisation. URL : {{ gatewayOrgCode() }}/api/gateway/{{ apiForm.getRawValue().code || 'code' }}/…</span>
               </div>
               <div class="field">
                 <label>Version</label>

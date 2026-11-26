@@ -78,7 +78,7 @@ export class ApiBuilderComponent implements OnInit {
   private scheduleId: number | null = null;
 
   readonly apiForm = this.fb.nonNullable.group({
-    code: ['', [Validators.required, Validators.pattern(/^[a-z0-9][a-z0-9-]{1,79}$/)]],
+    code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9][A-Za-z0-9_-]{1,79}$/)]],
     name: ['', Validators.required],
     description: [''],
     version: ['1.0'],
@@ -171,7 +171,7 @@ export class ApiBuilderComponent implements OnInit {
       this.apiForm.markAllAsTouched();
       const problems: string[] = [];
       if (this.apiForm.controls.code.invalid) {
-        problems.push('Code : 2 à 80 caractères, minuscules, chiffres et tirets');
+        problems.push('Code : 2 à 80 caractères, lettres, chiffres, tirets ou _');
       }
       if (this.apiForm.controls.name.invalid) {
         problems.push('Nom obligatoire');
@@ -181,6 +181,10 @@ export class ApiBuilderComponent implements OnInit {
     }
     this.saving.set(true);
     const raw = this.apiForm.getRawValue();
+    // Le backend normalise déjà en minuscules ; on le fait aussi ici pour que l'URL
+    // affichée dans le formulaire corresponde au code réellement enregistré.
+    raw.code = raw.code.trim().toLowerCase();
+    this.apiForm.patchValue({ code: raw.code }, { emitEvent: false });
     // [ngValue] fournit déjà un number ou null ; on normalise aussi les anciennes
     // valeurs "null" pour ne jamais envoyer une chaîne au champ Long du backend.
     const selectedOrganization: unknown = raw.organizationId;

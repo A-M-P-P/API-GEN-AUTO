@@ -54,8 +54,8 @@ public final class ApiDtos {
 
     public record ApiCreateRequest(
             @NotBlank
-            @Pattern(regexp = "^[a-z0-9][a-z0-9-]{1,79}$",
-                    message = "le code doit contenir 2 à 80 caractères : minuscules, chiffres et tirets")
+            @Pattern(regexp = "^[A-Za-z0-9][A-Za-z0-9_-]{1,79}$",
+                    message = "le code doit contenir 2 à 80 caractères : lettres, chiffres, tirets ou _")
             String code,
             @NotBlank String name,
             String description,
