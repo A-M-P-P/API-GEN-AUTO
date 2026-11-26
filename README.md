@@ -344,9 +344,11 @@ Tout est surchargeable sans rebuild via les variables du tableau ci-dessus ou le
 
 ### Contexte propre à chaque organisation
 
-Chaque organisation porte un contexte JSON éditable dans le studio (menu **Organisations**) :
+Chaque organisation porte un contexte éditable dans le studio (menu **Organisations**) :
 il est appliqué à toutes les API qui lui sont rattachées et surcharge la configuration globale.
-Les secrets y sont chiffrés en base (AES-256-GCM) et masqués à l'écran.
+Il ne modifie pas l'URL de la passerelle : le préfixe reste le **code** de l'organisation, précédé
+du chemin de contexte global éventuel. Les secrets y sont chiffrés en base (AES-256-GCM) et masqués
+à l'écran. Vous pouvez laisser cette section vide : tout le contexte global continue de s'appliquer.
 
 ```json
 {

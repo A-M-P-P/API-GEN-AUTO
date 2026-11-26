@@ -219,7 +219,8 @@ L'application redémarre normalement, le compte `admin` est rétabli. Aucun scri
 Une **organisation** possède zéro ou plusieurs API ; une API peut aussi rester « non classée ».
 Chaque organisation dispose de **son propre contexte**, appliqué à toutes ses API.
 
-1. Menu **Organisations** → **+ Nouvelle organisation** (code, nom, description, contexte JSON).
+1. Menu **Organisations** → **+ Nouvelle organisation** (code, nom, description, et éventuellement
+   des paramètres avancés). Le code est le seul élément utilisé dans l'URL.
 2. Menu **APIs → + Nouvelle API** → champ **Organisation** (ou **Aucune** pour une API non classée).
 3. La liste des API est **groupée par organisation**, avec un filtre « Toutes les organisations »
    en haut de page.
@@ -229,7 +230,11 @@ Chaque organisation dispose de **son propre contexte**, appliqué à toutes ses 
    le rôle d'un contexte ; si un contexte global est réglé dans **Configuration**, il vient avant
    (ex. `/apigen/dgi/api/gateway/clients/...`).
 
-Le **contexte** est un objet JSON :
+Le **contexte d'organisation** ne doit pas être confondu avec le préfixe de l'URL : il ne modifie
+pas la route. Il contient uniquement des valeurs propres aux API de l'organisation, utilisées dans
+les pipelines. Le studio le génère depuis des champs guidés ; il n'y a rien à saisir en JSON.
+
+En interne, ce contexte est un objet JSON :
 
 ```json
 {

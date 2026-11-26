@@ -112,8 +112,13 @@
       <div class="field">
         <div class="spread">
           <div>
-            <label>Paramètres propres à cette organisation (facultatif)</label>
-            <span class="hint">Vous pouvez ignorer cette section : elle sert uniquement si les API de cette organisation doivent utiliser des valeurs particulières.</span>
+            <label>Paramètres avancés propres à cette organisation (facultatif)</label>
+            <span class="hint">
+              Vous pouvez ignorer cette section. L'URL de test est déjà formée avec le <strong>Code</strong>
+              ci-dessus : <code>/&#123;chemin global&#125;/&#123;code&#125;/api/gateway/&#123;code-api&#125;/...</code>. Ces paramètres
+              servent uniquement si les API de cette organisation doivent utiliser d'autres valeurs
+              que la configuration globale (adresse d'un ERP, dossier d'échanges, jeton d'accès…).
+            </span>
           </div>
           <button type="button" class="btn btn-ghost btn-sm" (click)="advancedOpen.set(!advancedOpen())">
             {{ advancedOpen() ? 'Masquer' : 'Configurer' }}
@@ -126,6 +131,9 @@
               Utilisez <code>&#123;org.variables.nom&#125;</code> dans une étape pour insérer une
               variable, et <code>&#123;org.secrets.nom&#125;</code> pour un secret. Les secrets sont
               chiffrés et masqués après enregistrement.
+              <br>Exemple : si la DGI appelle <code>erp.dgi.cm</code> et les Douanes
+              <code>erp.douanes.cm</code>, renseignez l'adresse de base de chacune ici ; sans cela,
+              toutes utilisent l'adresse globale de la <strong>Configuration</strong>.
             </p>
 
             <div class="sub-title">Variables</div>
