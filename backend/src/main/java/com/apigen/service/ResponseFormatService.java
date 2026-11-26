@@ -1,5 +1,6 @@
 package com.apigen.service;
 
+import com.apigen.config.XmlMapperProvider;
 import com.apigen.domain.Endpoint;
 import com.apigen.domain.ResponseFormat;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,9 +33,9 @@ public class ResponseFormatService {
     private final ObjectMapper objectMapper;
     private final XmlMapper xmlMapper;
 
-    public ResponseFormatService(ObjectMapper objectMapper, XmlMapper xmlMapper) {
+    public ResponseFormatService(ObjectMapper objectMapper, XmlMapperProvider xmlMapperProvider) {
         this.objectMapper = objectMapper;
-        this.xmlMapper = xmlMapper;
+        this.xmlMapper = xmlMapperProvider.mapper();
     }
 
     public ResponseEntity<Object> render(Endpoint endpoint, ExecutionService.ExecutionOutcome outcome) {

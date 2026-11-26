@@ -4,6 +4,7 @@ import com.apigen.dto.CommonDtos;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -36,12 +37,12 @@ public class GlobalExceptionHandler {
         body.put("message", "Certains champs sont invalides");
         body.put("fields", fields);
         body.put("path", request.getRequestURI());
-        return ResponseEntity.badRequest().body(body);
+        return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(body);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<CommonDtos.ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
-        return build(HttpStatus.BAD_REQUEST, "Corps de requête JSON illisible", request);
+        return build(HttpStatus.BAD_REQUEST, "Corps de requête illisible", request);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -73,6 +74,6 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 request.getHeader("X-Request-Id")
         );
-        return ResponseEntity.status(status).body(body);
+        return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(body);
     }
 }

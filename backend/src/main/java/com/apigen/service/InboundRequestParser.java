@@ -1,5 +1,6 @@
 package com.apigen.service;
 
+import com.apigen.config.XmlMapperProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,9 +31,9 @@ public class InboundRequestParser {
     private final ObjectMapper objectMapper;
     private final XmlMapper xmlMapper;
 
-    public InboundRequestParser(ObjectMapper objectMapper, XmlMapper xmlMapper) {
+    public InboundRequestParser(ObjectMapper objectMapper, XmlMapperProvider xmlMapperProvider) {
         this.objectMapper = objectMapper;
-        this.xmlMapper = xmlMapper;
+        this.xmlMapper = xmlMapperProvider.mapper();
     }
 
     public void enrich(HttpServletRequest request, Map<String, Object> context) {
