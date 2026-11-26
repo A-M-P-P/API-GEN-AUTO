@@ -1,0 +1,33 @@
+[
+  {
+    "name": "ERP Oracle",
+    "type": "ORACLE",
+    "description": "Base métier utilisée par les pipelines",
+    "baseConfig": {
+      "jdbcUrl": "jdbc:oracle:thin:@//serveur-oracle:1521/SERVICE",
+      "host": "serveur-oracle",
+      "port": 1521,
+      "database": "SERVICE",
+      "addressing": "SERVICE",
+      "maxPoolSize": 10
+    },
+    "credentials": { "username": "lecteur", "password": "change-moi" },
+    "active": true
+  },
+  {
+    "name": "API fournisseur",
+    "type": "REST",
+    "description": "Service HTTP externe",
+    "baseConfig": { "baseUrl": "https://api.exemple.com", "authType": "NONE" },
+    "credentials": {},
+    "active": true
+  },
+  {
+    "name": "Fichiers d'échange",
+    "type": "FILE",
+    "description": "Répertoire local des fichiers",
+    "baseConfig": { "basePath": "./data/exchanges" },
+    "credentials": {},
+    "active": true
+  }
+]

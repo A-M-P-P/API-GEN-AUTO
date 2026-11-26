@@ -1,0 +1,33 @@
+# Copier vers config/runtime.properties à côté du répertoire de lancement du backend.
+# Toutes ces valeurs sont lues au démarrage : aucun rebuild, aucun login requis.
+# Le profil, lui, se choisit avant le démarrage : APIGEN_PROFILE=prod (ou --spring.profiles.active=prod).
+
+# --- Base de données utilisée PAR LA PLATEFORME (ses propres tables) ---
+# Profil local (H2 fichier) : jdbc:h2:file:./data/apigen;MODE=Oracle;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE
+# Profil prod (Oracle) : jdbc:oracle:thin:@//serveur-oracle:1521/SERVICE
+spring.datasource.url=jdbc:oracle:thin:@//serveur-oracle:1521/SERVICE
+spring.datasource.username=apigen
+spring.datasource.password=change-moi
+
+# --- Serveur et URL publique ---
+server.port=8081
+server.servlet.context-path=/apigen
+
+# --- Sécurité ---
+apigen.jwt.secret=remplacez-par-au-moins-64-caracteres-aleatoires-long-et-unique-ici
+apigen.crypto.key=remplacez-par-une-cle-aleatoire-longue
+apigen.cors.allowed-origins=http://studio.example.com
+
+# --- Fonctionnement ---
+apigen.scheduler.enabled=true
+apigen.scheduler.poll-interval-ms=30000
+apigen.audit.retention-days=90
+apigen.files.base-dir=./data/exchanges
+apigen.seed.demo=false
+
+# --- Premier compte administrateur (uniquement s'il n'existe aucun utilisateur) ---
+apigen.seed.admin-username=admin
+apigen.seed.admin-password=ChangeMe123!
+
+# --- Connexions (sources des pipelines) créées au premier démarrage ---
+apigen.seed.connections-file=./config/connections.json

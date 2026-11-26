@@ -301,6 +301,42 @@ Tout ce qui est réglé dans `application.yml` est figé dans le WAR/EAR une foi
 changer une valeur **sans recompiler**, la plateforme lit un fichier de propriétés externe au
 démarrage.
 
+#### Deux bases bien distinctes
+
+1. **La base de la plateforme** : elle contient les utilisateurs, organisations, API, endpoints,
+   connexions, historique d'exécution et audit. C'est `spring.datasource.*` qui la désigne.
+   La base H2 fichier (`./data/apigen`) n'est utilisée **que** avec le profil `local`. Le profil par
+   défaut est `dev` (Oracle) et un déploiement doit utiliser `APIGEN_PROFILE=prod` (Oracle). Si la
+   base visée n'est pas joignable, le backend **ne démarre pas** : il ne bascule pas silencieusement
+   sur H2. Flyway crée ou met à jour les tables de cette base automatiquement.
+2. **Les connexions** : ce sont les systèmes cibles des pipelines (ERP, API, fichiers). Elles sont
+   enregistrées *dans* la base de la plateforme et peuvent être déclarées avant le premier login
+   dans `config/connections.json` (voir ci-dessous), ou créées ensuite dans le studio.
+
+#### Préparer un déploiement sans passer par l'interface
+
+```bash
+cp config/runtime.properties.example config/runtime.properties
+cp config/connections.json.example config/connections.json
+# Éditer les deux fichiers, puis lancer le backend :
+set APIGEN_PROFILE=prod
+java -jar apigen-platform.jar
+```
+
+Points importants :
+
+- **Le profil se choisit avant le démarrage** (`APIGEN_PROFILE=prod` ou
+  `--spring.profiles.active=prod`) : il ne peut pas être changé dans `runtime.properties`.
+- La configuration du studio (adresse du backend) se règle dans `config.json` côté frontend,
+  comme décrit en 5.5 ; elle n'a rien à voir avec la base de la plateforme.
+- Au premier démarrage, un administrateur est créé. Son identifiant et son mot de passe initiaux
+  peuvent être fournis par `apigen.seed.admin-username` / `apigen.seed.admin-password`
+  (`APIGEN_ADMIN_PASSWORD`). Changez-le ensuite depuis le studio.
+- `config/connections.json` est lu au démarrage ; les connexions déjà présentes ne sont jamais
+  écrasées. Les identifiants sont chiffrés avec `apigen.crypto.key`.
+- Les mots de passe de `runtime.properties` sont en clair : protégez le fichier ou utilisez les
+  variables d'environnement.
+
 ### 5.1. Le fichier `runtime.properties`
 
 Emplacement par défaut :

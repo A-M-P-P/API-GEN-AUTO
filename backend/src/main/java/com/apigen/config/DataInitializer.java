@@ -10,6 +10,7 @@ import com.apigen.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +52,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ScheduleRepository scheduleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AppProperties properties;
+    private final Environment environment;
 
     public DataInitializer(UserRepository userRepository,
                            OrganizationRepository organizationRepository,
@@ -59,7 +61,8 @@ public class DataInitializer implements CommandLineRunner {
                            ConnectionRepository connectionRepository,
                            ScheduleRepository scheduleRepository,
                            PasswordEncoder passwordEncoder,
-                           AppProperties properties) {
+                           AppProperties properties,
+                           Environment environment) {
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.apiRepository = apiRepository;
@@ -68,19 +71,23 @@ public class DataInitializer implements CommandLineRunner {
         this.scheduleRepository = scheduleRepository;
         this.passwordEncoder = passwordEncoder;
         this.properties = properties;
+        this.environment = environment;
     }
 
     @Override
     public void run(String... args) {
         if (userRepository.count() == 0) {
+            String username = environment.getProperty("apigen.seed.admin-username", "admin");
+            String password = environment.getProperty("apigen.seed.admin-password", "ChangeMe123!");
             AppUser admin = new AppUser();
-            admin.setUsername("admin");
-            admin.setPasswordHash(passwordEncoder.encode("ChangeMe123!"));
+            admin.setUsername(username);
+            admin.setPasswordHash(passwordEncoder.encode(password));
             admin.setFullName("Administrateur");
             admin.setRole(Role.ADMIN);
             admin.setEnabled(true);
             userRepository.save(admin);
-            log.warn("Compte admin créé : admin / ChangeMe123! — changez ce mot de passe en production.");
+            log.warn("Compte administrateur créé : {} — mot de passe fourni par apigen.seed.admin-password "
+                    + "ou « ChangeMe123! » par défaut. Changez-le en production.", username);
         }
 
         Organization defaultOrganization = ensureDefaultOrganization();

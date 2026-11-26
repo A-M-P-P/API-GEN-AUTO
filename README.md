@@ -326,8 +326,17 @@ Copier `.env.example` vers `.env` (ou exporter les variables) :
 | `APIGEN_SCHEDULER_POLL_MS` | `15000` | Fréquence de scrutation |
 | `APIGEN_FILES_BASE_DIR` | `./data/exchanges` | Racine des fichiers |
 | `APIGEN_SEED_DEMO` | `true` en dev | Crée le jeu de démonstration |
+| `APIGEN_ADMIN_PASSWORD` | `ChangeMe123!` | Mot de passe du premier compte admin (si aucun utilisateur) |
+| `APIGEN_SEED_CONNECTIONS_FILE` | `./config/connections.json` | Connexions des pipelines créées au démarrage |
 | `APIGEN_JWT_EXPIRATION_HOURS` | `8` | Durée de vie des jetons |
 | `APIGEN_JDBC_POOL_EVICT_MS` | `300000` | Fréquence de fermeture des pools inactifs |
+
+Pour un déploiement où l'on ne peut pas encore se connecter au studio : copier
+`config/runtime.properties.example` et `config/connections.json.example`, renseigner la base de la
+plateforme, les secrets, les CORS et les connexions des pipelines, puis démarrer avec
+`APIGEN_PROFILE=prod`. Le profil doit être choisi **avant** le démarrage : il ne peut pas être
+modifié dans `runtime.properties`. La base H2 n'est utilisée qu'avec le profil `local` ; aucun
+repli silencieux vers H2 n'existe si la base configurée est indisponible.
 
 ### Profils et base de données
 
