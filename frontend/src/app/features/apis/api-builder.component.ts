@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
@@ -393,9 +394,15 @@ export class ApiBuilderComponent implements OnInit {
           this.toast.error('Exécution échouée : ' + (run.errorMessage ?? 'erreur inconnue'));
         }
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.running.set(false);
-        this.toast.error('Exécution impossible.');
+        const detail = typeof err.error?.message === 'string'
+          ? err.error.message
+          : (typeof err.message === 'string' ? err.message : null);
+        this.toast.error(detail
+          ? `Exécution impossible (${err.status}) : ${detail}`
+          : `Exécution impossible (${err.status}).`);
+        console.error('POST /api/endpoints/' + id + '/run', err);
       }
     });
   }

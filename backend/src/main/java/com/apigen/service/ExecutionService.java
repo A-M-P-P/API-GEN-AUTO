@@ -70,17 +70,19 @@ public class ExecutionService {
         }
         root.putIfAbsent("trigger", trigger.name());
         context.setInitial(root);
-        // Chaque organisation fournit son propre contexte (variables, secrets, surcharges).
-        context.setRootValue("org", organizationContextService.forEndpoint(endpoint.getId()).asRoot());
 
         Object output = null;
         Throwable failure = null;
         try {
+            // Chaque organisation fournit son propre contexte (variables, secrets, surcharges).
+            // La résolution du contexte fait partie de l'exécution : une erreur ici doit
+            // produire un run FAILED lisible dans le studio, pas un HTTP 500 générique.
+            context.setRootValue("org", organizationContextService.forEndpoint(endpoint.getId()).asRoot());
             output = executePipeline(endpoint.getPipeline(), context);
         } catch (Exception e) {
             failure = e;
             log.warn("Exécution échouée pour l'endpoint {} ({}) : {}",
-                    endpoint.getId(), endpoint.getName(), e.getMessage());
+                    endpoint.getId(), endpoint.getName(), e.getMessage(), e);
         }
 
         Instant finished = Instant.now();
