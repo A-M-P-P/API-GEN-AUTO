@@ -1,10 +1,13 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, WritableSignal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { OrganizationService } from '../../core/organization.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { Organization } from '../../core/models';
+
+type KeyValueRow = { key: string; value: string };
+const MASKED_SECRET = '********';
 
 @Component({
   selector: 'app-organizations',
@@ -25,13 +28,17 @@ export class OrganizationsComponent implements OnInit {
   readonly editing = signal<Organization | null>(null);
   readonly saving = signal(false);
   readonly search = signal('');
+  readonly advancedOpen = signal(false);
+  readonly variables = signal<KeyValueRow[]>([]);
+  readonly secrets = signal<KeyValueRow[]>([]);
+  readonly restBaseUrl = signal('');
+  readonly filesBaseDir = signal('');
 
   readonly form = this.fb.nonNullable.group({
     code: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9][A-Za-z0-9-]{1,59}$/)]],
     name: ['', [Validators.required, Validators.maxLength(150)]],
     description: ['', Validators.maxLength(4000)],
-    active: [true],
-    contextConfig: ['']
+    active: [true]
   });
 
   ngOnInit(): void {
@@ -54,7 +61,8 @@ export class OrganizationsComponent implements OnInit {
 
   openNew(): void {
     this.editing.set(null);
-    this.form.reset({ code: '', name: '', description: '', active: true, contextConfig: '' });
+    this.form.reset({ code: '', name: '', description: '', active: true });
+    this.resetAdvanced();
     this.editorOpen.set(true);
   }
 
@@ -64,9 +72,9 @@ export class OrganizationsComponent implements OnInit {
       code: organization.code,
       name: organization.name,
       description: organization.description ?? '',
-      active: organization.active,
-      contextConfig: organization.contextConfig ?? ''
+      active: organization.active
     });
+    this.applyContext(organization.contextConfig);
     this.editorOpen.set(true);
   }
 
@@ -87,7 +95,7 @@ export class OrganizationsComponent implements OnInit {
       name: raw.name.trim(),
       description: raw.description,
       active: raw.active,
-      contextConfig: raw.contextConfig?.trim() || ''
+      contextConfig: this.serializeContext()
     };
     this.saving.set(true);
     const operation = current ? this.service.update(current.id, payload) : this.service.create(payload);
@@ -101,9 +109,93 @@ export class OrganizationsComponent implements OnInit {
       },
       error: () => {
         this.saving.set(false);
-        this.toast.error('Enregistrement impossible (code déjà utilisé ou contexte JSON invalide).');
+        this.toast.error('Enregistrement impossible (code déjà utilisé ou paramètre avancé invalide).');
       }
     });
+  }
+
+  /** Ajoute une ligne vide dans la section avancée. */
+  addRow(target: WritableSignal<KeyValueRow[]>): void {
+    target.update((rows) => [...rows, { key: '', value: '' }]);
+  }
+
+  removeRow(target: WritableSignal<KeyValueRow[]>, index: number): void {
+    target.update((rows) => rows.filter((_, i) => i !== index));
+  }
+
+  updateRow(target: WritableSignal<KeyValueRow[]>, index: number,
+            field: keyof KeyValueRow, value: string): void {
+    target.update((rows) => rows.map((row, i) => i === index ? { ...row, [field]: value } : row));
+  }
+
+  private resetAdvanced(): void {
+    this.advancedOpen.set(false);
+    this.variables.set([]);
+    this.secrets.set([]);
+    this.restBaseUrl.set('');
+    this.filesBaseDir.set('');
+  }
+
+  private applyContext(raw?: string | null): void {
+    this.resetAdvanced();
+    if (!raw?.trim()) {
+      return;
+    }
+    try {
+      const context = JSON.parse(raw);
+      this.variables.set(this.toRows(context.variables));
+      this.secrets.set(this.toRows(context.secrets));
+      this.restBaseUrl.set(context.overrides?.rest?.baseUrl ?? '');
+      this.filesBaseDir.set(context.overrides?.files?.baseDir ?? '');
+      this.advancedOpen.set(this.variables().length > 0 || this.secrets().length > 0
+        || !!this.restBaseUrl() || !!this.filesBaseDir());
+    } catch {
+      // Un contexte illisible est ignoré : il restera modifiable via l'API pour un administrateur.
+    }
+  }
+
+  private toRows(value: unknown): KeyValueRow[] {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return [];
+    }
+    return Object.entries(value as Record<string, unknown>)
+      .map(([key, item]) => ({ key, value: item == null ? '' : String(item) }));
+  }
+
+  /** Convertit les champs guidés en JSON attendu par le backend. */
+  private serializeContext(): string {
+    const context: Record<string, unknown> = {};
+    const variables = this.toObject(this.variables());
+    const secrets = this.toObject(this.secrets());
+    if (Object.keys(variables).length) {
+      context['variables'] = variables;
+    }
+    if (Object.keys(secrets).length) {
+      context['secrets'] = secrets;
+    }
+    const overrides: Record<string, unknown> = {};
+    if (this.restBaseUrl().trim()) {
+      overrides['rest'] = { baseUrl: this.restBaseUrl().trim() };
+    }
+    if (this.filesBaseDir().trim()) {
+      overrides['files'] = { baseDir: this.filesBaseDir().trim() };
+    }
+    if (Object.keys(overrides).length) {
+      context['overrides'] = overrides;
+    }
+    return Object.keys(context).length ? JSON.stringify(context) : '';
+  }
+
+  private toObject(rows: KeyValueRow[]): Record<string, string> {
+    const result: Record<string, string> = {};
+    rows.forEach((row) => {
+      const key = row.key.trim();
+      // Une valeur masquée est renvoyée telle quelle : le backend conserve le secret existant.
+      if (key) {
+        result[key] = row.value === MASKED_SECRET ? MASKED_SECRET : row.value;
+      }
+    });
+    return result;
   }
 
   toggleActive(organization: Organization): void {

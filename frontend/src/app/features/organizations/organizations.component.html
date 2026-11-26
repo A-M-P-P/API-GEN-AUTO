@@ -110,14 +110,64 @@
       </div>
 
       <div class="field">
-        <label>Contexte de l'organisation (JSON)</label>
-        <textarea class="textarea mono" formControlName="contextConfig" rows="6"
-                  placeholder='{"variables":{"region":"centre"},"secrets":{"apiToken":"..."},"overrides":{"rest":{"baseUrl":"https://host:8443/api"},"files":{"baseDir":"./data/exchanges/org"}}}'></textarea>
-        <span class="hint">
-          Appliqué aux API de cette organisation : <code>org.variables.*</code>,
-          <code>org.secrets.*</code>, et surcharges <code>org.overrides.rest.baseUrl</code> /
-          <code>org.overrides.files.baseDir</code>. Les secrets sont chiffrés et masqués à l'écran.
-        </span>
+        <div class="spread">
+          <div>
+            <label>Paramètres propres à cette organisation (facultatif)</label>
+            <span class="hint">Vous pouvez ignorer cette section : elle sert uniquement si les API de cette organisation doivent utiliser des valeurs particulières.</span>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" (click)="advancedOpen.set(!advancedOpen())">
+            {{ advancedOpen() ? 'Masquer' : 'Configurer' }}
+          </button>
+        </div>
+
+        @if (advancedOpen()) {
+          <div class="advanced mt-8">
+            <p class="small muted">
+              Utilisez <code>&#123;org.variables.nom&#125;</code> dans une étape pour insérer une
+              variable, et <code>&#123;org.secrets.nom&#125;</code> pour un secret. Les secrets sont
+              chiffrés et masqués après enregistrement.
+            </p>
+
+            <div class="sub-title">Variables</div>
+            @for (row of variables(); track $index; let i = $index) {
+              <div class="row">
+                <input class="input" placeholder="Nom (ex. region)" [value]="row.key"
+                       (input)="updateRow(variables, i, 'key', $any($event.target).value)">
+                <input class="input" placeholder="Valeur (ex. centre)" [value]="row.value"
+                       (input)="updateRow(variables, i, 'value', $any($event.target).value)">
+                <button type="button" class="btn btn-ghost btn-icon" (click)="removeRow(variables, i)">✕</button>
+              </div>
+            }
+            <button type="button" class="btn btn-ghost btn-sm" (click)="addRow(variables)">+ Ajouter une variable</button>
+
+            <div class="sub-title mt-8">Secrets</div>
+            @for (row of secrets(); track $index; let i = $index) {
+              <div class="row">
+                <input class="input" placeholder="Nom (ex. apiToken)" [value]="row.key"
+                       (input)="updateRow(secrets, i, 'key', $any($event.target).value)">
+                <input class="input" type="password" placeholder="Valeur secrète" [value]="row.value === '********' ? '' : row.value"
+                       (input)="updateRow(secrets, i, 'value', $any($event.target).value)">
+                <button type="button" class="btn btn-ghost btn-icon" (click)="removeRow(secrets, i)">✕</button>
+              </div>
+            }
+            <button type="button" class="btn btn-ghost btn-sm" (click)="addRow(secrets)">+ Ajouter un secret</button>
+
+            <div class="form-row mt-8">
+              <div class="field">
+                <label>Adresse de base des appels HTTP relatifs</label>
+                <input class="input" placeholder="https://serveur:8443/api" [value]="restBaseUrl()"
+                       (input)="restBaseUrl.set($any($event.target).value)">
+                <span class="hint">Utilisée quand une étape HTTP ne précise pas de connexion.</span>
+              </div>
+              <div class="field">
+                <label>Dossier des échanges de fichiers</label>
+                <input class="input" placeholder="./data/exchanges" [value]="filesBaseDir()"
+                       (input)="filesBaseDir.set($any($event.target).value)">
+                <span class="hint">Utilisé par les étapes de lecture/écriture de fichiers.</span>
+              </div>
+            </div>
+          </div>
+        }
       </div>
 
       <div class="field">

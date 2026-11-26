@@ -242,6 +242,8 @@ Le **contexte** est un objet JSON :
 }
 ```
 
+- Le studio génère ce JSON depuis les champs guidés **Paramètres propres à cette organisation** :
+  vous n'avez pas à saisir de JSON vous-même.
 - `{{org.variables.region}}` et `{{org.secrets.apiToken}}` sont utilisables dans les étapes de pipeline.
 - `org.overrides.rest.baseUrl` sert de base aux URL HTTP relatives sans connexion REST explicite.
 - `org.overrides.files.baseDir` remplace la racine globale `APIGEN_FILES_BASE_DIR` pour les étapes

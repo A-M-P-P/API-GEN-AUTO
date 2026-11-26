@@ -359,6 +359,8 @@ Les secrets y sont chiffrés en base (AES-256-GCM) et masqués à l'écran.
 }
 ```
 
+- dans le studio, ce JSON est généré automatiquement depuis les champs **Variables**, **Secrets**,
+  **Adresse de base des appels HTTP** et **Dossier des échanges** : aucun JSON à écrire à la main ;
 - `variables` et `secrets` sont accessibles aux pipelines via `{{org.variables.region}}` et
   `{{org.secrets.apiToken}}` (URL, header, corps, paramètre SQL…).
 - `org.overrides.rest.baseUrl` sert de base aux URLs HTTP **relatives** lorsqu'aucune connexion
