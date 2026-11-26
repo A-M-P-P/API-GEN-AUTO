@@ -340,3 +340,12 @@ table.table { width: 100%; border-collapse: collapse; }
   gap: 12px;
   margin-top: 6px;
 }
+
+/* Champs obligatoires : signalétique commune à tous les formulaires. */
+.required { color: var(--danger, #dc2626); font-weight: 700; }
+.field-error {
+  display: block;
+  margin-top: 4px;
+  color: var(--danger, #dc2626);
+  font-size: 12px;
+}

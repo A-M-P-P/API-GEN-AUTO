@@ -91,15 +91,22 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="save()">
+      <p class="hint mb-8">Les champs marqués d'un <span class="required">*</span> sont obligatoires.</p>
       <div class="form-row">
         <div class="field">
-          <label>Code</label>
+          <label>Code <span class="required">*</span></label>
           <input class="input mono" formControlName="code" placeholder="Ex. DGI" [readonly]="!!editing()">
-          <span class="hint">Lettres, chiffres et tirets. Unique dans la plateforme.</span>
+          @if (form.get('code')?.invalid && form.get('code')?.touched) {
+            <span class="field-error">Lettres, chiffres et tirets (2 à 60 caractères).</span>
+          }
+          <span class="hint">Unique dans la plateforme.</span>
         </div>
         <div class="field">
-          <label>Nom</label>
+          <label>Nom <span class="required">*</span></label>
           <input class="input" formControlName="name" placeholder="Ex. Direction Générale des Impôts">
+          @if (form.get('name')?.invalid && form.get('name')?.touched) {
+            <span class="field-error">Indiquez un nom.</span>
+          }
         </div>
       </div>
 

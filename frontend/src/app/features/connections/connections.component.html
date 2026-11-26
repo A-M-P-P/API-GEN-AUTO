@@ -87,13 +87,20 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="save()">
+      <p class="hint mb-8">
+        Les champs marqués d'un <span class="required">*</span> sont obligatoires. Les autres
+        dépendent du type de connexion choisi.
+      </p>
       <div class="form-row">
         <div class="field">
-          <label>Nom</label>
+          <label>Nom <span class="required">*</span></label>
           <input class="input" formControlName="name" placeholder="Ex. ERP production">
+          @if (form.get('name')?.invalid && form.get('name')?.touched) {
+            <span class="field-error">Indiquez un nom.</span>
+          }
         </div>
         <div class="field">
-          <label>Type</label>
+          <label>Type <span class="required">*</span></label>
           <select class="select" formControlName="type" (change)="onTypeChange()">
             <option value="REST">REST / HTTP</option>
             <option value="ORACLE">Oracle</option>
@@ -116,18 +123,18 @@
 
           <div class="form-row">
             <div class="field grow">
-              <label>Hôte</label>
+              <label>Hôte (requis pour une base)</label>
               <input class="input" formControlName="host" placeholder="ex. localhost ou 10.0.0.12">
             </div>
             <div class="field port-field">
-              <label>Port</label>
+              <label>Port (requis)</label>
               <input class="input" type="number" formControlName="port" min="1" max="65535">
             </div>
           </div>
 
           <div class="form-row">
             <div class="field grow">
-              <label>{{ databaseLabel() }}</label>
+              <label>{{ databaseLabel() }} (requis)</label>
               <input class="input" formControlName="database" [placeholder]="databasePlaceholder()">
             </div>
             @if (form.getRawValue().type === 'ORACLE') {
@@ -150,11 +157,11 @@
 
           <div class="form-row">
             <div class="field grow">
-              <label>Utilisateur</label>
+              <label>Utilisateur (requis)</label>
               <input class="input" formControlName="username" autocomplete="off" placeholder="ex. APIGEN">
             </div>
             <div class="field grow">
-              <label>Mot de passe</label>
+              <label>Mot de passe (requis)</label>
               <input class="input" type="password" formControlName="password" autocomplete="new-password">
             </div>
           </div>
@@ -193,7 +200,7 @@
           <legend>API REST</legend>
 
           <div class="field">
-            <label>URL de base</label>
+            <label>URL de base (requise pour REST)</label>
             <input class="input" formControlName="baseUrl" placeholder="https://api.exemple.com">
           </div>
 
@@ -248,7 +255,7 @@
         <fieldset class="group">
           <legend>Fichiers</legend>
           <div class="field">
-            <label>Répertoire de base</label>
+            <label>Répertoire de base (requis pour fichiers)</label>
             <input class="input" formControlName="basePath" placeholder="./data/exchanges">
             <span class="hint">Chemin relatif au répertoire de travail du serveur.</span>
           </div>

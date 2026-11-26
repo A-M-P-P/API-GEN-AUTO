@@ -125,7 +125,11 @@ export class ApiBuilderComponent implements OnInit {
 
   /** Code de l'organisation qui préfixe l'URL de la passerelle. */
   gatewayOrgCode(): string {
-    const organizationId = this.apiForm.getRawValue().organizationId;
+    const selected: unknown = this.apiForm.getRawValue().organizationId;
+    if (selected == null || selected === '' || selected === 'null') {
+      return 'default';
+    }
+    const organizationId = Number(selected);
     return this.organizations().find((organization) => organization.id === organizationId)?.code ?? 'default';
   }
 
@@ -165,7 +169,14 @@ export class ApiBuilderComponent implements OnInit {
       return;
     }
     this.saving.set(true);
-    const payload: ApiPayload = this.apiForm.getRawValue();
+    const raw = this.apiForm.getRawValue();
+    // Un <option [value]="null"> fournit la chaîne "null" : on la ramène à un vrai null,
+    // sinon le backend reçoit organizationId="null" et refuse la création.
+    const selectedOrganization: unknown = raw.organizationId;
+    const organizationId = selectedOrganization == null
+      || selectedOrganization === '' || selectedOrganization === 'null'
+      ? null : Number(selectedOrganization);
+    const payload: ApiPayload = { ...raw, organizationId };
     const current = this.apiData();
     const operation = current ? this.api.update(current.id, payload) : this.api.create(payload);
 
@@ -178,9 +189,10 @@ export class ApiBuilderComponent implements OnInit {
           this.router.navigate(['/apis', data.id]);
         }
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.saving.set(false);
-        this.toast.error('Enregistrement de l\u2019API impossible.');
+        const detail = typeof err.error?.message === 'string' ? err.error.message : null;
+        this.toast.error(detail ?? 'Enregistrement de l\u2019API impossible.');
       }
     });
   }

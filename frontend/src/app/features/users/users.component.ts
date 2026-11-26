@@ -48,12 +48,17 @@ export class UsersComponent implements OnInit {
 
   openNew(): void {
     this.editing.set(null);
+    this.form.controls.password.setValidators([Validators.required, Validators.minLength(8)]);
+    this.form.controls.password.updateValueAndValidity();
     this.form.reset({ username: '', password: '', fullName: '', role: 'VIEWER', enabled: true });
     this.editorOpen.set(true);
   }
 
   openEdit(user: User): void {
     this.editing.set(user);
+    // Le mot de passe n'est pas modifié ici : il ne doit pas bloquer la mise à jour.
+    this.form.controls.password.clearValidators();
+    this.form.controls.password.updateValueAndValidity();
     this.form.reset({ username: user.username, password: '', fullName: user.fullName ?? '', role: user.role, enabled: user.enabled });
     this.editorOpen.set(true);
   }
