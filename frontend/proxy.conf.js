@@ -87,8 +87,10 @@ async function detectContextPath() {
   } else if (prefixedOk && !plainOk) {
     contextPath = declared;
   }
-  console.log('[api-gen] proxy : backend ' + TARGET + ', préfixe actif = '
-    + (contextPath || '(aucun)')
+  console.log('[api-gen] proxy : backend ' + TARGET
+    + ', santé /actuator/health = ' + (plainOk ? 'OK' : 'KO')
+    + (declared ? ', santé ' + declared + '/actuator/health = ' + (prefixedOk ? 'OK' : 'KO') : '')
+    + ', préfixe actif = ' + (contextPath || '(aucun)')
     + (contextPath && contextPath !== declared ? ' (déclaré : ' + declared + ')' : ''));
 }
 

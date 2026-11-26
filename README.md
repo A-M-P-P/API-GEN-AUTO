@@ -485,7 +485,9 @@ Laissez `backendUrl` vide pour conserver le comportement « même serveur » (pr
 développement, nginx en production). Si le chemin de contexte est déjà inclus dans `backendUrl`,
 ne le répétez pas dans `contextPath`. Autorisez ensuite l'origine du studio sur le backend avec
 `APIGEN_CORS_ORIGINS=http://studio.example.com`. L'adresse effective est visible dans le studio,
-menu **Configuration**.
+menu **Configuration**. Sans accès au fichier, l'écran de connexion permet de la saisir dans
+**Paramètres de connexion (avancé)** : le réglage est mémorisé dans le navigateur et peut être
+réinitialisé.
 
 En développement : `APIGEN_BACKEND=http://serveur-backend:8081 npm start`.
 

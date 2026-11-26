@@ -399,7 +399,12 @@ la page : **modifiable sans rebuild ni redéploiement**, il suffit de recharger 
 - `contextPath` : préfixe global (`/apigen`) défini dans **Configuration** côté backend.
 
 Le studio affiche l'adresse retenue dans **Configuration → Adresse du backend utilisée par le
-studio**. Si le backend est sur une autre origine (autre host ou autre port), autorisez le studio
+studio**. Si vous n'avez pas accès au fichier déployé, l'écran de connexion propose
+**Paramètres de connexion (avancé)** : saisissez l'adresse et le chemin de contexte, puis
+**Appliquer**. La valeur est mémorisée dans ce navigateur ; **Réinitialiser** revient au
+`config.json`.
+
+Si le backend est sur une autre origine (autre host ou autre port), autorisez le studio
 dans les CORS du backend :
 
 ```bash

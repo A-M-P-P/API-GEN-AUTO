@@ -140,3 +140,18 @@ form { display: grid; gap: 16px; }
   cursor: pointer;
 }
 .fill-demo:hover { background: #b9f3ea; }
+
+.connection-settings {
+  margin-top: 4px;
+  padding: 8px 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+.connection-settings summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 4px 0;
+}
+.connection-settings[open] summary { margin-bottom: 8px; }
+.connection-settings .form-stack { display: grid; gap: 8px; margin-bottom: 8px; }
+.connection-settings .row { display: flex; gap: 8px; }

@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/auth.service';
+import { FrontendConfigService } from '../../core/frontend-config.service';
 
 @Component({
   selector: 'app-login',
@@ -15,6 +16,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  readonly frontendConfig = inject(FrontendConfigService);
 
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
@@ -23,6 +25,11 @@ export class LoginComponent {
   readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required]],
     password: ['', [Validators.required]]
+  });
+
+  readonly settingsForm = this.fb.nonNullable.group({
+    backendUrl: [this.frontendConfig.snapshot().backendUrl],
+    contextPath: [this.frontendConfig.snapshot().contextPath]
   });
 
   submit(): void {
@@ -70,6 +77,16 @@ export class LoginComponent {
 
   togglePassword(): void {
     this.showPassword.update((value) => !value);
+  }
+
+  applySettings(): void {
+    this.frontendConfig.applyOverride(this.settingsForm.getRawValue());
+    window.location.reload();
+  }
+
+  resetSettings(): void {
+    this.frontendConfig.resetOverride();
+    window.location.reload();
   }
 
   fillDemo(): void {

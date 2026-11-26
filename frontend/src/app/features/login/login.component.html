@@ -73,6 +73,29 @@
         </button>
       </form>
 
+      <details class="connection-settings">
+        <summary>Paramètres de connexion (avancé)</summary>
+        <p class="hint">
+          À remplir seulement si le backend est installé sur un autre serveur. Laissez vide
+          pour utiliser le réglage du fichier <code>config.json</code>.
+        </p>
+        <div [formGroup]="settingsForm" class="form-stack">
+          <div class="field">
+            <label for="backendUrl">Adresse du backend (facultatif)</label>
+            <input id="backendUrl" class="input" formControlName="backendUrl"
+                   placeholder="Ex. http://serveur-backend:8081">
+          </div>
+          <div class="field">
+            <label for="contextPath">Chemin de contexte (facultatif)</label>
+            <input id="contextPath" class="input" formControlName="contextPath" placeholder="Ex. /apigen">
+          </div>
+          <div class="row">
+            <button type="button" class="btn btn-ghost btn-sm" (click)="applySettings()">Appliquer</button>
+            <button type="button" class="btn btn-ghost btn-sm" (click)="resetSettings()">Réinitialiser</button>
+          </div>
+        </div>
+      </details>
+
       <div class="demo-hint">
         <strong>Accès de démonstration</strong>
         <div class="hint-row"><span>Identifiant</span><code>admin</code></div>
