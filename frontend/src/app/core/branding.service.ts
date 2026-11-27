@@ -16,7 +16,20 @@ export class BrandingService {
   readonly loadError = signal('');
   readonly loading = signal(false);
   readonly organization = signal<Organization | null>(null);
-  private readonly selectedPlatform = signal<string | null>(null);
+  private readonly storageKey = 'apigen.studio.theme:' + new URL('.', this.document.baseURI).pathname;
+  private readonly selectedPlatform = signal<string | null>(this.readPreference());
+
+  private readPreference(): string | null {
+    try {
+      const id = this.document.defaultView?.localStorage.getItem(this.storageKey);
+      return id && /^[a-z][a-z0-9-]{0,30}$/.test(id) ? id : null;
+    } catch { return null; } // Storage may be unavailable in private/restricted browsers.
+  }
+
+  private rememberPreference(id: string): void {
+    try { this.document.defaultView?.localStorage.setItem(this.storageKey, id); }
+    catch { /* The visual selection still works for this visit. */ }
+  }
   readonly current = computed(() => {
     const id = this.selectedPlatform();
     return id ? this.themes().find(theme => theme.id === id) || neutral : this.themeFor(this.organization());
@@ -33,8 +46,10 @@ export class BrandingService {
   }
 
   selectPlatform(id: string, organizations: Organization[]): void {
+    if (!this.themes().some(theme => theme.id === id)) return;
     this.organization.set(organizations.find(org => this.themeFor(org).id === id || org.code.toLowerCase() === id) || null);
     this.selectedPlatform.set(id);
+    this.rememberPreference(id);
     this.apply();
   }
 
@@ -57,6 +72,11 @@ export class BrandingService {
         if (theme.logo && !(/^(branding\/[a-z0-9-]+\.(png|webp|jpg)|https:\/\/[^\s]+)$/i.test(theme.logo))) delete theme.logo;
       }
       this.themes.set([neutral, ...themes]);
+      const preferred = this.selectedPlatform();
+      if (preferred && !this.themes().some(theme => theme.id === preferred)) {
+        this.selectedPlatform.set('neutral');
+        this.rememberPreference('neutral');
+      }
       this.apply();
     } catch {
       this.loadError.set('Les thèmes ne peuvent pas être chargés. Vérifiez que branding.json et le dossier branding sont déployés à côté de index.html, puis réessayez.');
@@ -64,7 +84,7 @@ export class BrandingService {
       this.loading.set(false);
     }
   }
-  select(org: Organization | null): void { this.selectedPlatform.set(null); this.organization.set(org); this.apply(); }
+  select(org: Organization | null): void { this.organization.set(org); this.apply(); }
   private apply(): void {
     const theme = this.current();
     const root = this.document.documentElement;

@@ -1,3 +1,4 @@
+import { BrandingService } from './core/branding.service';
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ToastService } from './core/toast.service';
@@ -53,6 +54,8 @@ import { ToastService } from './core/toast.service';
   `]
 })
 export class AppComponent {
+  constructor() { void inject(BrandingService).load(); }
+
   private toastService = inject(ToastService);
   readonly toasts = this.toastService.toasts;
 

@@ -68,6 +68,13 @@ Le lien d’installation n’est pas nécessaire pour l’utilisation quotidienn
 
 Dans l’en-tête, cliquez sur un logo situé derrière la carte centrale pour le placer devant. Les flèches parcourent les logos en boucle. **Défaut** rétablit l’apparence commune.
 
+Le logo choisi est mémorisé dans ce navigateur et réappliqué après fermeture,
+réouverture ou déconnexion. Il devient votre apparence par défaut et reste
+prioritaire sur le thème des organisations. Pour revenir au neutre, cliquez
+sur **Défaut** : ce choix sera lui aussi conservé. Sur un autre navigateur ou
+après effacement des données du site, choisissez à nouveau votre logo. Si votre
+navigateur bloque le stockage local, le choix peut ne durer que la visite.
+
 Ce choix change uniquement les couleurs et le logo. Il ne sélectionne pas une institution dans les formulaires et n’accorde aucun droit. Dans chaque API, choisissez toujours la bonne organisation.
 
 Si un logo externe ne se charge pas, son nom reste disponible. Si les thèmes sont indisponibles, utilisez **Réessayer les thèmes** ; si le message persiste, prévenez l’administrateur.

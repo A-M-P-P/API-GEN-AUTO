@@ -14,12 +14,12 @@ import { ToastService } from '../core/toast.service';
 })
 export class ShellComponent {
   readonly branding = inject(BrandingService);
-  readonly logoFailures = signal<Record<string, boolean>>({});
-  logoFailed(id: string): void { this.logoFailures.update(values => ({ ...values, [id]: true })); }
   constructor() {
-    void this.branding.load();
+    // Clear transient organization context, never the saved visual preference.
     inject(DestroyRef).onDestroy(() => this.branding.select(null));
   }
+  readonly logoFailures = signal<Record<string, boolean>>({});
+  logoFailed(id: string): void { this.logoFailures.update(values => ({ ...values, [id]: true })); }
   readonly Math = Math;
 
   platformOffset(index: number): number {

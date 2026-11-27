@@ -49,8 +49,9 @@ sur le logo pour appliquer CNEF. Le logo au premier plan indique le thème actif
 
 Le choix visuel n’est pas un mécanisme de sélection de tenant : il ne filtre
 pas les listes et n’accorde aucun droit. Le bandeau le rappelle explicitement.
-La sélection n’est pas persistée dans le navigateur : la connexion et une
-nouvelle session de navigation du shell repartent en contexte neutre. Les
+Le logo choisi explicitement est mémorisé dans le stockage local du navigateur,
+par chemin de déploiement. Il est restauré au démarrage, y compris après
+déconnexion. Il reste prioritaire sur le thème automatique des organisations. Les
 organisations sans thème reconnu utilisent toujours le thème neutre.
 
 ## Ajuster les couleurs sans reconstruire le frontend
@@ -149,3 +150,18 @@ visible « Choisir une plateforme » est retiré ; le carrousel conserve un nom
 accessible. Le thème neutre possède un logo original généré, stocké localement
 dans `branding/default.png`, et sa carte porte le libellé « Défaut ». Le même
 logo est repris dans la barre latérale lorsque le thème neutre est actif.
+
+## Préférence persistante du logo
+
+Le chargement des thèmes démarre à la racine de l’application, même avant la
+connexion. Le choix explicite « Défaut » est mémorisé comme les autres logos.
+Seul l’identifiant du thème est stocké : aucun compte, secret ou droit. Un thème
+supprimé de branding.json est remplacé par le neutre après un chargement réussi.
+Un échec réseau conserve la préférence pour une nouvelle tentative.
+
+La préférence concerne ce navigateur et cette adresse de déploiement ; elle
+n’est pas synchronisée entre appareils. Si le stockage est bloqué ou effacé,
+la persistance ne peut pas être garantie ; la sélection courante fonctionne
+toujours sans bloquer l’accès au Studio. Vérifications manuelles : sélectionner
+CNEF, recharger, fermer/rouvrir, se déconnecter/reconnecter, ouvrir une API
+d’une autre organisation, puis sélectionner Défaut et recharger.
