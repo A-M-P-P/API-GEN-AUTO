@@ -844,13 +844,14 @@ Les endpoints anciens sans déclaration conservent leur comportement.
 Les références affichées sont `{{request.pathVariables.numero}}` et
 `{{request.query.ville}}`. Pour SQL, écrivez par exemple `WHERE NUMERO = ?`
 et utilisez `"params": ["{{request.pathVariables.numero}}"]`. Ne placez pas
-une valeur reçue directement dans le texte SQL. Le choix automatique d’une
-référence dans une étape de pipeline reste à réaliser.
+une valeur reçue directement dans le texte SQL. Le sélecteur **Utiliser une information reçue** permet désormais de choisir
+le paramètre et son étape SQL, HTTP ou SET sans recopier sa référence.
 
-### Évolution d’authentification : non encore livrée
+### Authentification des consommateurs par système
 
-Les profils d’authentification par système d’une organisation, leur endpoint
-par défaut configurable, les tokens consommateurs de 24 heures, le renouvellement
-et la révocation restent à implémenter. Les modes de sécurité actuels ne sont
-pas remplacés par cette livraison des paramètres. Ne considérez donc pas les
-JWT Studio comme des tokens consommateurs limités à un système.
+Cette évolution est désormais implémentée : ouvrez **Accès consommateurs** pour
+configurer les profils de chaque organisation. Consultez **AUTH-CONSOMMATEURS.md**
+pour le contrat des pipelines, les tokens, les renouvellements et la migration.
+Attention : les anciennes clés et les JWT Studio ne donnent plus accès à la
+passerelle. Les profils par défaut sont désactivés ; configurez-les avant
+l’ouverture aux consommateurs. Les API non rattachées à une organisation sont bloquées.

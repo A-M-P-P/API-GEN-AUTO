@@ -19,15 +19,17 @@ public class OrganizationService {
     private final ApiDefinitionService apiService;
     private final AuditService auditService;
     private final OrganizationContextService contextService;
+    private final ConsumerAuthService consumerAuth;
 
     public OrganizationService(OrganizationRepository repository,
                                ApiDefinitionService apiService,
                                AuditService auditService,
-                               OrganizationContextService contextService) {
+                               OrganizationContextService contextService, ConsumerAuthService consumerAuth) {
         this.repository = repository;
         this.apiService = apiService;
         this.auditService = auditService;
         this.contextService = contextService;
+        this.consumerAuth = consumerAuth;
     }
 
     @Transactional(readOnly = true)
@@ -60,6 +62,7 @@ public class OrganizationService {
         organization.setContextConfig(contextService.prepareForStorage(request.contextConfig(), null));
         organization.setActive(request.active() == null || request.active());
         Organization saved = repository.save(organization);
+        consumerAuth.ensureDefault(saved.getId());
         auditService.record("ORGANIZATION_CREATE", "Organization", String.valueOf(saved.getId()),
                 "Création de l'organisation " + saved.getCode());
         return toResponse(saved);

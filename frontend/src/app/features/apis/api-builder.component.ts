@@ -338,6 +338,42 @@ export class ApiBuilderComponent implements OnInit {
     });
   }
 
+  readonly parameterSourceIndex = signal(0);
+  readonly parameterStepIndex = signal(-1);
+
+  pipelineParameterTargets(): { index: number; label: string }[] {
+    try {
+      const steps = JSON.parse(this.endpointForm.getRawValue().pipeline);
+      if (!Array.isArray(steps)) return [];
+      return steps.map((step: any, index: number) => ({ index,
+        label: (index + 1) + '. ' + (step.name || step.type), type: step.type }))
+        .filter((step: any) => ['DB_QUERY', 'SQL_QUERY', 'DB_EXEC', 'DB_UPDATE', 'SQL_EXEC', 'HTTP', 'REST', 'SET'].includes(step.type));
+    } catch { return []; }
+  }
+
+  useRequestParameter(): void {
+    const parameter = this.requestParameters()[this.parameterSourceIndex()];
+    if (!parameter || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(parameter.name)) {
+      this.toast.warning('Choisissez un paramètre avec un nom technique valide.'); return;
+    }
+    const steps = this.parseJson(this.endpointForm.getRawValue().pipeline, 'Vérifiez le JSON du pipeline.');
+    const step = Array.isArray(steps) ? steps[this.parameterStepIndex()] : null;
+    if (!step) { this.toast.warning('Choisissez une étape du pipeline.'); return; }
+    const reference = this.parameterReference(parameter);
+    if (['DB_QUERY', 'SQL_QUERY', 'DB_EXEC', 'DB_UPDATE', 'SQL_EXEC'].includes(step.type)) {
+      if (step.params != null && !Array.isArray(step.params)) { this.toast.warning('La liste params de cette étape doit être un tableau.'); return; }
+      step.params = [...(step.params || []), reference];
+      this.toast.success('Valeur ajoutée aux paramètres SQL. Placez un ? à la position correspondante dans la requête.');
+    } else if (['HTTP', 'REST'].includes(step.type)) {
+      step.queryParams = { ...(step.queryParams || {}), [parameter.name]: reference };
+      this.toast.success('Paramètre ajouté aux filtres de l’appel HTTP.');
+    } else if (step.type === 'SET') {
+      step.value = reference;
+      this.toast.success('L’étape utilisera cette information reçue.');
+    } else { this.toast.warning('Choisissez une étape SQL, HTTP ou SET.'); return; }
+    this.endpointForm.patchValue({ pipeline: JSON.stringify(steps, null, 2) });
+  }
+
   setParameterTestValue(key: string, value: string): void {
     this.parameterTestValues.update(values => ({ ...values, [key]: value }));
   }

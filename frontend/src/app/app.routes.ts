@@ -35,6 +35,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/organizations/organizations.component').then((m) => m.OrganizationsComponent)
       },
       {
+        path: 'consumer-auth',
+        canActivate: [editorGuard],
+        loadComponent: () => import('./features/organizations/consumer-auth.component').then(m => m.ConsumerAuthComponent)
+      },
+      {
         path: 'connections',
         loadComponent: () => import('./features/connections/connections.component').then((m) => m.ConnectionsComponent)
       },

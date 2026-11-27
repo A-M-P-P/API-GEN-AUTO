@@ -2,17 +2,13 @@ package com.apigen.web;
 
 import com.apigen.domain.ApiDefinition;
 import com.apigen.domain.Endpoint;
-import com.apigen.domain.InboundAuth;
 import com.apigen.domain.Organization;
 import com.apigen.repository.ApiDefinitionRepository;
 import com.apigen.repository.EndpointRepository;
 import com.apigen.repository.OrganizationRepository;
-import com.apigen.security.ApiKeyService;
-import com.apigen.security.JwtService;
 import com.apigen.service.ExecutionService;
 import com.apigen.service.InboundRequestParser;
 import com.apigen.service.ResponseFormatService;
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -47,8 +43,7 @@ public class DynamicGatewayController {
     private final ApiDefinitionRepository apiRepository;
     private final OrganizationRepository organizationRepository;
     private final EndpointRepository endpointRepository;
-    private final ApiKeyService apiKeyService;
-    private final JwtService jwtService;
+    private final com.apigen.service.ConsumerAuthService consumerAuth;
     private final ExecutionService executionService;
     private final InboundRequestParser requestParser;
     private final ResponseFormatService responseFormatService;
@@ -57,8 +52,7 @@ public class DynamicGatewayController {
     public DynamicGatewayController(ApiDefinitionRepository apiRepository,
                                     OrganizationRepository organizationRepository,
                                     EndpointRepository endpointRepository,
-                                    ApiKeyService apiKeyService,
-                                    JwtService jwtService,
+                                    com.apigen.service.ConsumerAuthService consumerAuth,
                                     ExecutionService executionService,
                                     InboundRequestParser requestParser,
                                     ResponseFormatService responseFormatService,
@@ -66,8 +60,7 @@ public class DynamicGatewayController {
         this.apiRepository = apiRepository;
         this.organizationRepository = organizationRepository;
         this.endpointRepository = endpointRepository;
-        this.apiKeyService = apiKeyService;
-        this.jwtService = jwtService;
+        this.consumerAuth = consumerAuth;
         this.executionService = executionService;
         this.requestParser = requestParser;
         this.responseFormatService = responseFormatService;
@@ -109,10 +102,7 @@ public class DynamicGatewayController {
             return error(HttpStatus.NOT_FOUND, "Endpoint désactivé : " + method + " " + path);
         }
 
-        ResponseEntity<Object> authFailure = checkInboundAuth(api, request);
-        if (authFailure != null) {
-            return authFailure;
-        }
+        String consumerSubject = consumerAuth.authorize(api, request.getHeader("Authorization"));
 
         Map<String, Object> requestContext;
         try {
@@ -120,35 +110,10 @@ public class DynamicGatewayController {
         } catch (IllegalArgumentException e) {
             return error(HttpStatus.BAD_REQUEST, e.getMessage());
         }
+        requestContext.put("consumer", Map.of("subject", consumerSubject));
         requestParameters.validateRequest(endpoint, requestContext);
         ExecutionService.ExecutionOutcome outcome = executionService.inboundRun(endpoint, requestContext);
         return responseFormatService.render(endpoint, outcome);
-    }
-
-    private ResponseEntity<Object> checkInboundAuth(ApiDefinition api, HttpServletRequest request) {
-        InboundAuth auth = api.getInboundAuth() == null ? InboundAuth.NONE : api.getInboundAuth();
-        return switch (auth) {
-            case NONE -> null;
-            case API_KEY -> {
-                String raw = request.getHeader("X-API-Key");
-                if (raw != null && apiKeyService.matches(raw, api.getApiKeyHash())) {
-                    yield null;
-                }
-                yield error(HttpStatus.UNAUTHORIZED, "Clé API absente ou invalide");
-            }
-            case JWT -> {
-                String header = request.getHeader("Authorization");
-                if (header == null || !header.startsWith("Bearer ")) {
-                    yield error(HttpStatus.UNAUTHORIZED, "Token JWT requis");
-                }
-                try {
-                    jwtService.extractUsername(header.substring(7).trim());
-                    yield null;
-                } catch (JwtException | IllegalArgumentException e) {
-                    yield error(HttpStatus.UNAUTHORIZED, "Token JWT invalide ou expiré");
-                }
-            }
-        };
     }
 
     private EndpointMatch findEndpoint(Long apiId, String method, String path) {

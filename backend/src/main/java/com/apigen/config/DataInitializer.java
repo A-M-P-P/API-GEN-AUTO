@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
  * Initialise le compte administrateur et, en développement, un jeu de démonstration.
  */
 @Component
+@org.springframework.core.annotation.Order(org.springframework.core.Ordered.LOWEST_PRECEDENCE - 5)
 public class DataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);

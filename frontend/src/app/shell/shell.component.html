@@ -23,6 +23,9 @@
       <a routerLink="/organizations" routerLinkActive="active" (click)="sidebarOpen.set(false)">
         <span class="nav-icon">▣</span> Organisations
       </a>
+      @if (auth.hasRole('ADMIN', 'EDITOR')) {
+        <a routerLink="/consumer-auth" routerLinkActive="active" (click)="sidebarOpen.set(false)"><span class="nav-icon">⚿</span> Accès consommateurs</a>
+      }
       <a routerLink="/connections" routerLinkActive="active" (click)="sidebarOpen.set(false)">
         <span class="nav-icon">⛁</span> Connexions
       </a>

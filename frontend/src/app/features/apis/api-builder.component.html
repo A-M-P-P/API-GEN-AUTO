@@ -148,36 +148,8 @@
           <h3 class="mb-8">Sécurité des appels entrants</h3>
           <p class="small muted mb-16">Mode d'authentification exigé sur la passerelle <code class="mono">{{ gatewayOrgCode() }}/api/gateway/{{ apiData()?.code || 'code' }}</code>.</p>
 
-          <div class="field mb-16">
-            <label>Authentification</label>
-            <select class="select" formControlName="inboundAuth">
-              <option value="NONE">Aucune (ouverte)</option>
-              <option value="API_KEY">Clé API (X-API-Key)</option>
-              <option value="JWT">JWT (Bearer)</option>
-            </select>
-          </div>
-
-          @if (apiForm.getRawValue().inboundAuth === 'NONE') {
-            <div class="alert alert-warning">Tout le monde peut appeler cette API. Réservez ce mode aux tests.</div>
-          } @else if (apiForm.getRawValue().inboundAuth === 'JWT') {
-            <div class="alert alert-info">Les appelants doivent présenter un JWT émis par la plateforme (login).</div>
-          } @else {
-            @if (apiKey(); as key) {
-              <div class="key-box">
-                <div class="spread">
-                  <strong class="small">Nouvelle clé API</strong>
-                  <button class="btn btn-secondary btn-sm" (click)="copyKey()">Copier</button>
-                </div>
-                <code class="mono">{{ key }}</code>
-                <span class="hint">Affichée une seule fois. Conservez-la dans votre coffre-fort.</span>
-              </div>
-            }
-            <div class="row mt-16">
-              <button class="btn btn-primary btn-sm" (click)="generateKey()">Générer / régénérer une clé</button>
-              <button class="btn btn-ghost btn-sm" (click)="revokeKey()">Révoquer</button>
-            </div>
-            <span class="hint mt-8">La clé est stockée sous forme de hash SHA-256, jamais en clair.</span>
-          }
+          <div class="alert alert-info">Un token consommateur valide est obligatoire pour toutes les routes entrantes. Configurez les systèmes et leurs droits dans « Accès consommateurs ». Les tokens Studio et les anciennes clés statiques ne permettent plus de consommer ces routes.</div>
+          <p class="hint">Une API doit être rattachée à une organisation et autorisée dans un profil actif. Les essais internes du Studio restent réservés aux utilisateurs internes autorisés.</p>
         </div>
       </div>
 
@@ -367,6 +339,24 @@
               </details>
             </div>
 
+            @if (requestParameters().length) {
+              <section class="parameter-card">
+                <h4>Utiliser une information reçue</h4>
+                <div class="field"><label>Information à utiliser <span class="required">*</span></label>
+                  <select class="select" [value]="parameterSourceIndex()" (change)="parameterSourceIndex.set(+$any($event.target).value)">
+                    @for (parameter of requestParameters(); track $index) { <option [value]="$index">{{ parameter.label || parameter.name }} — {{ parameter.location === 'path' ? 'identifiant' : 'filtre' }}</option> }
+                  </select>
+                </div>
+                <div class="field"><label>Étape destinataire <span class="required">*</span></label>
+                  <select class="select" [value]="parameterStepIndex()" (change)="parameterStepIndex.set(+$any($event.target).value)">
+                    <option [value]="-1">Choisir une étape</option>
+                    @for (target of pipelineParameterTargets(); track target.index) { <option [value]="target.index">{{ target.label }}</option> }
+                  </select>
+                </div>
+                <button type="button" class="btn btn-secondary" (click)="useRequestParameter()">Utiliser dans cette étape</button>
+                <p class="hint">SQL : ajoute une valeur liée dans params (placez un ? dans le SQL, dans le même ordre). HTTP : ajoute un filtre à l’appel sortant. SET : remplace sa valeur. Aucune valeur reçue n’est collée dans le SQL.</p>
+              </section>
+            }
             <textarea class="textarea code" formControlName="pipeline" rows="14" spellcheck="false"></textarea>
             @if (pipelineError(); as error) {
               <div class="alert alert-error mt-8">{{ error }}</div>

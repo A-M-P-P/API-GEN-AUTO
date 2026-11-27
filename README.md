@@ -790,3 +790,21 @@ Les secrets par défaut du `docker-compose.yml` sont des valeurs de démonstrati
 ## Licence
 
 Projet interne — à adapter selon la politique de votre entreprise.
+
+## Authentification consommateurs par système (nouveau modèle)
+
+La passerelle exige maintenant un token consommateur opaque de 24 h maximum,
+limité à l’organisation et aux API autorisées du système. Les anciens modes
+`NONE` / `API_KEY` / JWT Studio ne permettent plus de contourner ce contrôle.
+Leurs mentions dans les anciens exemples ci-dessus sont historiques.
+
+Le menu **Accès consommateurs** gère les profils locaux ou à pipeline SQL/HTTP,
+leurs API autorisées, les consommateurs locaux et les révocations de sessions.
+Chaque organisation reçoit un profil `default` désactivé. Les applications
+consommatrices n’ont pas de compte Studio. Le renouvellement rotatif est limité
+à 7 jours par connexion initiale.
+
+**Avant déploiement : lire [AUTH-CONSOMMATEURS.md](AUTH-CONSOMMATEURS.md)**,
+notamment la procédure de migration et les contraintes des systèmes externes.
+L’éditeur d’endpoint propose également **Utiliser une information reçue** pour
+transmettre les paramètres déclarés à une étape SQL, HTTP ou SET.
