@@ -379,16 +379,16 @@ table tbody tr:hover { background: var(--surface-2); }
   .modal { max-height: calc(100dvh - 24px); overflow-y: auto; }
 }
 
-/* L’identité CNEF s’applique à l’espace de travail, pas seulement aux boutons. */
-html[data-studio-theme="cnef"] {
-  --bg: #f1f6f2;
-  --surface-2: #f3f8f4;
-  --line: #d6e3d9;
-  --accent-soft: #fff5d5;
+/* Déclinaison commune : la palette du logo habille tout l’espace de travail. */
+html[data-studio-theme]:not([data-studio-theme="neutral"]) {
+  --bg: color-mix(in srgb, var(--brand) 5%, white);
+  --surface-2: color-mix(in srgb, var(--brand) 3%, white);
+  --line: color-mix(in srgb, var(--brand) 18%, white);
+  --accent-soft: color-mix(in srgb, var(--accent) 10%, white);
 }
-html[data-studio-theme="cnef"] .card { border-top: 3px solid var(--brand); }
-html[data-studio-theme="cnef"] .page-head h1,
-html[data-studio-theme="cnef"] .page-head h2 { color: var(--brand-strong); }
-html[data-studio-theme="cnef"] .input:focus,
-html[data-studio-theme="cnef"] .select:focus,
-html[data-studio-theme="cnef"] .textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
+html[data-studio-theme]:not([data-studio-theme="neutral"]) .card { border-top: 3px solid var(--brand); }
+html[data-studio-theme]:not([data-studio-theme="neutral"]) .page-head h1,
+html[data-studio-theme]:not([data-studio-theme="neutral"]) .page-head h2 { color: var(--brand-strong); }
+html[data-studio-theme]:not([data-studio-theme="neutral"]) .input:focus,
+html[data-studio-theme]:not([data-studio-theme="neutral"]) .select:focus,
+html[data-studio-theme]:not([data-studio-theme="neutral"]) .textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }

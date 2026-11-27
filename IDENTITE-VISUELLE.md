@@ -85,3 +85,17 @@ localement l’association de chaque thème, la réouverture du formulaire, le
 changement depuis l’en-tête, le retour neutre à la déconnexion, le repli sans
 branding.json, la navigation clavier, les contrastes et les petits écrans.
 La conformité aux chartes nécessite la validation des organismes concernés.
+
+## Palettes dérivées des logos
+
+Les thèmes CNEF et DGI utilisent les familles de couleurs visibles dans leurs
+logos locaux : vert dominant, avec une touche dorée pour CNEF et rouge pour
+DGI. Les nuances des boutons sont assombries pour la lisibilité ; il ne s’agit
+pas d’un relevé colorimétrique certifié. Les couleurs de fond, bordures, titres,
+cartes et focus sont désormais déclinées pour chaque thème, pas uniquement CNEF.
+Les statuts fonctionnels conservent leur sens (erreur rouge, avertissement, succès).
+
+Les images externes SRC et SIGIF fournies par l’utilisateur n’ont pas pu être
+ouvertes par les outils de consultation lors de cette mise à jour. Leurs palettes
+précédentes restent donc provisoires : ne pas les présenter comme extraites de
+ces images. Fournir les fichiers image pour pouvoir les ajuster fidèlement.
