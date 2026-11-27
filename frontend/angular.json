@@ -30,6 +30,16 @@
                 "glob": "config.json",
                 "input": "public",
                 "output": "/"
+              },
+              {
+                "glob": "branding.json",
+                "input": "public",
+                "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "public/branding",
+                "output": "/branding/"
               }
             ],
             "styles": [

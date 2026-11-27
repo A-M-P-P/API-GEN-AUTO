@@ -90,6 +90,11 @@
     </header>
     <div class="visual-context-banner">
       <span id="visual-context-help">Thème actif : {{ branding.current().label }} · {{ branding.organization()?.name || 'Aperçu visuel sans organisation associée' }} · Le thème ne modifie ni les droits ni les filtres de données.</span>
+      @if (branding.loading()) { <span role="status">Chargement des thèmes…</span> }
+      @if (branding.loadError()) {
+        <span role="alert">{{ branding.loadError() }}</span>
+        <button type="button" class="btn btn-secondary" (click)="branding.load()" [disabled]="branding.loading()">Réessayer les thèmes</button>
+      }
       @if (themeError()) { <span role="status">{{ themeError() }}</span> }
     </div>
     <main class="content" id="studio-content" tabindex="-1">

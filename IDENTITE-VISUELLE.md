@@ -99,3 +99,18 @@ Les images externes SRC et SIGIF fournies par l’utilisateur n’ont pas pu êt
 ouvertes par les outils de consultation lors de cette mise à jour. Leurs palettes
 précédentes restent donc provisoires : ne pas les présenter comme extraites de
 ces images. Fournir les fichiers image pour pouvoir les ajuster fidèlement.
+
+## Déploiement des ressources de thème
+
+La configuration `frontend/angular.json` inclut explicitement `branding.json`
+et tout le dossier `public/branding` dans les assets Angular. Auparavant seul
+`config.json` était copié : les thèmes et les logos locaux manquaient donc à
+l’exécution. Cette correction de configuration nécessite de reconstruire puis
+de redéployer le frontend une première fois. Ensuite, les palettes de
+`branding.json` restent modifiables sans reconstruction.
+
+Contrôle manuel après déploiement : ouvrir `branding.json` à côté de l’URL
+de `index.html` (le résultat doit être du JSON, pas la page HTML de connexion),
+puis `branding/cnef.png` et `branding/dgi.png`. Cliquer ensuite sur CNEF et DGI
+dans le Studio et vérifier le nom du thème actif dans le bandeau. Un échec
+de chargement du fichier affiche désormais un message et un bouton Réessayer.
