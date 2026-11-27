@@ -6,7 +6,7 @@ export interface StudioTheme {
   id: string; label: string; primary: string; strong: string; soft: string;
   sidebar: string; accent: string; source: string; logo?: string;
 }
-const neutral: StudioTheme = { id: 'neutral', label: 'API-GEN Studio', primary: '#334e68', strong: '#243b53', soft: '#e8eef4', sidebar: '#142536', accent: '#805b14', source: '' };
+const neutral: StudioTheme = { id: 'neutral', label: 'API-GEN Studio', primary: '#334e68', strong: '#243b53', soft: '#e8eef4', sidebar: '#142536', accent: '#805b14', source: '', logo: 'branding/default.png' };
 
 /** Visual context only. Does not select a tenant, grant rights or filter API data. */
 @Injectable({ providedIn: 'root' })

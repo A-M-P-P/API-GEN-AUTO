@@ -141,3 +141,11 @@ non autorisé n’est supprimé silencieusement.
 Validation manuelle à effectuer : saisie naturelle des codes, enregistrement
 avec Entrée, validation des erreurs, codes existants inchangés, carrousel sur
 petit écran et parcours des formulaires au clavier. Aucun build ni test exécuté.
+
+### Ajustement du carrousel
+
+Les cartes mesurent désormais 78 × 70 px et les logos 58 × 42 px. Le titre
+visible « Choisir une plateforme » est retiré ; le carrousel conserve un nom
+accessible. Le thème neutre possède un logo original généré, stocké localement
+dans `branding/default.png`, et sa carte porte le libellé « Défaut ». Le même
+logo est repris dans la barre latérale lorsque le thème neutre est actif.

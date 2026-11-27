@@ -66,16 +66,15 @@
         Studio de configuration
       </div>
       <div class="topbar-right">
-        <span class="visual-context-label" id="platform-selector-label">Choisir une plateforme</span>
-        <div class="platform-carousel" role="region" aria-roledescription="carrousel" aria-labelledby="platform-selector-label" (keydown)="carouselKey($event)">
+        <div class="platform-carousel" role="region" aria-roledescription="carrousel" aria-label="Plateformes" (keydown)="carouselKey($event)">
           <button type="button" class="carousel-arrow" (click)="rotatePlatform(-1)" [disabled]="branding.themes().length < 2" aria-label="Plateforme précédente">‹</button>
           <div class="platform-selector" role="group" aria-label="Logos des plateformes">
             @for (platform of branding.themes(); track platform.id; let index = $index) {
               <button type="button" class="platform-choice" [class.selected]="branding.current().id === platform.id" [style.--slot]="platformOffset(index)" [style.z-index]="10 - Math.abs(platformOffset(index))" [attr.aria-pressed]="branding.current().id === platform.id" [attr.aria-label]="'Afficher au premier plan et appliquer le thème ' + platform.label" (click)="selectPlatform(platform.id)">
                 @if (platform.logo && !logoFailures()[platform.id]) {
                   <img [src]="platform.logo" alt="" referrerpolicy="no-referrer" (error)="logoFailed(platform.id)">
-                } @else { <span class="platform-fallback">{{ platform.id === 'neutral' ? 'API' : platform.id.toUpperCase() }}</span> }
-                <span>{{ platform.id === 'sigif' ? 'SIGIF' : platform.label }}</span>
+                } @else { <span class="platform-fallback">{{ platform.id === 'neutral' ? 'Défaut' : platform.id.toUpperCase() }}</span> }
+                <span>{{ platform.id === 'neutral' ? 'Défaut' : platform.id === 'sigif' ? 'SIGIF' : platform.label }}</span>
               </button>
             }
           </div>
