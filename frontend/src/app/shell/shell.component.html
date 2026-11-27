@@ -1,15 +1,11 @@
+<a class="skip-link" href="#studio-content">Aller au contenu principal</a>
 <div class="shell">
   <aside class="sidebar" [class.open]="sidebarOpen()">
     <div class="brand">
-      <div class="brand-mark">
-        <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
-          <rect width="32" height="32" rx="8" fill="#14b8a6"></rect>
-          <path d="M9 22V10h3.2l3.8 6.2 3.8-6.2H23v12h-3v-7.2l-4 6.4-4-6.4V22H9z" fill="white"></path>
-        </svg>
-      </div>
+      <div class="institution-mark" aria-hidden="true">{{ branding.current().id === 'neutral' ? 'API' : branding.current().id.toUpperCase() }}</div>
       <div>
-        <div class="brand-name">API-GEN</div>
-        <div class="brand-sub">Studio</div>
+        <div class="brand-name">{{ branding.current().label }}</div>
+        <div class="brand-sub">Studio des échanges</div>
       </div>
     </div>
 
@@ -60,17 +56,28 @@
 
   <div class="main">
     <header class="topbar">
-      <button class="burger" (click)="toggleSidebar()" aria-label="Menu">☰</button>
+      <button class="burger" (click)="toggleSidebar()" aria-label="Ouvrir ou fermer le menu" [attr.aria-expanded]="sidebarOpen()">☰</button>
       <div class="topbar-title">
         <span class="env-dot"></span>
         Studio de configuration
         <span class="pill">Sécurisé</span>
       </div>
       <div class="topbar-right">
-        <span class="version">v0.1 · MVP</span>
+        <label class="visual-context-label" for="visual-organization">Identité visuelle</label>
+        <div class="row">
+          <select id="visual-organization" class="select visual-context-select" [value]="branding.organization()?.id || ''" (change)="selectVisualOrganization($event)" aria-describedby="visual-context-help">
+            <option value="">Studio partagé — neutre</option>
+            @for (org of themeOrganizations(); track org.id) { <option [value]="org.id">{{ org.name }}</option> }
+          </select>
+          <button class="btn btn-ghost btn-icon" (click)="refreshThemeOrganizations()" aria-label="Actualiser la liste des organisations">↻</button>
+        </div>
       </div>
     </header>
-    <main class="content">
+    <div class="visual-context-banner">
+      <span id="visual-context-help">{{ branding.organization()?.name || 'Espace interne partagé' }} · Le thème ne modifie ni les droits ni les filtres de données.</span>
+      @if (themeError()) { <span role="status">{{ themeError() }}</span> }
+    </div>
+    <main class="content" id="studio-content" tabindex="-1">
       <router-outlet></router-outlet>
     </main>
   </div>
@@ -97,11 +104,11 @@
 
     <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
       <div class="field">
-        <label>Mot de passe actuel</label>
+        <label>Mot de passe actuel <span class="required">*</span></label>
         <input class="input" type="password" formControlName="currentPassword" autocomplete="current-password">
       </div>
       <div class="field">
-        <label>Nouveau mot de passe</label>
+        <label>Nouveau mot de passe <span class="required">*</span></label>
         <input class="input" type="password" formControlName="newPassword" autocomplete="new-password">
         <span class="hint">8 caractères minimum.</span>
       </div>

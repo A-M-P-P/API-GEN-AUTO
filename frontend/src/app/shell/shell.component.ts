@@ -1,4 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { BrandingService } from '../core/branding.service';
+import { OrganizationService } from '../core/organization.service';
+import { Organization } from '../core/models';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth.service';
@@ -12,6 +15,24 @@ import { ToastService } from '../core/toast.service';
   styleUrl: './shell.component.scss'
 })
 export class ShellComponent {
+  readonly branding = inject(BrandingService);
+  private organizationService = inject(OrganizationService);
+  readonly themeOrganizations = signal<Organization[]>([]);
+  readonly themeError = signal('');
+  constructor() {
+    void this.branding.load();
+    this.refreshThemeOrganizations();
+    inject(DestroyRef).onDestroy(() => this.branding.select(null));
+  }
+  refreshThemeOrganizations(): void {
+    this.organizationService.list().subscribe({ next: rows => { this.themeOrganizations.set(rows); this.themeError.set(''); },
+      error: () => this.themeError.set('Organisations indisponibles. Réessayez avec Actualiser.') });
+  }
+  selectVisualOrganization(event: Event): void {
+    const id = Number((event.target as HTMLSelectElement).value);
+    this.branding.select(this.themeOrganizations().find(org => org.id === id) || null);
+  }
+
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private toast = inject(ToastService);

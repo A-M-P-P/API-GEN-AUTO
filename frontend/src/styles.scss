@@ -351,3 +351,30 @@ table.table { width: 100%; border-collapse: collapse; }
 }
 
 .modal-xl { width: min(1000px, calc(100vw - 32px)); }
+
+/* Ergonomie commune aux identités institutionnelles. */
+:root { --sidebar-bg: #142536; --muted: #64748b; --brand: #334e68; --brand-strong: #243b53; --brand-soft: #e8eef4; }
+:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
+button:disabled { cursor: not-allowed; }
+.input, .select { min-height: 44px; }
+.textarea { min-height: 100px; line-height: 1.6; }
+.field > label { font-weight: 600; }
+.required { color: #b42318; font-weight: 750; }
+.hint { line-height: 1.6; }
+.table-wrap, .table-container { overflow-x: auto; }
+table th { text-align: left; white-space: nowrap; }
+table tbody tr:hover { background: var(--surface-2); }
+.btn { min-height: 40px; }
+.btn-primary { background: var(--brand); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--brand-strong); }
+.skip-link { position: fixed; top: -120px; left: 16px; z-index: 10000; padding: 12px 20px; background: var(--surface); color: var(--ink); border: 2px solid var(--brand); border-radius: 8px; }
+.skip-link:focus { top: 12px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+@media (max-width: 640px) {
+  .page { padding: 20px 16px 32px; }
+  .page-head, .form-row { flex-wrap: wrap; gap: 12px; }
+  .form-row > .field { min-width: min(100%, 240px); flex: 1 1 100%; }
+  .modal { max-height: calc(100dvh - 24px); overflow-y: auto; }
+}

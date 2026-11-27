@@ -827,3 +827,13 @@ moteurs sont fournies mais leur validation réelle reste à effectuer chez vous.
 Aucun transfert de données n’est automatique.
 Consulter [INSTALLATION-ASSISTEE.md](INSTALLATION-ASSISTEE.md) avant utilisation,
 notamment pour préserver les clés d’une installation existante et configurer TLS.
+
+## Ergonomie et identité par organisation
+
+L’association d’un thème se règle dans **Organisations → Identité visuelle du
+Studio**, puis s’applique avec le sélecteur d’organisation dans l’en-tête.
+Elle est uniquement visuelle et ne remplace pas les contrôles d’accès ou les filtres.
+Les palettes CNEF/DGI/SRC/SIGIF proposées doivent être validées : elles ne sont
+pas des chartes officielles certifiées. Voir [IDENTITE-VISUELLE.md](IDENTITE-VISUELLE.md)
+pour les références, les améliorations ergonomiques et la personnalisation de
+`branding.json` sans rebuild.

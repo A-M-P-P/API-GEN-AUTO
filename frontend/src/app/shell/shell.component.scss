@@ -212,3 +212,23 @@
 .modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
 .modal form { display: grid; gap: 14px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+
+/* Couleurs pilotées par branding.json ; statuts métier inchangés. */
+.sidebar { background: var(--sidebar-bg); }
+.brand { min-height: 92px; }
+.brand-name { font-size: 14px; letter-spacing: .015em; line-height: 1.4; }
+.brand-sub { color: #d5e2ed; letter-spacing: .1em; }
+.institution-mark { min-width: 58px; padding: 12px 5px; border: 1px solid #ffffff50; border-radius: 12px; font-size: 12px; font-weight: 800; color: #fff; text-align: center; background: #ffffff12; }
+.nav a { min-height: 44px; color: #c4d0dc; border-left: 3px solid transparent; }
+.nav a.active { background: #ffffff16; color: #fff; border-left-color: #fff; }
+.nav a:hover { background: #ffffff12; color: #fff; }
+.topbar { height: auto; min-height: 86px; padding-block: 12px; flex-wrap: wrap; gap: 12px; border-top: 4px solid var(--brand); }
+.visual-context-label { display: block; font-size: 12px; font-weight: 650; color: var(--ink-soft); margin-bottom: 4px; }
+.visual-context-select { min-width: 230px; max-width: 360px; }
+.visual-context-banner { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 32px; background: var(--brand-soft); color: var(--ink-soft); border-bottom: 1px solid var(--line); font-size: 12px; }
+@media (max-width: 640px) {
+  .topbar-right { width: 100%; }
+  .visual-context-select { min-width: 0; width: 100%; max-width: none; }
+  .topbar-right .row { width: 100%; }
+  .visual-context-banner { padding: 10px 16px; }
+}
