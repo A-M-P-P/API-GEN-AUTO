@@ -12,6 +12,7 @@ interface Profile { id?: number; organizationId?: number; code: string; name: st
     <h2>Accès des consommateurs</h2>
     <p>Chaque système possède sa vérification et ses API autorisées. Les consommateurs ne se connectent pas au Studio.</p>
     <div class="alert alert-warning">Toutes les API entrantes exigent désormais un token consommateur. Les anciens JWT Studio et clés statiques ne sont plus acceptés. Les API sans organisation restent bloquées.</div>
+    @if (!organizations().length) { <p role="status">Créez d’abord une organisation dans le menu Organisations, puis revenez sur cette page.</p> }
     <div class="field"><label>Organisation <span class="required">*</span></label>
       <select class="select" [ngModel]="orgId" (ngModelChange)="selectOrganization($event)">
         <option [ngValue]="null">Choisir une organisation</option>
@@ -119,6 +120,12 @@ export class ConsumerAuthComponent implements OnInit {
   }
   toggleApi(id: number, checked: boolean): void { this.selectedApis = checked ? [...this.selectedApis, id] : this.selectedApis.filter(value => value !== id); }
   save(): void {
+    if (!this.orgId || !this.organizations().some(org => org.id === this.orgId)) {
+      this.toast.warning('Créez puis sélectionnez une organisation avant d’enregistrer un système.'); return;
+    }
+    if (this.form.active && (!this.selectedApis.length || this.selectedApis.some(id => !this.apis().some(api => api.id === id)))) {
+      this.toast.warning('Créez une API dans cette organisation, puis cochez les API autorisées avant d’activer le système.'); return;
+    }
     if (!this.form.id) this.form.code = normalizeCode(this.form.code);
     if (!/^[a-z][a-z0-9-]{1,59}$/.test(this.form.code)) {
       this.toast.error('Choisissez un code de 2 à 60 caractères commençant par une lettre, par exemple systeme-a.');
@@ -141,6 +148,8 @@ export class ConsumerAuthComponent implements OnInit {
     this.http.get<any[]>('/api/consumer-profiles/' + this.form.id + '/clients').subscribe({ next: rows => this.clients.set(rows), error: e => this.error(e) });
   }
   addClient(): void {
+    if (!this.form.id) { this.toast.warning('Enregistrez d’abord le profil du système.'); return; }
+    if (!this.clientName.trim()) { this.toast.warning('Renseignez le nom de l’identifiant consommateur.'); return; }
     this.busy.set(true); this.secret.set('');
     this.http.post<any>('/api/consumer-profiles/' + this.form.id + '/clients', { clientId: this.clientName }).subscribe({ next: c => { this.busy.set(false); this.secret.set(c.secret); this.clientName = ''; this.loadClients(); }, error: e => this.error(e) });
   }

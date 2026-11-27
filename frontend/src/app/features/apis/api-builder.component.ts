@@ -170,7 +170,7 @@ export class ApiBuilderComponent implements OnInit {
     version: ['1.0'],
     status: ['DRAFT' as ApiPayload['status']],
     inboundAuth: ['NONE' as InboundAuth],
-    organizationId: this.fb.control<number | null>(null)
+    organizationId: this.fb.control<number | null>(null, Validators.required)
   });
 
   readonly endpointForm = this.fb.nonNullable.group({
@@ -263,6 +263,11 @@ export class ApiBuilderComponent implements OnInit {
     if (this.saving()) {
       return;
     }
+    const organizationId = this.apiForm.controls.organizationId.value;
+    if (!this.organizations().some(org => org.id === Number(organizationId))) {
+      this.toast.warning('Créez une organisation dans Organisations, puis sélectionnez-la avant d’enregistrer cette API.');
+      return;
+    }
     if (this.apiForm.invalid) {
       this.apiForm.markAllAsTouched();
       const problems: string[] = [];
@@ -284,10 +289,10 @@ export class ApiBuilderComponent implements OnInit {
     // [ngValue] fournit déjà un number ou null ; on normalise aussi les anciennes
     // valeurs "null" pour ne jamais envoyer une chaîne au champ Long du backend.
     const selectedOrganization: unknown = raw.organizationId;
-    const organizationId = selectedOrganization == null
+    const normalizedOrganizationId = selectedOrganization == null
       || selectedOrganization === '' || selectedOrganization === 'null'
       ? null : Number(selectedOrganization);
-    const payload: ApiPayload = { ...raw, organizationId };
+    const payload: ApiPayload = { ...raw, organizationId: normalizedOrganizationId };
     const current = this.apiData();
     const operation = current ? this.api.update(current.id, payload) : this.api.create(payload);
 
@@ -473,11 +478,48 @@ export class ApiBuilderComponent implements OnInit {
   }
 
   newEndpoint(): void {
+    if (!this.apiData()) { this.toast.warning('Enregistrez d’abord l’API.'); return; }
     this.resetEndpointForm();
     this.selectedEndpointId.set(null);
   }
 
   saveEndpoint(): void {
+    if (this.savingEndpoint()) return;
+    if (!this.apiData()) { this.toast.warning('Enregistrez d’abord l’API.'); return; }
+    const pipeline = this.parseJson(this.endpointForm.getRawValue().pipeline, 'Vérifiez la liste des actions.');
+    if (!Array.isArray(pipeline)) return;
+    if (!pipeline.some(step => step && (step.connectionId != null || ['DB_QUERY', 'SQL_QUERY', 'DB_EXEC', 'DB_UPDATE', 'SQL_EXEC'].includes(String(step.type || '').toUpperCase())))) {
+      this.persistEndpoint();
+      return;
+    }
+    this.savingEndpoint.set(true);
+    this.connections.list().subscribe({
+      next: connections => {
+        this.savingEndpoint.set(false);
+        for (const [index, step] of pipeline.entries()) {
+          if (!step || typeof step !== 'object') { this.toast.warning('Action ' + (index + 1) + ' : choisissez une action valide.'); return; }
+          const type = String(step.type || '').toUpperCase();
+          const database = ['DB_QUERY', 'SQL_QUERY', 'DB_EXEC', 'DB_UPDATE', 'SQL_EXEC'].includes(type);
+          if (database && !step.connectionId) {
+            this.toast.warning('Action ' + (index + 1) + ' : créez puis choisissez une connexion de base de données dans « Parcourir la base ».'); return;
+          }
+          if (step.connectionId != null) {
+            const connection = connections.find(item => item.id === Number(step.connectionId));
+            const compatible = connection && (database ? ['ORACLE', 'POSTGRESQL', 'MYSQL', 'SQLSERVER'].includes(connection.type)
+              : ['HTTP', 'REST'].includes(type) ? connection.type === 'REST'
+              : ['FILE_READ', 'FILE_WRITE'].includes(type) ? connection.type === 'FILE' : true);
+            if (!connection || !connection.active || !compatible) {
+              this.toast.warning('Action ' + (index + 1) + ' : la connexion est absente, inactive ou incompatible. Corrigez-la dans Connexions avant d’enregistrer.'); return;
+            }
+          }
+        }
+        this.persistEndpoint();
+      },
+      error: () => { this.savingEndpoint.set(false); this.toast.error('Impossible de vérifier les connexions. Réessayez avant d’enregistrer.'); }
+    });
+  }
+
+  private persistEndpoint(): void {
     const current = this.apiData();
     if (!current || this.endpointForm.invalid) {
       this.endpointForm.markAllAsTouched();
@@ -651,6 +693,23 @@ export class ApiBuilderComponent implements OnInit {
     };
     const template = templates[kind];
     if (!template) return;
+    const requiredType = ['dbQuery', 'dbExec'].includes(kind) ? 'database'
+      : ['fileRead', 'fileWrite'].includes(kind) ? 'FILE' : kind === 'http' ? 'REST' : null;
+    if (requiredType) {
+      this.connections.list().subscribe({
+        next: connections => {
+          const connection = connections.find(item => item.active && (requiredType === 'database'
+            ? ['ORACLE', 'POSTGRESQL', 'MYSQL', 'SQLSERVER'].includes(item.type) : item.type === requiredType));
+          if (!connection) { this.toast.warning('Créez d’abord une connexion ' + (requiredType === 'database' ? 'de base de données' : requiredType === 'FILE' ? 'de fichiers' : 'REST') + ' active dans Connexions.'); return; }
+          const latest = this.parseJson(this.endpointForm.getRawValue().pipeline, null);
+          if (!Array.isArray(latest)) { this.toast.warning('Corrigez la liste des actions avant d’en ajouter une.'); return; }
+          latest.push({ ...template, connectionId: connection.id });
+          this.endpointForm.patchValue({ pipeline: JSON.stringify(latest, null, 2) });
+          this.toast.info('Action ajoutée avec la connexion « ' + connection.name + ' ».');
+        }, error: () => this.toast.error('Impossible de vérifier les connexions. Réessayez.')
+      });
+      return;
+    }
     steps.push(template);
     this.endpointForm.patchValue({ pipeline: JSON.stringify(steps, null, 2) });
     this.toast.info('Modèle inséré : ' + kind);

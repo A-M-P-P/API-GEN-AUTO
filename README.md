@@ -837,3 +837,20 @@ Les palettes CNEF/DGI/SRC/SIGIF proposées doivent être validées : elles ne so
 pas des chartes officielles certifiées. Voir [IDENTITE-VISUELLE.md](IDENTITE-VISUELLE.md)
 pour les références, les améliorations ergonomiques et la personnalisation de
 `branding.json` sans rebuild.
+
+## Guide pour les utilisateurs du Studio
+
+Le [guide pratique pas à pas](frontend/public/GUIDE-UTILISATEUR.md) présente
+les tâches courantes, leur ordre, les résultats attendus et les démarches en
+cas de problème, sans supposer de connaissances informatiques. Il est aussi
+téléchargeable depuis **Guide d’utilisation** dans le menu du Studio.
+
+Les API doivent désormais être rattachées à une organisation existante à
+l’enregistrement (contrôle Studio et backend). Les anciennes API non classées
+restent stockées, mais doivent être rattachées lors de leur prochaine modification.
+Les modèles d’actions de source demandent une connexion active compatible ;
+le Studio vérifie aussi les références explicites de connexion avant d’enregistrer
+un endpoint. Les appels HTTP sans connexion explicite et les chemins de fichiers
+utilisant les valeurs de contexte restent possibles dans les configurations avancées.
+Ces contrôles ne remplacent ni les droits du serveur ni une politique de
+suppression des éléments utilisés ; aucune suppression ou migration automatique.

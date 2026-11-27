@@ -7,7 +7,11 @@
         Elles sont classées par organisation.
       </p>
     </div>
-    <a routerLink="/apis/new" class="btn btn-primary">+ Nouvelle API</a>
+    @if (organizations().length) {
+      <a routerLink="/apis/new" class="btn btn-primary">+ Nouvelle API</a>
+    } @else {
+      <a routerLink="/organizations" class="btn btn-primary">Créer d’abord une organisation</a>
+    }
   </div>
 
   <div class="toolbar">
@@ -37,7 +41,7 @@
         <div class="glyph">⇄</div>
         Aucune API trouvée.<br>
         <span class="small">Créez votre première API pour commencer à échanger des données.</span>
-        <div class="mt-16"><a routerLink="/apis/new" class="btn btn-primary btn-sm">Créer une API</a></div>
+        <div class="mt-16">@if (organizations().length) { <a routerLink="/apis/new" class="btn btn-primary btn-sm">Créer une API</a> } @else { <a routerLink="/organizations" class="btn btn-primary btn-sm">Créer d’abord une organisation</a> }</div>
       </div>
     </div>
   } @else {

@@ -15,7 +15,7 @@
       </p>
     </div>
     <div class="row">
-      <button class="btn btn-primary" (click)="saveApi()" [disabled]="saving()">
+      <button class="btn btn-primary" (click)="saveApi()" [disabled]="saving() || organizations().length === 0">
         @if (saving()) { <span class="spinner"></span> Enregistrement… } @else { Enregistrer l'API }
       </button>
     </div>
@@ -24,6 +24,9 @@
   @if (loading()) {
     <div class="empty"><span class="spinner"></span> Chargement de l'API…</div>
   } @else {
+    @if (organizations().length === 0) {
+      <div class="alert alert-warning">Une organisation est nécessaire avant de créer une API. <a routerLink="/organizations">Créer une organisation</a>, puis revenez ici.</div>
+    }
     <div class="builder-grid">
       <div class="col-left">
         <div class="card card-pad">
@@ -63,9 +66,9 @@
                 </select>
               </div>
               <div class="field">
-                <label>Organisation</label>
+                <label>Organisation <span class="required">*</span></label>
                 <select class="select" formControlName="organizationId">
-                  <option [ngValue]="null">Aucune (non classée)</option>
+                  <option [ngValue]="null">Choisir une organisation</option>
                   @for (organization of organizations(); track organization.id) {
                     <option [ngValue]="organization.id">{{ organization.name }}</option>
                   }

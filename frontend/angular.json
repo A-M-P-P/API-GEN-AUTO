@@ -40,6 +40,11 @@
                 "glob": "**/*",
                 "input": "public/branding",
                 "output": "/branding/"
+              },
+              {
+                "glob": "GUIDE-UTILISATEUR.md",
+                "input": "public",
+                "output": "/"
               }
             ],
             "styles": [

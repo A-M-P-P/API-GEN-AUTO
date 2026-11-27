@@ -98,7 +98,7 @@ public class ApiDefinitionService {
                 api.setApiKeyHash(null);
             }
         }
-        // null explicite = retirer l'API de son organisation
+        // Une API doit toujours être rattachée à une organisation existante.
         Organization organization = resolveOrganization(request.organizationId());
         Long currentOrganizationId = api.getOrganization() == null ? null : api.getOrganization().getId();
         Long targetOrganizationId = organization == null ? null : organization.getId();
@@ -194,7 +194,7 @@ public class ApiDefinitionService {
 
     private com.apigen.domain.Organization resolveOrganization(Long organizationId) {
         if (organizationId == null) {
-            return null;
+            throw ApiException.badRequest("Créez puis sélectionnez une organisation avant d’enregistrer une API.");
         }
         return organizationRepository.findById(organizationId)
                 .orElseThrow(() -> ApiException.notFound("Organisation introuvable : " + organizationId));
