@@ -1,3 +1,4 @@
+import { normalizeCode } from '../../shared/code-input';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BrandingService } from '../../core/branding.service';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
@@ -49,6 +50,8 @@ interface QueryJoin {
   styleUrl: './api-builder.component.scss'
 })
 export class ApiBuilderComponent implements OnInit {
+  readonly normalizeCode = normalizeCode;
+
   private branding = inject(BrandingService);
   private destroyRef = inject(DestroyRef);
 
@@ -254,6 +257,9 @@ export class ApiBuilderComponent implements OnInit {
   }
 
   saveApi(): void {
+    if (this.isCreateMode) {
+      this.apiForm.controls.code.setValue(normalizeCode(this.apiForm.controls.code.value, true));
+    }
     if (this.saving()) {
       return;
     }

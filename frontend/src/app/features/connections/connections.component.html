@@ -81,16 +81,13 @@
     <div class="modal-head">
       <div>
         <h3>{{ editing() ? 'Modifier la connexion' : 'Nouvelle connexion' }}</h3>
-        <p class="small muted">Les identifiants sont séparés de la configuration et chiffrés avant stockage.</p>
+
       </div>
       <button class="btn btn-ghost btn-icon" (click)="closeEditor()">✕</button>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="save()">
-      <p class="hint mb-8">
-        Les champs marqués d'un <span class="required">*</span> sont obligatoires. Les autres
-        dépendent du type de connexion choisi.
-      </p>
+
       <div class="form-row">
         <div class="field">
           <label>Nom <span class="required">*</span></label>

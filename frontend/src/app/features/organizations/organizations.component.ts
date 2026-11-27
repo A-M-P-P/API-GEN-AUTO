@@ -1,3 +1,4 @@
+import { normalizeCode } from '../../shared/code-input';
 import { BrandingService } from '../../core/branding.service';
 import { Component, OnInit, inject, signal, WritableSignal } from '@angular/core';
 import { DatePipe } from '@angular/common';
@@ -18,6 +19,8 @@ const MASKED_SECRET = '********';
   styleUrl: './organizations.component.scss'
 })
 export class OrganizationsComponent implements OnInit {
+  readonly normalizeCode = normalizeCode;
+
   private service = inject(OrganizationService);
   readonly branding = inject(BrandingService);
   readonly studioTheme = signal('auto');
@@ -88,6 +91,9 @@ export class OrganizationsComponent implements OnInit {
   }
 
   save(): void {
+    if (!this.editing()) {
+      this.form.controls.code.setValue(normalizeCode(this.form.controls.code.value, false));
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

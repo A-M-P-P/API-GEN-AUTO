@@ -1,3 +1,4 @@
+import { normalizeCode } from '../../shared/code-input';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -27,7 +28,7 @@ interface Profile { id?: number; organizationId?: number; code: string; name: st
       <div class="card card-pad mt-16">
         <h3>Profil du système</h3>
         <div class="form-row">
-          <div class="field"><label>Code du système <span class="required">*</span></label><input class="input" [(ngModel)]="form.code" [disabled]="!!form.id" placeholder="systeme-a"></div>
+          <div class="field"><label>Code du système <span class="required">*</span></label><input class="input" [(ngModel)]="form.code" maxlength="60" autocomplete="off" spellcheck="false" (blur)="form.code = normalizeCode(form.code)" [disabled]="!!form.id" placeholder="systeme-a"></div>
           <div class="field"><label>Nom du système <span class="required">*</span></label><input class="input" [(ngModel)]="form.name" placeholder="Système de gestion A"></div>
         </div>
         <div class="field"><label>Vérification des identifiants <span class="required">*</span></label>
@@ -97,6 +98,7 @@ export class ConsumerAuthComponent implements OnInit {
   clientName = '';
   credentialExample = '{{request.body.username}} et {{request.body.password}}';
   form: Profile = this.empty();
+  readonly normalizeCode = normalizeCode;
   private empty(): Profile { return { code: '', name: '', active: false, mode: 'LOCAL', apiIds: '[]', pipeline: '[]' }; }
   ngOnInit(): void {
     this.http.get<any[]>('/api/organizations').subscribe({ next: rows => this.organizations.set(rows), error: e => this.error(e) });
@@ -117,6 +119,11 @@ export class ConsumerAuthComponent implements OnInit {
   }
   toggleApi(id: number, checked: boolean): void { this.selectedApis = checked ? [...this.selectedApis, id] : this.selectedApis.filter(value => value !== id); }
   save(): void {
+    if (!this.form.id) this.form.code = normalizeCode(this.form.code);
+    if (!/^[a-z][a-z0-9-]{1,59}$/.test(this.form.code)) {
+      this.toast.error('Choisissez un code de 2 à 60 caractères commençant par une lettre, par exemple systeme-a.');
+      return;
+    }
     let pipeline: unknown;
     try { pipeline = JSON.parse(this.form.pipeline); } catch { this.toast.error('Le pipeline doit contenir une liste JSON valide.'); return; }
     const path = '/api/organizations/' + this.orgId + '/auth-profiles';

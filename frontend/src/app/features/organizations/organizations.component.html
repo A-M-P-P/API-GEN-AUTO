@@ -91,15 +91,14 @@
     </div>
 
     <form [formGroup]="form" (ngSubmit)="save()">
-      <p class="hint mb-8">Les champs marqués d'un <span class="required">*</span> sont obligatoires.</p>
       <div class="form-row">
         <div class="field">
           <label>Code <span class="required">*</span></label>
-          <input class="input mono" formControlName="code" placeholder="Ex. DGI" [readonly]="!!editing()">
+          <input class="input mono" formControlName="code" maxlength="60" autocomplete="off" spellcheck="false" (blur)="!editing() && form.controls.code.setValue(normalizeCode(form.controls.code.value, false))" placeholder="Ex. DGI" [readonly]="!!editing()">
           @if (form.get('code')?.invalid && form.get('code')?.touched) {
-            <span class="field-error">Lettres, chiffres et tirets (2 à 60 caractères).</span>
+            <span class="field-error">Choisissez un code de 2 à 60 lettres ou chiffres, avec des tirets si besoin.</span>
           }
-          <span class="hint">Unique dans la plateforme.</span>
+          <span class="hint">Ex. mon-service. Espaces et accents adaptés automatiquement.</span>
         </div>
         <div class="field">
           <label>Nom <span class="required">*</span></label>
@@ -116,7 +115,7 @@
           <option value="auto">Automatique — selon le code de l’organisation</option>
           @for (theme of branding.themes(); track theme.id) { <option [value]="theme.id">{{ theme.label }}</option> }
         </select>
-        <span class="hint">Facultatif. Les palettes institutionnelles sont des propositions à valider, pas des chartes officielles certifiées. La sélection ne change aucun droit d’accès.</span>
+        <span class="hint">Facultatif. Automatique selon le code de l’organisation.</span>
       </div>
 
       <div class="field">

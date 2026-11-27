@@ -14,26 +14,10 @@
     </div>
 
     <div class="hero-copy">
-      <span class="eyebrow">Interfaces sécurisées &amp; paramétrables</span>
-      <h1>Configurez vos API d'échange.<br><span>Sans écrire de code.</span></h1>
-      <p>
-        Connectez vos systèmes hétérogènes — REST, fichiers, bases de données —
-        depuis une interface unique. Déclarez un endpoint, mappez les champs,
-        planifiez l'exécution et suivez chaque échange.
-      </p>
-
-      <ul class="features">
-        <li><span>01</span> Création d'API et d'endpoints en quelques clics</li>
-        <li><span>02</span> Moteur d'exécution avec mapping et transformations</li>
-        <li><span>03</span> Planification cron, API keys, journalisation et audit</li>
-      </ul>
+      <h1>Vos échanges de données,<br><span>dans un seul espace.</span></h1>
     </div>
 
-    <div class="hero-foot">
-      <div class="stat"><strong>REST</strong><span>JSON · webhooks</span></div>
-      <div class="stat"><strong>DB</strong><span>Oracle · PostgreSQL</span></div>
-      <div class="stat"><strong>Files</strong><span>CSV · XLSX · JSON</span></div>
-    </div>
+
   </section>
 
   <section class="panel">
@@ -45,7 +29,6 @@
       </div>
 
       <form [formGroup]="form" (ngSubmit)="submit()">
-        <p class="hint mb-8">Les champs marqués d'un <span class="required">*</span> sont obligatoires.</p>
         <div class="field">
           <label for="username">Identifiant <span class="required">*</span></label>
           <input id="username" class="input" formControlName="username" autocomplete="username" placeholder="admin">

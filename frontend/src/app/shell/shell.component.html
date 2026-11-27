@@ -64,7 +64,6 @@
       <div class="topbar-title">
         <span class="env-dot"></span>
         Studio de configuration
-        <span class="pill">Sécurisé</span>
       </div>
       <div class="topbar-right">
         <span class="visual-context-label" id="platform-selector-label">Choisir une plateforme</span>
@@ -82,12 +81,10 @@
           </div>
           <button type="button" class="carousel-arrow" (click)="rotatePlatform(1)" [disabled]="branding.themes().length < 2" aria-label="Plateforme suivante">›</button>
         </div>
-        <span class="carousel-caption" aria-live="polite" aria-atomic="true">{{ branding.current().label }}</span>
 
       </div>
     </header>
-    <div class="visual-context-banner">
-      <span id="visual-context-help">Thème actif : {{ branding.current().label }} · {{ branding.organization()?.name || 'Aperçu visuel sans organisation associée' }} · Le thème ne modifie ni les droits ni les filtres de données.</span>
+    <div class="visual-context-banner" [hidden]="!branding.loading() && !branding.loadError()">
       @if (branding.loading()) { <span role="status">Chargement des thèmes…</span> }
       @if (branding.loadError()) {
         <span role="alert">{{ branding.loadError() }}</span>
@@ -106,7 +103,7 @@
     <div class="modal-head">
       <div>
         <h3>Mon profil</h3>
-        <p class="small muted">Changez votre mot de passe. Il est haché avec BCrypt.</p>
+
       </div>
       <button class="btn btn-ghost btn-icon" (click)="closeProfile()">✕</button>
     </div>

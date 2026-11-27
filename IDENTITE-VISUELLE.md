@@ -45,7 +45,7 @@ Sources des images :
 La sélection d’une organisation dans l’éditeur d’API applique également son thème.
 Un ancien paramètre explicite `studioTheme: neutral` reste prioritaire sur la
 détection : choisir « Automatique » dans Organisations ou cliquer directement
-sur le logo pour appliquer CNEF. Le bandeau affiche toujours le thème actif.
+sur le logo pour appliquer CNEF. Le logo au premier plan indique le thème actif.
 
 Le choix visuel n’est pas un mécanisme de sélection de tenant : il ne filtre
 pas les listes et n’accorde aucun droit. Le bandeau le rappelle explicitement.
@@ -117,5 +117,27 @@ de redéployer le frontend une première fois. Ensuite, les palettes de
 Contrôle manuel après déploiement : ouvrir `branding.json` à côté de l’URL
 de `index.html` (le résultat doit être du JSON, pas la page HTML de connexion),
 puis `branding/cnef.png` et `branding/dgi.png`. Cliquer ensuite sur CNEF et DGI
-dans le Studio et vérifier le nom du thème actif dans le bandeau. Un échec
+dans le Studio et vérifier que le logo sélectionné passe au premier plan et que les couleurs changent. Un échec
 de chargement du fichier affiche désormais un message et un bouton Réessayer.
+
+## Interface compacte
+
+Le carrousel conserve la navigation en boucle, avec des cartes de 68 × 60 px
+et des logos de 48 × 32 px. La légende du thème et le bandeau de contexte
+permanent sont retirés ; les erreurs de chargement restent visibles. Les
+espacements partagés (pages, cartes, tableaux, formulaires) sont réduits, avec
+champs et boutons d’au moins 44 px sur les appareils tactiles. Les blocs
+promotionnels de connexion et le guide répétitif du tableau de bord sont retirés.
+Les aides de sécurité, erreurs et indications obligatoires sont conservées.
+
+Pour les codes des organisations, API et systèmes consommateurs, la saisie
+accepte les majuscules, espaces et accents : en création, ces derniers sont
+adaptés à la sortie du champ ou à l’enregistrement (ex. « Mon API » devient
+`mon-api`). Les codes existants ne sont pas renommés. Les limites du backend
+restent en place : unicité, longueurs et interdiction du slash dans les codes
+d’URL ; le code consommateur doit commencer par une lettre. Aucun symbole
+non autorisé n’est supprimé silencieusement.
+
+Validation manuelle à effectuer : saisie naturelle des codes, enregistrement
+avec Entrée, validation des erreurs, codes existants inchangés, carrousel sur
+petit écran et parcours des formulaires au clavier. Aucun build ni test exécuté.

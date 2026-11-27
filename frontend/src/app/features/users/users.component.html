@@ -65,13 +65,12 @@
     <div class="modal-head">
       <div>
         <h3>{{ editing() ? 'Modifier l\u2019utilisateur' : 'Nouvel utilisateur' }}</h3>
-        <p class="small muted">Le mot de passe est haché avec BCrypt.</p>
+
       </div>
       <button class="btn btn-ghost btn-icon" (click)="close()">✕</button>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="save()">
-      <p class="hint mb-8">Les champs marqués d'un <span class="required">*</span> sont obligatoires.</p>
       <div class="form-row">
         <div class="field">
           <label>Identifiant <span class="required">*</span></label>
