@@ -224,21 +224,38 @@
 .nav a:hover { background: #ffffff12; color: #fff; }
 .topbar { height: auto; min-height: 86px; padding-block: 12px; flex-wrap: wrap; gap: 12px; border-top: 4px solid var(--brand); }
 .visual-context-label { display: block; font-size: 12px; font-weight: 650; color: var(--ink-soft); margin-bottom: 4px; }
-.visual-context-select { min-width: 230px; max-width: 360px; }
 .visual-context-banner { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 32px; background: var(--brand-soft); color: var(--ink-soft); border-bottom: 1px solid var(--line); font-size: 12px; }
 @media (max-width: 640px) {
   .topbar-right { width: 100%; }
-  .visual-context-select { min-width: 0; width: 100%; max-width: none; }
-  .topbar-right .row { width: 100%; }
   .visual-context-banner { padding: 10px 16px; }
 }
 
-.platform-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-.platform-choice { cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; background: #fff; color: #263445; border: 2px solid var(--line); border-radius: 10px; width: 92px; min-height: 82px; padding: 8px; font-size: 11px; font-weight: 650; }
-.platform-choice img { width: 64px; height: 42px; object-fit: contain; }
-.platform-choice:hover { border-color: var(--brand); background: var(--brand-soft); }
-.platform-choice.selected { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-soft); background: var(--brand-soft); }
-.platform-fallback { min-height: 42px; display: grid; place-items: center; font-size: 15px; font-weight: 800; }
+.platform-carousel { display: flex; align-items: center; gap: 8px; width: min(100%, 430px); }
+.platform-selector { position: relative; width: 338px; max-width: 100%; height: 120px; perspective: 700px; isolation: isolate; }
+.platform-choice {
+  --slot: 0;
+  position: absolute; top: 9px; left: calc(50% - 53px); width: 106px; height: 98px;
+  cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px;
+  padding: 8px; background: #fff; color: #263445; border: 2px solid var(--line); border-radius: 12px;
+  font-size: 11px; font-weight: 650; box-shadow: 0 6px 16px #14253624;
+  transform: translateX(calc(var(--slot) * 53px)) translateZ(-100px) rotateY(calc(var(--slot) * -13deg)) scale(.86);
+  transition: transform .45s ease, box-shadow .45s ease, border-color .25s ease;
+}
+.platform-choice img { width: 76px; height: 54px; object-fit: contain; pointer-events: none; }
+.platform-choice:hover { border-color: var(--brand); }
+.platform-choice.selected { transform: translateX(0) translateZ(0) rotateY(0) scale(1); border-color: var(--brand); box-shadow: 0 8px 22px #14253638; }
+.platform-choice:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; z-index: 20 !important; }
+.platform-fallback { min-height: 54px; display: grid; place-items: center; font-size: 18px; font-weight: 800; }
+.carousel-arrow { flex-shrink: 0; width: 36px; height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--brand-strong); font-size: 28px; cursor: pointer; }
+.carousel-arrow:hover:not(:disabled) { background: var(--brand-soft); }
+.carousel-arrow:disabled { opacity: .4; cursor: default; }
+.carousel-caption { display: block; text-align: center; font-size: 12px; font-weight: 650; color: var(--brand-strong); }
+@media (max-width: 640px) {
+  .platform-carousel { margin-inline: auto; gap: 4px; }
+  .platform-selector { width: 100%; }
+  .platform-choice { width: 92px; left: calc(50% - 46px); transform: translateX(calc(var(--slot) * 40px)) translateZ(-100px) rotateY(calc(var(--slot) * -13deg)) scale(.8); }
+  .platform-choice.selected { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .platform-choice { transition: none; } }
 .institution-mark { background: #fff; color: var(--brand-strong); width: 76px; min-width: 76px; padding: 8px; }
 .institution-mark img { width: 100%; height: 64px; object-fit: contain; display: block; }
-@media (max-width: 640px) { .platform-choice { width: 76px; min-height: 76px; } }

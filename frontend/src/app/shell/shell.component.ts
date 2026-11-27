@@ -1,6 +1,4 @@
 import { BrandingService } from '../core/branding.service';
-import { OrganizationService } from '../core/organization.service';
-import { Organization } from '../core/models';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -16,23 +14,35 @@ import { ToastService } from '../core/toast.service';
 })
 export class ShellComponent {
   readonly branding = inject(BrandingService);
-  private organizationService = inject(OrganizationService);
-  readonly themeOrganizations = signal<Organization[]>([]);
-  readonly themeError = signal('');
   readonly logoFailures = signal<Record<string, boolean>>({});
   logoFailed(id: string): void { this.logoFailures.update(values => ({ ...values, [id]: true })); }
   constructor() {
     void this.branding.load();
-    this.refreshThemeOrganizations();
     inject(DestroyRef).onDestroy(() => this.branding.select(null));
   }
-  refreshThemeOrganizations(): void {
-    this.organizationService.list().subscribe({ next: rows => { this.themeOrganizations.set(rows); this.themeError.set(''); },
-      error: () => this.themeError.set('Organisations indisponibles. Réessayez avec Actualiser.') });
+  readonly Math = Math;
+
+  platformOffset(index: number): number {
+    const themes = this.branding.themes();
+    const active = Math.max(0, themes.findIndex(theme => theme.id === this.branding.current().id));
+    const offset = (index - active + themes.length) % themes.length;
+    return offset > themes.length / 2 ? offset - themes.length : offset;
   }
-  selectVisualOrganization(event: Event): void {
-    const id = Number((event.target as HTMLSelectElement).value);
-    this.branding.select(this.themeOrganizations().find(org => org.id === id) || null);
+
+  selectPlatform(id: string): void {
+    this.branding.selectPlatform(id, []);
+  }
+
+  rotatePlatform(direction: number): void {
+    const themes = this.branding.themes();
+    const active = Math.max(0, themes.findIndex(theme => theme.id === this.branding.current().id));
+    this.selectPlatform(themes[(active + direction + themes.length) % themes.length].id);
+  }
+
+  carouselKey(event: KeyboardEvent): void {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    this.rotatePlatform(event.key === 'ArrowRight' ? 1 : -1);
   }
 
   private router = inject(Router);

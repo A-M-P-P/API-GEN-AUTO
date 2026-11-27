@@ -68,24 +68,22 @@
       </div>
       <div class="topbar-right">
         <span class="visual-context-label" id="platform-selector-label">Choisir une plateforme</span>
-        <div class="platform-selector" role="group" aria-labelledby="platform-selector-label">
-          @for (platform of branding.themes(); track platform.id) {
-            <button type="button" class="platform-choice" [class.selected]="branding.current().id === platform.id" [attr.aria-pressed]="branding.current().id === platform.id" [attr.aria-label]="'Appliquer le thème ' + platform.label" (click)="branding.selectPlatform(platform.id, themeOrganizations())">
-              @if (platform.logo && !logoFailures()[platform.id]) {
-                <img [src]="platform.logo" alt="" referrerpolicy="no-referrer" (error)="logoFailed(platform.id)">
-              } @else { <span class="platform-fallback">{{ platform.id === 'neutral' ? 'API' : platform.id.toUpperCase() }}</span> }
-              <span>{{ platform.id === 'sigif' ? 'SIGIF' : platform.label }}</span>
-            </button>
-          }
+        <div class="platform-carousel" role="region" aria-roledescription="carrousel" aria-labelledby="platform-selector-label" (keydown)="carouselKey($event)">
+          <button type="button" class="carousel-arrow" (click)="rotatePlatform(-1)" [disabled]="branding.themes().length < 2" aria-label="Plateforme précédente">‹</button>
+          <div class="platform-selector" role="group" aria-label="Logos des plateformes">
+            @for (platform of branding.themes(); track platform.id; let index = $index) {
+              <button type="button" class="platform-choice" [class.selected]="branding.current().id === platform.id" [style.--slot]="platformOffset(index)" [style.z-index]="10 - Math.abs(platformOffset(index))" [attr.aria-pressed]="branding.current().id === platform.id" [attr.aria-label]="'Afficher au premier plan et appliquer le thème ' + platform.label" (click)="selectPlatform(platform.id)">
+                @if (platform.logo && !logoFailures()[platform.id]) {
+                  <img [src]="platform.logo" alt="" referrerpolicy="no-referrer" (error)="logoFailed(platform.id)">
+                } @else { <span class="platform-fallback">{{ platform.id === 'neutral' ? 'API' : platform.id.toUpperCase() }}</span> }
+                <span>{{ platform.id === 'sigif' ? 'SIGIF' : platform.label }}</span>
+              </button>
+            }
+          </div>
+          <button type="button" class="carousel-arrow" (click)="rotatePlatform(1)" [disabled]="branding.themes().length < 2" aria-label="Plateforme suivante">›</button>
         </div>
-        <label class="visual-context-label" for="visual-organization">Organisation associée (facultatif)</label>
-        <div class="row">
-          <select id="visual-organization" class="select visual-context-select" [value]="branding.organization()?.id || ''" (change)="selectVisualOrganization($event)" aria-describedby="visual-context-help">
-            <option value="">Studio partagé — neutre</option>
-            @for (org of themeOrganizations(); track org.id) { <option [value]="org.id">{{ org.name }}</option> }
-          </select>
-          <button class="btn btn-ghost btn-icon" (click)="refreshThemeOrganizations()" aria-label="Actualiser la liste des organisations">↻</button>
-        </div>
+        <span class="carousel-caption" aria-live="polite" aria-atomic="true">{{ branding.current().label }}</span>
+
       </div>
     </header>
     <div class="visual-context-banner">
@@ -95,7 +93,6 @@
         <span role="alert">{{ branding.loadError() }}</span>
         <button type="button" class="btn btn-secondary" (click)="branding.load()" [disabled]="branding.loading()">Réessayer les thèmes</button>
       }
-      @if (themeError()) { <span role="status">{{ themeError() }}</span> }
     </div>
     <main class="content" id="studio-content" tabindex="-1">
       <router-outlet></router-outlet>

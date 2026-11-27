@@ -21,7 +21,7 @@ Sources des images :
 - CNEF : https://cnefcameroun.cm/wp-content/uploads/2023/06/logo1.png
 - DGI : https://fr.wikipedia.org/wiki/Fichier:Logo_DGI_Cameroun.png (copie récupérée via recherche d’images ; à valider par la DGI).
 - SRC : https://obivsolutions.com/wp-content/uploads/2024/08/Societe-de-Recouvrement-des-Creances-SRC.png (image choisie et fournie par l’utilisateur).
-- SIGIF : https://pulitzercenter.org/sites/default/files/styles/orig_optimized/public/inline-images/illegal-logging-9.jpg.webp?itok=SiAwjPgw (image choisie et fournie par l’utilisateur ; son statut de logo officiel n’a pas été vérifié).
+- SIGIF : https://tse4.mm.bing.net/th/id/OIP.0PBUR2GL3f5XOrLYptzMyQAAAA?r=0&rs=1&pid=ImgDetMain&o=7&rm=3 (image choisie et fournie par l’utilisateur ; son statut de logo officiel n’a pas été vérifié).
 
 ## Utilisation
 
@@ -31,10 +31,15 @@ Sources des images :
 3. Enregistrer. Cette association est conservée en base dans
    `contextConfig.variables.studioTheme`, avec les autres paramètres de
    l’organisation. Elle ne contient aucun secret.
-4. En haut du Studio, cliquer sur un **logo de plateforme** pour appliquer directement son thème,
-   même sans association enregistrée. Le choix d’organisation reste également disponible.
-   La navigation, les boutons principaux et le bandeau de contexte suivent
-   alors le thème associé. Actualiser la liste avec ↻ après une création.
+4. En haut du Studio, le **carrousel de logos** présente le thème actif au premier
+   plan et les autres cartes en profondeur. Cliquer sur une carte derrière
+   l’amène devant et applique son thème. Les flèches précédente/suivante bouclent
+   sur toutes les plateformes, y compris le Studio neutre. Les touches clavier
+   gauche/droite fonctionnent lorsque le focus est dans le carrousel ; Tab et
+   Entrée permettent aussi de sélectionner chaque carte. Aucune rotation automatique.
+   La liste « Organisation associée » et son bouton d’actualisation sont supprimés ;
+   le shell ne charge plus les organisations pour ce sélecteur purement visuel.
+   Les transitions sont désactivées si la réduction des animations est demandée.
 5. Cliquer sur **API-GEN Studio** pour revenir à l’identité commune.
 
 La sélection d’une organisation dans l’éditeur d’API applique également son thème.
