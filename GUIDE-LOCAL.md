@@ -815,3 +815,42 @@ Le WAR exécutable produit par le build se trouve dans `backend/target/apigen-pl
 ```bash
 java -jar backend/target/apigen-platform.war --spring.profiles.active=dev
 ```
+
+## Paramètres d’adresse guidés
+
+Dans l’éditeur d’endpoint, la section **Informations attendues par cet endpoint**
+permet d’ajouter un **identifiant dans l’adresse** (ex. `/contribuables/{numero}`)
+ou un **filtre dans l’adresse** (ex. `/contribuables?ville=Yaounde`).
+Les champs obligatoires sont marqués d’une étoile. Un identifiant du chemin
+est toujours obligatoire. Noms : lettres, chiffres et `_`, sans chiffre initial.
+
+1. Ajoutez un paramètre et choisissez texte, nombre, date (`AAAA-MM-JJ`) ou
+   oui/non (`true` / `false`). Pour préserver les zéros initiaux d’un matricule,
+   choisissez **Texte**.
+2. Renseignez un libellé, un exemple et, pour les filtres, éventuellement une
+   valeur par défaut.
+3. Cliquez sur **Insérer dans le chemin** pour un identifiant. Si le chemin
+   contient déjà des accolades, **Détecter les identifiants du chemin** crée
+   les lignes à configurer.
+4. Vérifiez l’aperçu, puis enregistrez. Supprimer une ligne d’identifiant ne
+   supprime pas les accolades du chemin : modifiez également le chemin.
+5. L’écran d’essai propose les champs correspondants ; le JSON de test sert
+   de corps de requête. Enregistrez les modifications avant l’essai.
+
+La passerelle vérifie les paramètres déclarés avant d’exécuter le pipeline.
+Une valeur absente ou de mauvais type produit une erreur avec le champ à corriger.
+Les endpoints anciens sans déclaration conservent leur comportement.
+
+Les références affichées sont `{{request.pathVariables.numero}}` et
+`{{request.query.ville}}`. Pour SQL, écrivez par exemple `WHERE NUMERO = ?`
+et utilisez `"params": ["{{request.pathVariables.numero}}"]`. Ne placez pas
+une valeur reçue directement dans le texte SQL. Le choix automatique d’une
+référence dans une étape de pipeline reste à réaliser.
+
+### Évolution d’authentification : non encore livrée
+
+Les profils d’authentification par système d’une organisation, leur endpoint
+par défaut configurable, les tokens consommateurs de 24 heures, le renouvellement
+et la révocation restent à implémenter. Les modes de sécurité actuels ne sont
+pas remplacés par cette livraison des paramètres. Ne considérez donc pas les
+JWT Studio comme des tokens consommateurs limités à un système.

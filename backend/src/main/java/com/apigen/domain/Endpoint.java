@@ -64,6 +64,12 @@ public class Endpoint {
     @OneToOne(mappedBy = "endpoint", cascade = CascadeType.ALL, orphanRemoval = true)
     private Schedule schedule;
 
+    @Column(name = "request_parameters", columnDefinition = "CLOB")
+    private String requestParameters;
+
+    public String getRequestParameters() { return requestParameters; }
+    public void setRequestParameters(String value) { requestParameters = value; }
+
     public void touch() {
         this.updatedAt = Instant.now();
     }

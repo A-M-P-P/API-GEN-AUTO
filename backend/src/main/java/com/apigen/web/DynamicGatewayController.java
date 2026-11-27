@@ -52,6 +52,7 @@ public class DynamicGatewayController {
     private final ExecutionService executionService;
     private final InboundRequestParser requestParser;
     private final ResponseFormatService responseFormatService;
+    private final com.apigen.service.RequestParameterService requestParameters;
 
     public DynamicGatewayController(ApiDefinitionRepository apiRepository,
                                     OrganizationRepository organizationRepository,
@@ -60,7 +61,8 @@ public class DynamicGatewayController {
                                     JwtService jwtService,
                                     ExecutionService executionService,
                                     InboundRequestParser requestParser,
-                                    ResponseFormatService responseFormatService) {
+                                    ResponseFormatService responseFormatService,
+                                    com.apigen.service.RequestParameterService requestParameters) {
         this.apiRepository = apiRepository;
         this.organizationRepository = organizationRepository;
         this.endpointRepository = endpointRepository;
@@ -69,6 +71,7 @@ public class DynamicGatewayController {
         this.executionService = executionService;
         this.requestParser = requestParser;
         this.responseFormatService = responseFormatService;
+        this.requestParameters = requestParameters;
     }
 
     @RequestMapping(value = "/{organizationCode}/api/gateway/{apiCode}/**")
@@ -117,6 +120,7 @@ public class DynamicGatewayController {
         } catch (IllegalArgumentException e) {
             return error(HttpStatus.BAD_REQUEST, e.getMessage());
         }
+        requestParameters.validateRequest(endpoint, requestContext);
         ExecutionService.ExecutionOutcome outcome = executionService.inboundRun(endpoint, requestContext);
         return responseFormatService.render(endpoint, outcome);
     }
@@ -149,10 +153,11 @@ public class DynamicGatewayController {
 
     private EndpointMatch findEndpoint(Long apiId, String method, String path) {
         Endpoint exact = endpointRepository.findByApiIdAndMethodIgnoreCaseAndPath(apiId, method, path).orElse(null);
-        if (exact != null) {
+        if (exact != null && exact.getDirection() == com.apigen.domain.Direction.INBOUND) {
             return new EndpointMatch(exact, Map.of());
         }
         for (Endpoint candidate : endpointRepository.findByApiIdAndActiveTrue(apiId)) {
+            if (!candidate.getMethod().equalsIgnoreCase(method) || candidate.getDirection() != com.apigen.domain.Direction.INBOUND) continue;
             Map<String, String> variables = matchPath(candidate.getPath(), path);
             if (variables != null) {
                 return new EndpointMatch(candidate, variables);

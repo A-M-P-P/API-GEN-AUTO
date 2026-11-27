@@ -12,6 +12,7 @@ import {
   ApiPayload,
   Connection,
   Direction,
+  RequestParameter,
   EndpointDetail,
   EndpointPayload,
   EndpointSummary,
@@ -71,6 +72,8 @@ export class ApiBuilderComponent implements OnInit {
     return this.apiData()?.endpoints.find((endpoint) => endpoint.id === id) ?? null;
   });
 
+  readonly requestParameters = signal<RequestParameter[]>([]);
+  readonly parameterTestValues = signal<Record<string, string>>({});
   readonly pipelineError = signal<string | null>(null);
   readonly runResult = signal<Run | null>(null);
   readonly runPayload = signal('{}');
@@ -335,7 +338,65 @@ export class ApiBuilderComponent implements OnInit {
     });
   }
 
+  setParameterTestValue(key: string, value: string): void {
+    this.parameterTestValues.update(values => ({ ...values, [key]: value }));
+  }
+
+  addRequestParameter(location: 'path' | 'query'): void {
+    this.requestParameters.update(rows => [...rows, {
+      name: '', label: '', location, type: 'text', required: location === 'path',
+      example: '', defaultValue: '', description: ''
+    }]);
+  }
+
+  updateRequestParameter(index: number, field: string, value: unknown): void {
+    this.requestParameters.update(rows => rows.map((row, i) => i === index ? { ...row, [field]: value } : row));
+  }
+
+  removeRequestParameter(index: number): void {
+    this.requestParameters.update(rows => rows.filter((_, i) => i !== index));
+  }
+
+  detectPathParameters(): void {
+    const path = this.endpointForm.getRawValue().path;
+    const names = [...path.matchAll(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g)].map(match => match[1]);
+    const rows = this.requestParameters();
+    this.requestParameters.set([...rows, ...[...new Set(names)]
+      .filter(name => !rows.some(row => row.location === 'path' && row.name === name))
+      .map(name => ({ name, label: name, location: 'path' as const, type: 'text' as const,
+        required: true, example: '', defaultValue: '', description: '' }))]);
+  }
+
+  insertPathParameter(index: number): void {
+    const row = this.requestParameters()[index];
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(row.name)) {
+      this.toast.warning('Renseignez un nom technique sans espace, commençant par une lettre ou _.');
+      return;
+    }
+    const path = this.endpointForm.getRawValue().path;
+    if (!path.includes('{' + row.name + '}')) {
+      this.endpointForm.patchValue({ path: path.replace(/\/$/, '') + '/{' + row.name + '}' });
+    }
+  }
+
+  requestPreview(): string {
+    let path = this.endpointForm.getRawValue().path;
+    const query = new URLSearchParams();
+    for (const row of this.requestParameters()) {
+      const value = row.example || row.defaultValue || 'exemple';
+      if (row.location === 'path') path = path.replace('{' + row.name + '}', encodeURIComponent(value));
+      else if (row.name) query.set(row.name, value);
+    }
+    return path + (query.size ? '?' + query.toString() : '');
+  }
+
+  parameterReference(row: RequestParameter): string {
+    return '{{request.' + (row.location === 'path' ? 'pathVariables' : 'query') + '.' + row.name + '}}';
+  }
+
   patchEndpointForm(detail: EndpointDetail): void {
+    this.requestParameters.set(detail.requestParameters ?? []);
+    this.parameterTestValues.set({});
     this.scheduleId = detail.schedule?.id ?? null;
     this.endpointForm.patchValue({
       name: detail.name,
@@ -386,6 +447,7 @@ export class ApiBuilderComponent implements OnInit {
       responseFormat: raw.responseFormat,
       responseFileName: raw.responseFileName,
       responseContentType: raw.responseContentType,
+      requestParameters: this.requestParameters(),
       redirectLocation: raw.redirectLocation
     };
 
@@ -399,9 +461,9 @@ export class ApiBuilderComponent implements OnInit {
       next: (detail) => {
         this.afterEndpointSaved(detail, raw.cron, raw.scheduleEnabled, raw.schedulePayload);
       },
-      error: () => {
+      error: (error) => {
         this.savingEndpoint.set(false);
-        this.toast.error('Enregistrement de l’endpoint impossible.');
+        this.toast.error(error?.error?.message || 'Enregistrement impossible. Vérifiez les champs obligatoires et les paramètres, puis réessayez.');
       }
     });
   }
@@ -481,11 +543,20 @@ export class ApiBuilderComponent implements OnInit {
       this.toast.warning('Enregistrez d\u2019abord l’endpoint.');
       return;
     }
-    const payload = this.parseJson(this.runPayload(), 'Le payload doit être un JSON valide.');
+    let payload = this.parseJson(this.runPayload(), 'Le payload doit être un JSON valide.');
     if (payload === undefined) return;
 
     this.running.set(true);
     this.runResult.set(null);
+    if (this.requestParameters().length) {
+      const query: Record<string, string> = {};
+      const pathVariables: Record<string, string> = {};
+      for (const parameter of this.requestParameters()) {
+        const value = this.parameterTestValues()[parameter.location + ':' + parameter.name] ?? parameter.example;
+        (parameter.location === 'path' ? pathVariables : query)[parameter.name] = value;
+      }
+      payload = { body: payload, query, pathVariables };
+    }
     this.api.runEndpoint(id, payload).subscribe({
       next: (run) => {
         this.running.set(false);
@@ -629,7 +700,9 @@ export class ApiBuilderComponent implements OnInit {
     this.cronPreset.set(known ? known.value : '');
   }
 
-  private resetEndpointForm(): void {    this.scheduleId = null;
+  private resetEndpointForm(): void {
+    this.requestParameters.set([]);
+    this.parameterTestValues.set({});    this.scheduleId = null;
     this.endpointForm.reset({
       name: '',
       method: 'GET',

@@ -36,15 +36,17 @@ public class ExecutionService {
     private final ExchangeRunRepository runRepository;
     private final OrganizationContextService organizationContextService;
     private final ObjectMapper objectMapper;
+    private final RequestParameterService requestParameters;
 
     public ExecutionService(StepExecutor stepExecutor,
                             ExchangeRunRepository runRepository,
                             OrganizationContextService organizationContextService,
-                            ObjectMapper objectMapper) {
+                            ObjectMapper objectMapper, RequestParameterService requestParameters) {
         this.stepExecutor = stepExecutor;
         this.runRepository = runRepository;
         this.organizationContextService = organizationContextService;
         this.objectMapper = objectMapper;
+        this.requestParameters = requestParameters;
     }
 
     public record ExecutionOutcome(ExchangeRun run, Object output, Throwable error) {
@@ -141,13 +143,17 @@ public class ExecutionService {
         request.put("headers", Map.of());
         if (body instanceof Map<?, ?> map) {
             Object query = map.get("query");
-            request.put("query", query instanceof Map<?, ?> values ? values : Map.of());
+            request.put("query", query instanceof Map<?, ?> values ? new LinkedHashMap<>(values) : new LinkedHashMap<>());
+            Object variables = map.get("pathVariables");
+            request.put("pathVariables", variables instanceof Map<?, ?> values ? new LinkedHashMap<>(values) : new LinkedHashMap<>());
             Object nestedBody = map.get("body");
             request.put("body", nestedBody == null ? body : nestedBody);
         } else {
-            request.put("query", Map.of());
+            request.put("query", new LinkedHashMap<>());
+            request.put("pathVariables", new LinkedHashMap<>());
             request.put("body", body);
         }
+        requestParameters.validateRequest(endpoint, request);
         return request;
     }
 

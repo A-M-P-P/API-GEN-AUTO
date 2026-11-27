@@ -79,6 +79,63 @@
               </div>
             </div>
 
+            <section class="parameter-editor">
+              <h4>Informations attendues par cet endpoint</h4>
+              <p class="hint">Un identifiant fait partie du chemin. Un filtre précise une recherche après le signe ?.</p>
+              <div class="actions">
+                <button type="button" class="btn btn-secondary" (click)="addRequestParameter('path')">+ Identifiant dans l’adresse</button>
+                <button type="button" class="btn btn-secondary" (click)="addRequestParameter('query')">+ Filtre dans l’adresse</button>
+                <button type="button" class="btn btn-ghost" (click)="detectPathParameters()">Détecter les identifiants du chemin</button>
+              </div>
+              @for (parameter of requestParameters(); track $index) {
+                <fieldset class="parameter-card">
+                  <legend>{{ parameter.location === 'path' ? 'Identifiant dans le chemin' : 'Filtre de recherche' }}</legend>
+                  <div class="form-row">
+                    <div class="field">
+                      <label>Nom technique <span class="required">*</span></label>
+                      <input class="input" [value]="parameter.name" (input)="updateRequestParameter($index, 'name', $any($event.target).value)" placeholder="numero">
+                    </div>
+                    <div class="field">
+                      <label>Libellé pour l’utilisateur</label>
+                      <input class="input" [value]="parameter.label" (input)="updateRequestParameter($index, 'label', $any($event.target).value)" placeholder="Numéro du contribuable">
+                    </div>
+                    <div class="field">
+                      <label>Type de valeur <span class="required">*</span></label>
+                      <select class="select" [value]="parameter.type" (change)="updateRequestParameter($index, 'type', $any($event.target).value)">
+                        <option value="text">Texte</option><option value="number">Nombre</option>
+                        <option value="date">Date (AAAA-MM-JJ)</option><option value="boolean">Oui/non (true/false)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="field"><label>Exemple de valeur</label>
+                      <input class="input" [value]="parameter.example" (input)="updateRequestParameter($index, 'example', $any($event.target).value)">
+                    </div>
+                    @if (parameter.location === 'query') {
+                      <div class="field"><label>Valeur par défaut (facultative)</label>
+                        <input class="input" [value]="parameter.defaultValue" (input)="updateRequestParameter($index, 'defaultValue', $any($event.target).value)">
+                      </div>
+                    }
+                  </div>
+                  <div class="field"><label>Description</label>
+                    <input class="input" [value]="parameter.description" (input)="updateRequestParameter($index, 'description', $any($event.target).value)" placeholder="Expliquez quelle information fournir">
+                  </div>
+                  <label><input type="checkbox" [checked]="parameter.required || parameter.location === 'path'" [disabled]="parameter.location === 'path'" (change)="updateRequestParameter($index, 'required', $any($event.target).checked)"> Information obligatoire</label>
+                  <div class="actions">
+                    @if (parameter.location === 'path') {
+                      <button type="button" class="btn btn-secondary" (click)="insertPathParameter($index)">Insérer dans le chemin</button>
+                    }
+                    <button type="button" class="btn btn-ghost" (click)="removeRequestParameter($index)">Supprimer ce paramètre</button>
+                  </div>
+                  <p class="hint">Référence dans le pipeline : <code>{{ parameterReference(parameter) }}</code></p>
+                </fieldset>
+              }
+              <p class="hint">Aperçu du chemin avec les exemples : <code>{{ requestPreview() }}</code></p>
+              @if (requestParameters().length) {
+                <p class="hint">Pour SQL : utilisez un ? dans la requête et placez la référence correspondante dans params. Ne collez jamais la valeur directement dans le SQL.</p>
+              }
+            </section>
+
             <div class="field">
               <label>Description</label>
               <textarea class="textarea" formControlName="description" rows="3"
@@ -207,7 +264,7 @@
                 @if (endpointForm.get('path')?.invalid && endpointForm.get('path')?.touched) {
                   <span class="field-error">Indiquez un chemin, par exemple /orders.</span>
                 }
-                <span class="hint">Variables acceptées : /orders/ID</span>
+                <span class="hint">Exemple : /orders/&#123;numero&#125; — utilisez le formulaire ci-dessous pour configurer numero.</span>
               </div>
               <div class="field" style="max-width: 170px">
                 <label>Direction</label>
@@ -358,6 +415,14 @@
               <strong class="small">Test d'exécution</strong>
               <span class="hint">Payload injecté dans la variable payload</span>
             </div>
+            @for (parameter of requestParameters(); track $index) {
+              <div class="field">
+                <label>{{ parameter.label || parameter.name }} ({{ parameter.location === 'path' ? 'identifiant' : 'filtre' }})
+                  @if (parameter.required || parameter.location === 'path') { <span class="required">*</span> }
+                </label>
+                <input class="input" [value]="parameterTestValues()[parameter.location + ':' + parameter.name] ?? parameter.example" [placeholder]="parameter.defaultValue || 'Valeur pour cet essai'" (input)="setParameterTestValue(parameter.location + ':' + parameter.name, $any($event.target).value)">
+              </div>
+            }
             <textarea class="textarea code" [value]="runPayload()" (input)="runPayload.set($any($event.target).value)" rows="4" spellcheck="false"></textarea>
             <div class="row mt-8">
               <button type="button" class="btn btn-secondary btn-sm" (click)="runTest()" [disabled]="running() || !selectedEndpointId()">

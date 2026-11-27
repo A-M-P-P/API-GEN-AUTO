@@ -107,7 +107,8 @@ public final class ApiDtos {
             ResponseFormat responseFormat,
             String responseFileName,
             String responseContentType,
-            String redirectLocation
+            String redirectLocation,
+            JsonNode requestParameters
     ) {
     }
 
@@ -126,7 +127,8 @@ public final class ApiDtos {
             ResponseFormat responseFormat,
             String responseFileName,
             String responseContentType,
-            String redirectLocation
+            String redirectLocation,
+            JsonNode requestParameters
     ) {
     }
 

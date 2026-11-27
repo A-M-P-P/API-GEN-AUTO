@@ -1,3 +1,9 @@
+export interface RequestParameter {
+  name: string; label: string; location: 'path' | 'query';
+  type: 'text' | 'number' | 'date' | 'boolean';
+  required: boolean; example: string; defaultValue: string; description: string;
+}
+
 export type ApiStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
 export type InboundAuth = 'NONE' | 'API_KEY' | 'JWT';
 export type Direction = 'INBOUND' | 'OUTBOUND';
@@ -74,6 +80,7 @@ export interface EndpointDetail extends EndpointSummary {
   responseFileName?: string | null;
   responseContentType?: string | null;
   redirectLocation?: string | null;
+  requestParameters?: RequestParameter[] | null;
 }
 
 export interface ApiDetail extends ApiSummary {
@@ -102,6 +109,7 @@ export interface EndpointPayload {
   responseFileName?: string;
   responseContentType?: string;
   redirectLocation?: string;
+  requestParameters?: RequestParameter[];
 }
 
 export interface ApiKeyResponse {

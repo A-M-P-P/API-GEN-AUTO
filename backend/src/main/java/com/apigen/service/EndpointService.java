@@ -37,6 +37,7 @@ public class EndpointService {
     private final EndpointMapper mapper;
     private final ObjectMapper objectMapper;
     private final AuditService auditService;
+    private final RequestParameterService requestParameters;
 
     public EndpointService(EndpointRepository endpointRepository,
                            ScheduleRepository scheduleRepository,
@@ -44,7 +45,7 @@ public class EndpointService {
                            ExecutionService executionService,
                            EndpointMapper mapper,
                            ObjectMapper objectMapper,
-                           AuditService auditService) {
+                           AuditService auditService, RequestParameterService requestParameters) {
         this.endpointRepository = endpointRepository;
         this.scheduleRepository = scheduleRepository;
         this.apiService = apiService;
@@ -52,6 +53,7 @@ public class EndpointService {
         this.mapper = mapper;
         this.objectMapper = objectMapper;
         this.auditService = auditService;
+        this.requestParameters = requestParameters;
     }
 
     @Transactional(readOnly = true)
@@ -76,6 +78,8 @@ public class EndpointService {
         endpoint.setPath(request.path());
         endpoint.setDirection(request.direction() == null ? com.apigen.domain.Direction.INBOUND : request.direction());
         endpoint.setDescription(request.description());
+        requestParameters.validateDefinition(request.path(), request.requestParameters());
+        endpoint.setRequestParameters(writeJson(request.requestParameters()));
         applyResponseFormat(endpoint, request);
         endpoint.setPipeline(writePipeline(request.pipeline()));
         endpoint.setActive(request.active() == null || request.active());
@@ -103,6 +107,8 @@ public class EndpointService {
             endpoint.setDirection(request.direction());
         }
         endpoint.setDescription(request.description());
+        requestParameters.validateDefinition(request.path(), request.requestParameters());
+        endpoint.setRequestParameters(writeJson(request.requestParameters()));
         applyResponseFormat(endpoint, request);
         endpoint.setPipeline(writePipeline(request.pipeline()));
         if (request.active() != null) {

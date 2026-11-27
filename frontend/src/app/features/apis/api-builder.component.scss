@@ -144,3 +144,6 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.parameter-editor { margin-block: 1rem; }
+.parameter-card { border: 1px solid var(--border, #d3d9e1); border-radius: 8px; padding: 16px; margin-block: 12px; min-width: 0; }

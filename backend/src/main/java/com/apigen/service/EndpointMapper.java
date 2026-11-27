@@ -46,7 +46,8 @@ public class EndpointMapper {
                 endpoint.getResponseFormat(),
                 endpoint.getResponseFileName(),
                 endpoint.getResponseContentType(),
-                endpoint.getRedirectLocation()
+                endpoint.getRedirectLocation(),
+                readJson(endpoint.getRequestParameters())
         );
     }
 
