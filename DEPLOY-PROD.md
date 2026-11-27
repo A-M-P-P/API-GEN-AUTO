@@ -126,3 +126,14 @@ http://tomcat.example.com:8080/apigen/{code-organisation}/api/gateway/{code-api}
 - [ ] `config/connections.json` renseigné
 - [ ] `config.json` du frontend pointe sur `http://tomcat:8080/apigen`
 - [ ] Mot de passe admin changé après la première connexion
+
+## Schéma Oracle dédié (à préparer avant démarrage)
+
+La plateforme utilise désormais le propriétaire **APIGEN** par défaut, et non
+un compte métier. Faire exécuter le script DBA
+`database/oracle/create-apigen-schema.sql` dans la bonne PDB, puis configurer le
+compte et son mot de passe dans le fichier runtime ou l’environnement.
+Voir **[SCHEMA-ORACLE.md](SCHEMA-ORACLE.md)** pour les droits, les contrôles et la
+reprise d’une installation existante. Changer seulement le compte JDBC ne migre
+pas les données. Les profils Oracle refusent un schéma non vide sans historique
+Flyway ; ne contournez pas ce contrôle sans analyse du DBA.

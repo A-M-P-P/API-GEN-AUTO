@@ -53,7 +53,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
 > **Deux profils possibles.** `local` embarque une base H2 : rien à installer. `dev` (et `prod`)
-> ciblent votre **Oracle 12c** (`SID=ORCL`, utilisateur `sigif`) — voir la section 4.3.
+> ciblent votre **Oracle 12c** (`SID=ORCL`, utilisateur `APIGEN`) — voir la section 4.3.
 
 La première exécution télécharge les dépendances Maven (2 à 5 minutes selon votre connexion), puis démarre. Attendez la ligne :
 
@@ -148,8 +148,8 @@ Cliquez **« Tester la connexion »** : le résultat s'affiche avec la latence. 
 
 ### 4.2. Faire tourner la **plateforme elle-même** sur Oracle 12c (dev et prod)
 
-C'est le réglage par défaut des profils `dev` et `prod` : `SID=ORCL`, utilisateur `sigif`,
-mot de passe `sigif2015`. L'URL utilise la **syntaxe SID** (deux-points, pas de `//`) :
+C'est le réglage par défaut des profils `dev` et `prod` : `SID=ORCL`, utilisateur `APIGEN`,
+mot de passe à fournir via `APIGEN_DB_PASSWORD`. L'URL utilise la **syntaxe SID** (deux-points, pas de `//`) :
 
 ```
 jdbc:oracle:thin:@localhost:1521:ORCL
@@ -183,8 +183,8 @@ Ou directement l'URL complète, si vous préférez la syntaxe service-name (plug
 
 ```bash
 export APIGEN_DB_URL="jdbc:oracle:thin:@//db-host:1521/FREEPDB1"
-export APIGEN_DB_USER="sigif"
-export APIGEN_DB_PASSWORD="sigif2015"
+export APIGEN_DB_USER="APIGEN"
+export APIGEN_DB_PASSWORD="A_REMPLACER"
 ```
 
 Au premier démarrage, **Flyway crée les tables** (`V1__init.sql`, `V2__organizations.sql`) et
@@ -207,8 +207,8 @@ Compte admin créé : admin / Admin2026!
 
 L'application redémarre normalement, le compte `admin` est rétabli. Aucun script SQL à rejouer.
 
-> **Mot de passe en clair.** `sigif2015` figure dans les YAML des profils. En production,
-> préférez `APIGEN_DB_PASSWORD` ou le fichier externe `config/runtime.properties` (hors WAR,
+> **Schéma dédié.** Créez APIGEN selon `SCHEMA-ORACLE.md`. Aucun mot de passe
+> Oracle réel n’est fourni. Utilisez `APIGEN_DB_PASSWORD` ou le fichier externe `config/runtime.properties` (hors WAR,
 > non versionné).
 
 > **Note** : `APIGEN_SEED_DEMO=false` en production. Si vous le laissez à `true`, l'API et les

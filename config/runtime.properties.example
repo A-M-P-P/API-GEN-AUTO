@@ -8,9 +8,11 @@
 # =====================================================================
 
 # --- Base de données DE LA PLATEFORME (utilisateurs, API, exécutions, audit) ---
+# Créer d’abord le compte/schéma APIGEN avec database/oracle/create-apigen-schema.sql.
+# Ne pas utiliser le compte d’un système métier.
 # La base H2 n'est utilisée qu'avec le profil "local". En prod, utilisez Oracle.
 spring.datasource.url=jdbc:oracle:thin:@//SERVEUR_ORACLE:1521/SERVICE
-spring.datasource.username=A_REMPLACER
+spring.datasource.username=APIGEN
 spring.datasource.password=A_REMPLACER
 
 # --- Serveur ---

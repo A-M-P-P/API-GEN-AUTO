@@ -1,12 +1,10 @@
-# Production — base Oracle 12c (SID ORCL, utilisateur sigif)
-# Les valeurs par défaut correspondent à la base de production ; elles restent surchargeables
-# par variables d'environnement ou par le fichier externe config/runtime.properties.
+# Base plateforme Oracle : utilisateur/schéma dédié APIGEN, jamais un compte métier.
 spring:
   datasource:
     url: ${APIGEN_DB_URL:jdbc:oracle:thin:@${ORACLE_HOST:localhost}:${ORACLE_PORT:1521}:${ORACLE_SID:ORCL}}
     driver-class-name: oracle.jdbc.OracleDriver
-    username: ${APIGEN_DB_USER:sigif}
-    password: ${APIGEN_DB_PASSWORD:sigif2015}
+    username: ${APIGEN_DB_USER:APIGEN}
+    password: ${APIGEN_DB_PASSWORD:A_REMPLACER}
     hikari:
       # Oracle 10g/11g : le pilote envoie sinon le nom de région de la JVM, inconnu du
       # fichier de fuseaux de la base -> ORA-01882. On force l'envoi d'un décalage.
@@ -26,7 +24,7 @@ spring:
   flyway:
     enabled: ${APIGEN_FLYWAY_ENABLED:true}
     locations: classpath:db/migration
-    baseline-on-migrate: true
+    baseline-on-migrate: false
     baseline-version: 0
 
 apigen:

@@ -316,8 +316,8 @@ Copier `.env.example` vers `.env` (ou exporter les variables) :
 | --- | --- | --- |
 | `APIGEN_PROFILE` | `dev` | `local` (H2), `dev` (Oracle 12c) ou `prod` (Oracle 12c) |
 | `APIGEN_DB_URL` | `jdbc:oracle:thin:@localhost:1521:ORCL` | URL JDBC Oracle (syntaxe SID) |
-| `APIGEN_DB_USER` | `sigif` | Utilisateur Oracle |
-| `APIGEN_DB_PASSWORD` | `sigif2015` | Mot de passe Oracle (**à changer en production**) |
+| `APIGEN_DB_USER` | `APIGEN` | Compte/schéma dédié à la plateforme |
+| `APIGEN_DB_PASSWORD` | `A_REMPLACER` | Mot de passe du compte APIGEN à fournir |
 | `ORACLE_HOST` / `ORACLE_PORT` / `ORACLE_SID` | `localhost` / `1521` / `ORCL` | Composants de l'URL si `APIGEN_DB_URL` n'est pas fourni |
 | `APIGEN_JWT_SECRET` | valeur de dev | **À changer en production** (≥ 64 caractères) |
 | `APIGEN_CRYPTO_KEY` | valeur de dev | Clé AES-256 des identifiants (**à changer**) |
@@ -343,8 +343,8 @@ repli silencieux vers H2 n'existe si la base configurée est indisponible.
 | Profil | Base | Usage |
 | --- | --- | --- |
 | `local` | H2 fichier (`./data/apigen`) | Démonstration, tests, démarrage sans Oracle |
-| `dev` | **Oracle 12c** — `SID=ORCL`, utilisateur `sigif` | Développement |
-| `prod` | **Oracle 12c** — `SID=ORCL`, utilisateur `sigif` | Production |
+| `dev` | **Oracle 12c** — `SID=ORCL`, utilisateur `APIGEN` | Développement |
+| `prod` | **Oracle 12c** — `SID=ORCL`, utilisateur `APIGEN` | Production |
 
 `dev` et `prod` partagent la même cible Oracle ; seul le comportement diffère (jeu de
 démonstration, console H2, verbosité). L'URL est construite par défaut avec la syntaxe **SID** :
@@ -533,11 +533,13 @@ Dans tous les cas, adresses et ports se règlent dans le fichier externe ci-dess
 
 ### Production avec Oracle 12c
 
-La base de production est déjà décrite dans les profils : `SID=ORCL`, utilisateur `sigif`.
-Il suffit donc de lancer en profil `prod`, et de surcharger uniquement les secrets :
+La base de production est déjà décrite dans les profils : `SID=ORCL`, utilisateur `APIGEN`.
+Créer d’abord le schéma dédié et fournir son mot de passe avant de lancer en profil `prod` :
 
 ```bash
 export APIGEN_PROFILE=prod
+export APIGEN_DB_USER=APIGEN
+export APIGEN_DB_PASSWORD="A_REMPLACER"
 export APIGEN_JWT_SECRET="$(openssl rand -hex 48)"
 export APIGEN_CRYPTO_KEY="$(openssl rand -base64 32)"
 java -jar backend/target/apigen-platform.war
@@ -552,17 +554,13 @@ export APIGEN_DB_URL="jdbc:oracle:thin:@db-host:1521:ORCL"
 export APIGEN_DB_URL="jdbc:oracle:thin:@//db-host:1521/FREEPDB1"
 ```
 
-1. Si l'utilisateur `sigif` n'existe pas encore, le créer une fois :
+1. Faire créer le compte/schéma APIGEN par le DBA avec
+   `database/oracle/create-apigen-schema.sql` : voir [SCHEMA-ORACLE.md](SCHEMA-ORACLE.md).
+2. Configurer le mot de passe du compte APIGEN. Flyway crée les tables de la
+   plateforme et son historique dans ce schéma, mais pas le compte Oracle lui-même.
 
-```sql
-CREATE USER SIGIF IDENTIFIED BY "sigif2015";
-GRANT CONNECT, RESOURCE, CREATE VIEW, CREATE TABLE, CREATE SEQUENCE TO SIGIF;
-ALTER USER SIGIF QUOTA UNLIMITED ON USERS;
-```
-
-2. Flyway applique automatiquement `V1__init.sql` puis `V2__organizations.sql`. Les scripts sont
-   compatibles Oracle 12c+ et H2 (mode Oracle). Toute table manquante est ensuite recréée par le
-   garde-fou de schéma (voir « Création automatique des tables manquantes »).
+**Changer le compte JDBC ne déplace pas les données existantes dans SIGIF.**
+Lire le guide de schéma avant de migrer une installation existante.
 
 ---
 
