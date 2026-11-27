@@ -14,6 +14,7 @@ public class ApiGenApplication {
     public static void main(String[] args) {
         // Avant SpringApplication : le pilote Oracle lit ses maps NLS au chargement de sa classe.
         JdbcConnectionProps.configureOracleNls();
-        SpringApplication.run(ApiGenApplication.class, args);
+        SpringApplication.run(com.apigensetup.SetupMode.enabled(args)
+                ? com.apigensetup.SetupApplication.class : ApiGenApplication.class, args);
     }
 }

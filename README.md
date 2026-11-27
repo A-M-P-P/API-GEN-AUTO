@@ -806,3 +806,24 @@ consommatrices n’ont pas de compte Studio. Le renouvellement rotatif est limit
 notamment la procédure de migration et les contraintes des systèmes externes.
 L’éditeur d’endpoint propose également **Utiliser une information reçue** pour
 transmettre les paramètres déclarés à une étape SQL, HTTP ou SET.
+
+## Assistant de configuration avant connexion
+
+Le backend peut désormais démarrer sans base en **mode installation explicite**
+(`APIGEN_SETUP_ENABLED=true`). Depuis la connexion Studio, cliquer sur
+**Installer ou reconfigurer la plateforme**, puis utiliser le code temporaire
+affiché sur la console du backend. L’assistant teste Oracle, PostgreSQL, MySQL,
+SQL Server ou H2 local et enregistre le fichier externe unique
+`APIGEN_RUNTIME_CONFIG` (par défaut `./config/runtime.properties`).
+
+Les quatre YAML historiques sont regroupés dans un seul `application.yml`,
+avec sections par profil. Le profil par défaut reste `dev` et `prod` doit être
+activé explicitement en production. Le moteur choisi par l’assistant surcharge
+les réglages de base du profil via le fichier externe.
+
+**Après enregistrement, désactiver le mode installation et redémarrer.**
+Les bases/comptes doivent être créés par le DBA. Les migrations des nouveaux
+moteurs sont fournies mais leur validation réelle reste à effectuer chez vous.
+Aucun transfert de données n’est automatique.
+Consulter [INSTALLATION-ASSISTEE.md](INSTALLATION-ASSISTEE.md) avant utilisation,
+notamment pour préserver les clés d’une installation existante et configurer TLS.

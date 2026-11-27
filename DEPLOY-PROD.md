@@ -137,3 +137,24 @@ Voir **[SCHEMA-ORACLE.md](SCHEMA-ORACLE.md)** pour les droits, les contrôles et
 reprise d’une installation existante. Changer seulement le compte JDBC ne migre
 pas les données. Les profils Oracle refusent un schéma non vide sans historique
 Flyway ; ne contournez pas ce contrôle sans analyse du DBA.
+
+## Assistant de configuration avant connexion
+
+Le backend peut désormais démarrer sans base en **mode installation explicite**
+(`APIGEN_SETUP_ENABLED=true`). Depuis la connexion Studio, cliquer sur
+**Installer ou reconfigurer la plateforme**, puis utiliser le code temporaire
+affiché sur la console du backend. L’assistant teste Oracle, PostgreSQL, MySQL,
+SQL Server ou H2 local et enregistre le fichier externe unique
+`APIGEN_RUNTIME_CONFIG` (par défaut `./config/runtime.properties`).
+
+Les quatre YAML historiques sont regroupés dans un seul `application.yml`,
+avec sections par profil. Le profil par défaut reste `dev` et `prod` doit être
+activé explicitement en production. Le moteur choisi par l’assistant surcharge
+les réglages de base du profil via le fichier externe.
+
+**Après enregistrement, désactiver le mode installation et redémarrer.**
+Les bases/comptes doivent être créés par le DBA. Les migrations des nouveaux
+moteurs sont fournies mais leur validation réelle reste à effectuer chez vous.
+Aucun transfert de données n’est automatique.
+Consulter [INSTALLATION-ASSISTEE.md](INSTALLATION-ASSISTEE.md) avant utilisation,
+notamment pour préserver les clés d’une installation existante et configurer TLS.

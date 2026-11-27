@@ -3,6 +3,7 @@ import { adminGuard, authGuard, editorGuard } from './core/auth.guard';
 import { ShellComponent } from './shell/shell.component';
 
 export const routes: Routes = [
+  { path: 'setup', loadComponent: () => import('./features/login/setup.component').then(m => m.SetupComponent) },
   {
     path: 'login',
     loadComponent: () => import('./features/login/login.component').then((m) => m.LoginComponent)

@@ -14,6 +14,7 @@ public class ServletInitializer extends SpringBootServletInitializer {
     @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
         JdbcConnectionProps.configureOracleNls();
-        return application.sources(ApiGenApplication.class);
+        return application.sources(com.apigensetup.SetupMode.enabled()
+                ? com.apigensetup.SetupApplication.class : ApiGenApplication.class);
     }
 }

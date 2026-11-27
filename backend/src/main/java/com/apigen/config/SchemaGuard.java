@@ -33,6 +33,12 @@ public class SchemaGuard implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        String product = jdbc.execute((org.springframework.jdbc.core.ConnectionCallback<String>)
+                connection -> connection.getMetaData().getDatabaseProductName());
+        if (product == null || !(product.toLowerCase(java.util.Locale.ROOT).contains("oracle") || product.equalsIgnoreCase("H2"))) {
+            log.info("Schéma {} géré exclusivement par Flyway ; garde-fou Oracle/H2 non exécuté.", product);
+            return;
+        }
         int created = 0;
         for (TableSpec spec : TABLES) {
             if (!tableExists(spec.name())) {

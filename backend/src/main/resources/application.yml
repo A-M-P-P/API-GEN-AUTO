@@ -83,3 +83,117 @@ logging:
     com.apigen: INFO
     org.hibernate.SQL: WARN
     org.springframework.security: WARN
+
+---
+# Base plateforme Oracle : utilisateur/schéma dédié APIGEN, jamais un compte métier.
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: ${APIGEN_DB_URL:jdbc:oracle:thin:@${ORACLE_HOST:localhost}:${ORACLE_PORT:1521}:${ORACLE_SID:ORCL}}
+    driver-class-name: oracle.jdbc.OracleDriver
+    username: ${APIGEN_DB_USER:APIGEN}
+    password: ${APIGEN_DB_PASSWORD:APIGEN1234}
+    hikari:
+      maximum-pool-size: ${APIGEN_DB_POOL_MAX:10}
+      minimum-idle: 2
+      connection-timeout: 30000
+  jpa:
+    database-platform: org.hibernate.dialect.OracleDialect
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: ${APIGEN_FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
+    # Refuser un schéma non vide sans historique : éviter de toucher à une base métier.
+    baseline-on-migrate: false
+    baseline-version: 0
+
+apigen:
+  seed:
+    demo: ${APIGEN_SEED_DEMO:true}
+
+logging:
+  level:
+    com.apigen: DEBUG
+    org.hibernate.SQL: WARN
+
+---
+# Base plateforme Oracle : utilisateur/schéma dédié APIGEN, jamais un compte métier.
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${APIGEN_DB_URL:jdbc:oracle:thin:@${ORACLE_HOST:localhost}:${ORACLE_PORT:1521}:${ORACLE_SID:ORCL}}
+    driver-class-name: oracle.jdbc.OracleDriver
+    username: ${APIGEN_DB_USER:APIGEN}
+    password: ${APIGEN_DB_PASSWORD:APIGEN1234}
+    hikari:
+      maximum-pool-size: ${APIGEN_DB_POOL_MAX:15}
+      minimum-idle: 2
+      connection-timeout: 30000
+  jpa:
+    database-platform: org.hibernate.dialect.OracleDialect
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+  h2:
+    console:
+      enabled: false
+  flyway:
+    enabled: ${APIGEN_FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    baseline-version: 0
+
+apigen:
+  seed:
+    demo: false
+  scheduler:
+    enabled: true
+
+logging:
+  level:
+    com.apigen: INFO
+    org.hibernate.SQL: WARN
+
+---
+# Profil « local » — H2 embarquée, aucune base à installer.
+# Utilisé pour la démonstration, les tests et le démarrage sans Oracle.
+# Le profil « dev » et le profil « prod » visent, eux, Oracle 12c.
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:h2:file:./data/apigen;MODE=Oracle;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: PUBLIC
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+
+apigen:
+  seed:
+    demo: true
+
+logging:
+  level:
+    com.apigen: DEBUG

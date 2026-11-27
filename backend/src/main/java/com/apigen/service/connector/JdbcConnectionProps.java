@@ -42,6 +42,7 @@ public final class JdbcConnectionProps {
      * première connexion peut arriver trop tard.
      */
     public static void configureOracleNls() {
+        setIfAbsent("oracle.jdbc.timezoneAsRegion", "false");
         Locale locale = Locale.getDefault(Locale.Category.FORMAT);
         String language = locale.getLanguage();
         String country = locale.getCountry();
