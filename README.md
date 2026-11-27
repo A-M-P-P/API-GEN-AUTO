@@ -854,3 +854,8 @@ un endpoint. Les appels HTTP sans connexion explicite et les chemins de fichiers
 utilisant les valeurs de contexte restent possibles dans les configurations avancées.
 Ces contrôles ne remplacent ni les droits du serveur ni une politique de
 suppression des éléments utilisés ; aucune suppression ou migration automatique.
+
+Le [guide est également disponible en PDF](frontend/public/GUIDE-UTILISATEUR.pdf),
+téléchargeable depuis le menu du Studio. Après modification du guide Markdown,
+régénérer le PDF avec `docs/tools/generate-user-guide-pdf.py` (Python, ReportLab
+et polices DejaVu Sans requis), puis déployer les deux fichiers.

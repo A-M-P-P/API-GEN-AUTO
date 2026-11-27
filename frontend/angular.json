@@ -45,6 +45,11 @@
                 "glob": "GUIDE-UTILISATEUR.md",
                 "input": "public",
                 "output": "/"
+              },
+              {
+                "glob": "GUIDE-UTILISATEUR.pdf",
+                "input": "public",
+                "output": "/"
               }
             ],
             "styles": [
