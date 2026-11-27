@@ -20,7 +20,7 @@ const MASKED_SECRET = '********';
 export class OrganizationsComponent implements OnInit {
   private service = inject(OrganizationService);
   readonly branding = inject(BrandingService);
-  readonly studioTheme = signal('neutral');
+  readonly studioTheme = signal('auto');
   private fb = inject(FormBuilder);
   private toast = inject(ToastService);
   readonly auth = inject(AuthService);
@@ -135,7 +135,7 @@ export class OrganizationsComponent implements OnInit {
 
   private resetAdvanced(): void {
     this.advancedOpen.set(false);
-    this.studioTheme.set('neutral');
+    this.studioTheme.set('auto');
     this.variables.set([]);
     this.secrets.set([]);
     this.restBaseUrl.set('');
@@ -149,7 +149,7 @@ export class OrganizationsComponent implements OnInit {
     }
     try {
       const context = JSON.parse(raw);
-      this.studioTheme.set(context.variables?.studioTheme || 'neutral');
+      this.studioTheme.set(context.variables?.studioTheme || 'auto');
       this.variables.set(this.toRows(context.variables).filter(row => row.key !== 'studioTheme'));
       this.secrets.set(this.toRows(context.secrets));
       this.restBaseUrl.set(context.overrides?.rest?.baseUrl ?? '');

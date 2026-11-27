@@ -4,7 +4,7 @@ import { Organization } from './models';
 
 export interface StudioTheme {
   id: string; label: string; primary: string; strong: string; soft: string;
-  sidebar: string; accent: string; source: string;
+  sidebar: string; accent: string; source: string; logo?: string;
 }
 const neutral: StudioTheme = { id: 'neutral', label: 'API-GEN Studio', primary: '#334e68', strong: '#243b53', soft: '#e8eef4', sidebar: '#142536', accent: '#805b14', source: '' };
 
@@ -14,14 +14,27 @@ export class BrandingService {
   private document = inject(DOCUMENT);
   readonly themes = signal<StudioTheme[]>([neutral]);
   readonly organization = signal<Organization | null>(null);
+  private readonly selectedPlatform = signal<string | null>(null);
   readonly current = computed(() => {
-    const org = this.organization();
-    let id = 'neutral';
-    if (org) {
-      try { id = JSON.parse(org.contextConfig || '{}').variables?.studioTheme || 'neutral'; } catch { /* neutral fallback */ }
-    }
-    return this.themes().find(theme => theme.id === id) || neutral;
+    const id = this.selectedPlatform();
+    return id ? this.themes().find(theme => theme.id === id) || neutral : this.themeFor(this.organization());
   });
+
+  themeFor(org: Organization | null): StudioTheme {
+    if (!org) return neutral;
+    let configured: string | undefined;
+    try { configured = JSON.parse(org.contextConfig || '{}').variables?.studioTheme; } catch { /* infer below */ }
+    const identity = (org.code + ' ' + org.name).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const inferred = ['cnef', 'dgi', 'src', 'sigif'].find(id => new RegExp('(^|[^a-z])' + id + '(?:2)?([^a-z]|$)').test(identity));
+    const id = configured && configured !== 'auto' ? configured : inferred;
+    return this.themes().find(theme => theme.id === id) || neutral;
+  }
+
+  selectPlatform(id: string, organizations: Organization[]): void {
+    this.organization.set(organizations.find(org => this.themeFor(org).id === id || org.code.toLowerCase() === id) || null);
+    this.selectedPlatform.set(id);
+    this.apply();
+  }
 
   async load(): Promise<void> {
     try {
@@ -35,11 +48,14 @@ export class BrandingService {
         typeof item.label === 'string' && item.label.length <= 120 &&
         [item.primary, item.strong, item.soft, item.sidebar, item.accent].every(c => typeof c === 'string' && color.test(c)) &&
         typeof item.source === 'string' && /^https:\/\//.test(item.source));
+      for (const theme of themes) {
+        if (theme.logo && !(/^(branding\/[a-z0-9-]+\.(png|webp|jpg)|https:\/\/[^\s]+)$/i.test(theme.logo))) delete theme.logo;
+      }
       this.themes.set([neutral, ...themes]);
       this.apply();
     } catch { /* A branding file must never prevent access to the Studio. */ }
   }
-  select(org: Organization | null): void { this.organization.set(org); this.apply(); }
+  select(org: Organization | null): void { this.selectedPlatform.set(null); this.organization.set(org); this.apply(); }
   private apply(): void {
     const theme = this.current();
     const root = this.document.documentElement;

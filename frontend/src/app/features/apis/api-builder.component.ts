@@ -1,4 +1,6 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { BrandingService } from '../../core/branding.service';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -47,6 +49,9 @@ interface QueryJoin {
   styleUrl: './api-builder.component.scss'
 })
 export class ApiBuilderComponent implements OnInit {
+  private branding = inject(BrandingService);
+  private destroyRef = inject(DestroyRef);
+
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -183,8 +188,15 @@ export class ApiBuilderComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.apiForm.controls.organizationId.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(id => {
+      this.branding.select(this.organizations().find(org => org.id === Number(id)) || null);
+    });
     this.organizationService.list().subscribe({
-      next: (organizations) => this.organizations.set(organizations),
+      next: (organizations) => {
+        this.organizations.set(organizations);
+        const id = this.apiForm.controls.organizationId.value;
+        if (id != null) this.branding.select(organizations.find(org => org.id === Number(id)) || null);
+      },
       error: () => this.organizations.set([])
     });
 

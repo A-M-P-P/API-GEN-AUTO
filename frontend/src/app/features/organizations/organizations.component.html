@@ -113,6 +113,7 @@
       <div class="field">
         <label for="organization-theme">Identité visuelle du Studio</label>
         <select id="organization-theme" class="select" [value]="studioTheme()" (change)="studioTheme.set($any($event.target).value)">
+          <option value="auto">Automatique — selon le code de l’organisation</option>
           @for (theme of branding.themes(); track theme.id) { <option [value]="theme.id">{{ theme.label }}</option> }
         </select>
         <span class="hint">Facultatif. Les palettes institutionnelles sont des propositions à valider, pas des chartes officielles certifiées. La sélection ne change aucun droit d’accès.</span>

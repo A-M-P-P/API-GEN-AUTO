@@ -19,6 +19,8 @@ export class ShellComponent {
   private organizationService = inject(OrganizationService);
   readonly themeOrganizations = signal<Organization[]>([]);
   readonly themeError = signal('');
+  readonly logoFailures = signal<Record<string, boolean>>({});
+  logoFailed(id: string): void { this.logoFailures.update(values => ({ ...values, [id]: true })); }
   constructor() {
     void this.branding.load();
     this.refreshThemeOrganizations();

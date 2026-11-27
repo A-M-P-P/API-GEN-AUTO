@@ -1,6 +1,46 @@
 [
-  { "id": "cnef", "label": "CNEF", "primary": "#176442", "strong": "#104b32", "soft": "#eaf4ee", "sidebar": "#102e23", "accent": "#865e17", "source": "https://cnefcameroun.cm/" },
-  { "id": "dgi", "label": "DGI", "primary": "#205a91", "strong": "#16416b", "soft": "#eaf1f9", "sidebar": "#132b43", "accent": "#815e13", "source": "https://www.impots.cm/" },
-  { "id": "src", "label": "SRC", "primary": "#275991", "strong": "#1d426b", "soft": "#edf2fa", "sidebar": "#192c46", "accent": "#8a482c", "source": "https://src.cm/" },
-  { "id": "sigif", "label": "SIGIF — informations forestières", "primary": "#426c32", "strong": "#2e4d23", "soft": "#eff5eb", "sidebar": "#24351e", "accent": "#865b24", "source": "https://www.sigif2.cm/" }
+  {
+    "id": "cnef",
+    "label": "CNEF",
+    "primary": "#006b43",
+    "strong": "#004d30",
+    "soft": "#edf6ef",
+    "sidebar": "#06442e",
+    "accent": "#9b6d0b",
+    "source": "https://cnefcameroun.cm/",
+    "logo": "branding/cnef.png"
+  },
+  {
+    "id": "dgi",
+    "label": "DGI",
+    "primary": "#205a91",
+    "strong": "#16416b",
+    "soft": "#eaf1f9",
+    "sidebar": "#132b43",
+    "accent": "#815e13",
+    "source": "https://www.impots.cm/",
+    "logo": "branding/dgi.png"
+  },
+  {
+    "id": "src",
+    "label": "SRC",
+    "primary": "#275991",
+    "strong": "#1d426b",
+    "soft": "#edf2fa",
+    "sidebar": "#192c46",
+    "accent": "#8a482c",
+    "source": "https://src.cm/",
+    "logo": "https://src.cm/wp-content/uploads/2025/09/logo-src-cameroun.png"
+  },
+  {
+    "id": "sigif",
+    "label": "SIGIF — informations forestières",
+    "primary": "#426c32",
+    "strong": "#2e4d23",
+    "soft": "#eff5eb",
+    "sidebar": "#24351e",
+    "accent": "#865b24",
+    "source": "https://www.sigif2.cm/",
+    "logo": "https://www.sigif2.cm/sigif/images/logo_sigif_grand_format.png"
+  }
 ]

@@ -2,7 +2,11 @@
 <div class="shell">
   <aside class="sidebar" [class.open]="sidebarOpen()">
     <div class="brand">
-      <div class="institution-mark" aria-hidden="true">{{ branding.current().id === 'neutral' ? 'API' : branding.current().id.toUpperCase() }}</div>
+      <div class="institution-mark">
+        @if (branding.current().logo && !logoFailures()[branding.current().id]) {
+          <img [src]="branding.current().logo" [alt]="'Logo ' + branding.current().label" referrerpolicy="no-referrer" (error)="logoFailed(branding.current().id)">
+        } @else { <span>{{ branding.current().id === 'neutral' ? 'API' : branding.current().id.toUpperCase() }}</span> }
+      </div>
       <div>
         <div class="brand-name">{{ branding.current().label }}</div>
         <div class="brand-sub">Studio des échanges</div>
@@ -63,7 +67,18 @@
         <span class="pill">Sécurisé</span>
       </div>
       <div class="topbar-right">
-        <label class="visual-context-label" for="visual-organization">Identité visuelle</label>
+        <span class="visual-context-label" id="platform-selector-label">Choisir une plateforme</span>
+        <div class="platform-selector" role="group" aria-labelledby="platform-selector-label">
+          @for (platform of branding.themes(); track platform.id) {
+            <button type="button" class="platform-choice" [class.selected]="branding.current().id === platform.id" [attr.aria-pressed]="branding.current().id === platform.id" [attr.aria-label]="'Appliquer le thème ' + platform.label" (click)="branding.selectPlatform(platform.id, themeOrganizations())">
+              @if (platform.logo && !logoFailures()[platform.id]) {
+                <img [src]="platform.logo" alt="" referrerpolicy="no-referrer" (error)="logoFailed(platform.id)">
+              } @else { <span class="platform-fallback">{{ platform.id === 'neutral' ? 'API' : platform.id.toUpperCase() }}</span> }
+              <span>{{ platform.id === 'sigif' ? 'SIGIF' : platform.label }}</span>
+            </button>
+          }
+        </div>
+        <label class="visual-context-label" for="visual-organization">Organisation associée (facultatif)</label>
         <div class="row">
           <select id="visual-organization" class="select visual-context-select" [value]="branding.organization()?.id || ''" (change)="selectVisualOrganization($event)" aria-describedby="visual-context-help">
             <option value="">Studio partagé — neutre</option>
@@ -74,7 +89,7 @@
       </div>
     </header>
     <div class="visual-context-banner">
-      <span id="visual-context-help">{{ branding.organization()?.name || 'Espace interne partagé' }} · Le thème ne modifie ni les droits ni les filtres de données.</span>
+      <span id="visual-context-help">Thème actif : {{ branding.current().label }} · {{ branding.organization()?.name || 'Aperçu visuel sans organisation associée' }} · Le thème ne modifie ni les droits ni les filtres de données.</span>
       @if (themeError()) { <span role="status">{{ themeError() }}</span> }
     </div>
     <main class="content" id="studio-content" tabindex="-1">

@@ -11,22 +11,36 @@ Les contenus de ces pages ont été récupérés. Ils identifient les organismes
 mais ne constituent pas une charte graphique complète avec palettes et règles
 d’usage certifiées. **Les quatre palettes fournies sont des propositions de
 travail, pas des couleurs officielles vérifiées.** Les faire valider/remplacer
-par chaque institution avant diffusion sous son identité. Aucun logo officiel
-n’est recréé, aucun logo artificiel n’est utilisé et aucune ressource externe
-n’est chargée par le navigateur pour afficher ces thèmes : les marques dans la
-navigation sont des sigles typographiques, pas des logos institutionnels.
+par chaque institution avant diffusion sous son identité. Les logos CNEF et DGI sont fournis localement (sources ci-dessous). Les logos
+SRC et SIGIF utilisent leurs URL publiées sur les sites de référence ; un échec
+de chargement affiche le sigle, sans casser le sélecteur. Aucun logo artificiel
+n’est utilisé. Pour un réseau fermé, déposer les images validées localement
+et remplacer les URL dans branding.json.
+
+Sources des images :
+- CNEF : https://cnefcameroun.cm/wp-content/uploads/2023/06/logo1.png
+- DGI : https://fr.wikipedia.org/wiki/Fichier:Logo_DGI_Cameroun.png (copie récupérée via recherche d’images ; à valider par la DGI).
+- SRC : https://src.cm/wp-content/uploads/2025/09/logo-src-cameroun.png (référence retrouvée dans la médiathèque publique du site).
+- SIGIF : https://www.sigif2.cm/sigif/images/logo_sigif_grand_format.png (image référencée par la page de connexion).
 
 ## Utilisation
 
 1. Ouvrir **Organisations**, créer ou modifier l’organisation.
-2. Choisir **Identité visuelle du Studio** : neutre, CNEF, DGI, SRC ou SIGIF.
+2. Choisir **Identité visuelle du Studio** : automatique, neutre, CNEF, DGI, SRC ou SIGIF.
+   En automatique, les codes/noms contenant les sigles CNEF, DGI, SRC et SIGIF sont reconnus.
 3. Enregistrer. Cette association est conservée en base dans
    `contextConfig.variables.studioTheme`, avec les autres paramètres de
    l’organisation. Elle ne contient aucun secret.
-4. En haut du Studio, utiliser **Identité visuelle** pour choisir l’organisation.
+4. En haut du Studio, cliquer sur un **logo de plateforme** pour appliquer directement son thème,
+   même sans association enregistrée. Le choix d’organisation reste également disponible.
    La navigation, les boutons principaux et le bandeau de contexte suivent
    alors le thème associé. Actualiser la liste avec ↻ après une création.
-5. Choisir **Studio partagé — neutre** pour revenir à l’identité commune.
+5. Cliquer sur **API-GEN Studio** pour revenir à l’identité commune.
+
+La sélection d’une organisation dans l’éditeur d’API applique également son thème.
+Un ancien paramètre explicite `studioTheme: neutral` reste prioritaire sur la
+détection : choisir « Automatique » dans Organisations ou cliquer directement
+sur le logo pour appliquer CNEF. Le bandeau affiche toujours le thème actif.
 
 Le choix visuel n’est pas un mécanisme de sélection de tenant : il ne filtre
 pas les listes et n’accorde aucun droit. Le bandeau le rappelle explicitement.
@@ -43,7 +57,8 @@ avec un cache court ou désactivé. Chaque entrée comporte :
 - `id` : identifiant technique, stable et unique ;
 - `label` : libellé institutionnel ;
 - `primary`, `strong`, `soft`, `sidebar`, `accent` : couleurs hexadécimales à six chiffres ;
-- `source` : adresse HTTPS de référence.
+- `source` : adresse HTTPS de référence ;
+- `logo` : chemin local `branding/nom.png` (webp/jpg acceptés) ou URL HTTPS.
 
 Ne pas y placer de secret. Les identifiants configurés dans les organisations
 correspondent à ces `id`. La palette neutre reste intégrée comme repli si le
