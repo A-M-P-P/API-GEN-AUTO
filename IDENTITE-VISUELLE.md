@@ -11,8 +11,8 @@ Les contenus de ces pages ont été récupérés. Ils identifient les organismes
 mais ne constituent pas une charte graphique complète avec palettes et règles
 d’usage certifiées. **Les quatre palettes fournies sont des propositions de
 travail, pas des couleurs officielles vérifiées.** Les faire valider/remplacer
-par chaque institution avant diffusion sous son identité. Les logos CNEF et DGI sont fournis localement (sources ci-dessous). Les logos
-SRC et SIGIF utilisent leurs URL publiées sur les sites de référence ; un échec
+par chaque institution avant diffusion sous son identité. Les logos CNEF et DGI sont fournis localement (sources ci-dessous). Les images
+SRC et SIGIF utilisent les URL externes fournies par l’utilisateur ; un échec
 de chargement affiche le sigle, sans casser le sélecteur. Aucun logo artificiel
 n’est utilisé. Pour un réseau fermé, déposer les images validées localement
 et remplacer les URL dans branding.json.
@@ -20,8 +20,8 @@ et remplacer les URL dans branding.json.
 Sources des images :
 - CNEF : https://cnefcameroun.cm/wp-content/uploads/2023/06/logo1.png
 - DGI : https://fr.wikipedia.org/wiki/Fichier:Logo_DGI_Cameroun.png (copie récupérée via recherche d’images ; à valider par la DGI).
-- SRC : https://src.cm/wp-content/uploads/2025/09/logo-src-cameroun.png (référence retrouvée dans la médiathèque publique du site).
-- SIGIF : https://www.sigif2.cm/sigif/images/logo_sigif_grand_format.png (image référencée par la page de connexion).
+- SRC : https://obivsolutions.com/wp-content/uploads/2024/08/Societe-de-Recouvrement-des-Creances-SRC.png (image choisie et fournie par l’utilisateur).
+- SIGIF : https://pulitzercenter.org/sites/default/files/styles/orig_optimized/public/inline-images/illegal-logging-9.jpg.webp?itok=SiAwjPgw (image choisie et fournie par l’utilisateur ; son statut de logo officiel n’a pas été vérifié).
 
 ## Utilisation
 
