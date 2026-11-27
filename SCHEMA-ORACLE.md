@@ -20,10 +20,9 @@ tests ne sont pas modifiés par cette configuration Oracle.
 1. Le DBA se connecte avec SQL*Plus/SQLcl à la **PDB/service cible**, pas au
    conteneur racine CDB$ROOT. Il adapte les tablespaces USERS/TEMP si nécessaire.
 2. Il exécute `@database/oracle/create-apigen-schema.sql` depuis la racine du
-   dépôt. Le mot de passe est demandé sans affichage ; ne pas activer de spool
-   ni transmettre ce secret sur la ligne de commande. Pour ce script interactif,
-   ne pas utiliser de guillemet double ni de `&` dans le mot de passe. Le DBA peut
-   utiliser son outil de provisionnement sécurisé pour une autre politique.
+   dépôt. Le mot de passe initial est **`APIGEN1234`** ; il est connu et versionné.
+   Le remplacer pour la production et répercuter sa nouvelle valeur dans la
+   configuration externe du backend. Ne pas activer de spool contenant des secrets.
 3. Le script crée APIGEN avec un quota initial **1 Go**, CREATE SESSION,
    CREATE TABLE et CREATE SEQUENCE. Aucun rôle DBA, privilège ANY, accès aux
    schémas métier ni quota illimité n’est accordé. Le DBA ajuste le quota selon
@@ -36,7 +35,7 @@ tests ne sont pas modifiés par cette configuration Oracle.
 # config/runtime.properties (non versionné)
 spring.datasource.url=jdbc:oracle:thin:@//SERVEUR_ORACLE:1521/SERVICE
 spring.datasource.username=APIGEN
-spring.datasource.password=A_REMPLACER
+spring.datasource.password=APIGEN1234
 ```
 
 Ou, si ces valeurs ne sont pas définies dans le fichier prioritaire :
@@ -44,7 +43,7 @@ Ou, si ces valeurs ne sont pas définies dans le fichier prioritaire :
 ```bash
 export APIGEN_DB_URL='jdbc:oracle:thin:@//SERVEUR_ORACLE:1521/SERVICE'
 export APIGEN_DB_USER=APIGEN
-export APIGEN_DB_PASSWORD='A_REMPLACER'
+export APIGEN_DB_PASSWORD='APIGEN1234'
 ```
 
 5. Démarrer le backend. Flyway crée toutes les tables dans le schéma du compte
@@ -62,8 +61,8 @@ SELECT table_name FROM user_tables ORDER BY table_name;
 ```
 
 USER et CURRENT_SCHEMA doivent désigner APIGEN. Les profils Oracle `dev` et
-`prod` utilisent maintenant APIGEN par défaut, avec un mot de passe placeholder
-à remplacer. Les fichiers runtime ou variables déjà remplis peuvent toujours
+`prod` utilisent maintenant APIGEN par défaut, avec le mot de passe initial `APIGEN1234`,
+à remplacer en production. Les fichiers runtime ou variables déjà remplis peuvent toujours
 surcharger ces valeurs : vérifiez-les avant le démarrage.
 
 ## Installation existante dans SIGIF ou un autre schéma
@@ -107,3 +106,17 @@ toujours choisir un autre propriétaire. Le bon compte doit être contrôlé au 
 
 Aucun script SQL, build ou test n’a été exécuté automatiquement pour provisionner
 votre base réelle. Le DBA doit créer le compte et valider le script dans son environnement.
+
+## Compte APIGEN déjà existant
+
+Le script de création ne modifie pas un utilisateur existant. Si le DBA veut
+appliquer le mot de passe initial demandé à un compte déjà présent, il peut
+exécuter explicitement dans la bonne PDB :
+
+```sql
+ALTER USER APIGEN IDENTIFIED BY "APIGEN1234";
+```
+
+Cette opération n’est pas exécutée par l’application. Coordonner le changement
+avec la configuration du backend et son redémarrage. Ce mot de passe initial
+public ne doit pas être conservé en production.

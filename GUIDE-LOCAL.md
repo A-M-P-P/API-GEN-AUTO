@@ -184,7 +184,7 @@ Ou directement l'URL complète, si vous préférez la syntaxe service-name (plug
 ```bash
 export APIGEN_DB_URL="jdbc:oracle:thin:@//db-host:1521/FREEPDB1"
 export APIGEN_DB_USER="APIGEN"
-export APIGEN_DB_PASSWORD="A_REMPLACER"
+export APIGEN_DB_PASSWORD="APIGEN1234"
 ```
 
 Au premier démarrage, **Flyway crée les tables** (`V1__init.sql`, `V2__organizations.sql`) et
@@ -207,8 +207,7 @@ Compte admin créé : admin / Admin2026!
 
 L'application redémarre normalement, le compte `admin` est rétabli. Aucun script SQL à rejouer.
 
-> **Schéma dédié.** Créez APIGEN selon `SCHEMA-ORACLE.md`. Aucun mot de passe
-> Oracle réel n’est fourni. Utilisez `APIGEN_DB_PASSWORD` ou le fichier externe `config/runtime.properties` (hors WAR,
+> **Schéma dédié.** Créez APIGEN selon `SCHEMA-ORACLE.md`. Le mot de passe initial est `APIGEN1234`, à changer en production. Utilisez `APIGEN_DB_PASSWORD` ou le fichier externe `config/runtime.properties` (hors WAR,
 > non versionné).
 
 > **Note** : `APIGEN_SEED_DEMO=false` en production. Si vous le laissez à `true`, l'API et les

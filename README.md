@@ -317,7 +317,7 @@ Copier `.env.example` vers `.env` (ou exporter les variables) :
 | `APIGEN_PROFILE` | `dev` | `local` (H2), `dev` (Oracle 12c) ou `prod` (Oracle 12c) |
 | `APIGEN_DB_URL` | `jdbc:oracle:thin:@localhost:1521:ORCL` | URL JDBC Oracle (syntaxe SID) |
 | `APIGEN_DB_USER` | `APIGEN` | Compte/schéma dédié à la plateforme |
-| `APIGEN_DB_PASSWORD` | `A_REMPLACER` | Mot de passe du compte APIGEN à fournir |
+| `APIGEN_DB_PASSWORD` | `APIGEN1234` | Mot de passe initial du compte APIGEN, à changer en production |
 | `ORACLE_HOST` / `ORACLE_PORT` / `ORACLE_SID` | `localhost` / `1521` / `ORCL` | Composants de l'URL si `APIGEN_DB_URL` n'est pas fourni |
 | `APIGEN_JWT_SECRET` | valeur de dev | **À changer en production** (≥ 64 caractères) |
 | `APIGEN_CRYPTO_KEY` | valeur de dev | Clé AES-256 des identifiants (**à changer**) |
@@ -539,7 +539,7 @@ Créer d’abord le schéma dédié et fournir son mot de passe avant de lancer 
 ```bash
 export APIGEN_PROFILE=prod
 export APIGEN_DB_USER=APIGEN
-export APIGEN_DB_PASSWORD="A_REMPLACER"
+export APIGEN_DB_PASSWORD="APIGEN1234"
 export APIGEN_JWT_SECRET="$(openssl rand -hex 48)"
 export APIGEN_CRYPTO_KEY="$(openssl rand -base64 32)"
 java -jar backend/target/apigen-platform.war

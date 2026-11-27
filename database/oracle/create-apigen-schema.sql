@@ -5,12 +5,11 @@
 SET ECHO OFF
 SET VERIFY OFF
 WHENEVER SQLERROR EXIT SQL.SQLCODE
-ACCEPT apigen_password CHAR PROMPT 'Mot de passe du nouveau compte APIGEN (sans guillemet double ni &): ' HIDE
-CREATE USER APIGEN IDENTIFIED BY "&apigen_password"
+-- Mot de passe initial demandé : à remplacer pour la production.
+CREATE USER APIGEN IDENTIFIED BY "APIGEN1234"
     DEFAULT TABLESPACE USERS
     TEMPORARY TABLESPACE TEMP
     QUOTA 1G ON USERS;
-UNDEFINE apigen_password
 GRANT CREATE SESSION, CREATE TABLE, CREATE SEQUENCE TO APIGEN;
 PROMPT Compte APIGEN cree. Configurer le backend puis laisser Flyway creer ses tables.
 PROMPT Aucun droit sur les schemas metier n'a ete accorde.

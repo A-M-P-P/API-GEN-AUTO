@@ -13,7 +13,7 @@
 # La base H2 n'est utilisée qu'avec le profil "local". En prod, utilisez Oracle.
 spring.datasource.url=jdbc:oracle:thin:@//SERVEUR_ORACLE:1521/SERVICE
 spring.datasource.username=APIGEN
-spring.datasource.password=A_REMPLACER
+spring.datasource.password=APIGEN1234
 
 # --- Serveur ---
 # Ces deux clés ne s'appliquent qu'au JAR autonome. Dans Tomcat/WebLogic, le port et
