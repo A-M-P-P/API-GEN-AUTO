@@ -73,7 +73,8 @@ export class ApiBuilderComponent implements OnInit {
   });
 
   readonly requestParameters = signal<RequestParameter[]>([]);
-  readonly parameterTestValues = signal<Record<string, string>>({});
+  // Une clé peut être absente tant qu’aucune valeur n’a été saisie pour l’essai.
+  readonly parameterTestValues = signal<Partial<Record<string, string>>>({});
   readonly pipelineError = signal<string | null>(null);
   readonly runResult = signal<Run | null>(null);
   readonly runPayload = signal('{}');
